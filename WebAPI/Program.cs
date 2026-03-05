@@ -3,6 +3,8 @@ using WebAPI.Presentation;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.AddConsole();
+
 builder.Services.AddApplication();
 builder.Services.AddPresentation();
 
