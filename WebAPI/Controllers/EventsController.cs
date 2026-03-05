@@ -10,7 +10,7 @@ namespace WebAPI.Controllers
     [ApiController]
     [Route("api/[controller]")]
     [Produces("application/json")]
-    public class EventController(IEventService eventService, ILogger<EventController> logger) : ControllerBase
+    public class EventsController(IEventService eventService, ILogger<EventsController> logger) : ControllerBase
     {
         /// <summary>
         /// Получить список всех событий
