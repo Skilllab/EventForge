@@ -10,7 +10,7 @@ namespace WebAPI.Application.Services
         public void CreateEvent(Event newEvent)
         {
             if (_events.TryGetValue(newEvent.Id, out var value))
-                throw new ArgumentException("Задание с таким ID уже существует в базе");
+                throw new ArgumentException("Событие с таким ID уже существует в базе");
 
             _events.Add(newEvent.Id, newEvent);
         }
@@ -34,12 +34,12 @@ namespace WebAPI.Application.Services
         {
             if (!_events.TryGetValue(currentEvent.Id, out var existedEvent))
             {
-                throw new ArgumentException("Задание с таким ID не найдено");
+                throw new ArgumentException("Событие с таким ID не найдено");
             }
 
             if (currentEvent.EndAt < currentEvent.StartAt)
             {
-                throw new ArgumentException("У задания не может быть дата начала меньше даты завершения");
+                throw new ArgumentException("У события не может быть дата начала меньше даты завершения");
             }
 
             existedEvent.Title = currentEvent.Title;

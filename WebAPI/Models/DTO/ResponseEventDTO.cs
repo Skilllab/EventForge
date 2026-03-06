@@ -3,7 +3,7 @@
 /// <summary>
 /// DTO класс для ответов
 /// </summary>
-public class ResponceEventDTO
+public class ResponseEventDTO
 {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;

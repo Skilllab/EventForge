@@ -28,17 +28,17 @@ namespace WebAPI.Controllers
                 {
                     Success = false,
                     StatusCode = HttpStatusCode.NoContent,
-                    Message = "В базе нет заданий"
+                    Message = "В базе нет события"
                 };
             }
 
 
-            return new ApiResult<IEnumerable<ResponceEventDTO>>
+            return new ApiResult<IEnumerable<ResponseEventDTO>>
             {
                 Data = response,
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = "Получены все задания из базы"
+                Message = "Получены все события из базы"
             };
         }
 
@@ -46,28 +46,28 @@ namespace WebAPI.Controllers
         /// Получить событие по id
         /// </summary>
         [HttpGet("{id}")]
-        public ApiResult<ResponceEventDTO> GetEvent(Guid id)
+        public ApiResult<ResponseEventDTO> GetEvent(Guid id)
         {
             logger.LogDebug($"Обработка запроса GET {nameof(GetEvent)}");
 
 
             if (eventService.GetEvent(id, out var @event))
             {
-                return new ApiResult<ResponceEventDTO>
+                return new ApiResult<ResponseEventDTO>
                 {
                     Data = MapToDTO(@event),
                     Success = true,
                     StatusCode = HttpStatusCode.OK,
-                    Message = "Задание найдено"
+                    Message = "Событие найдено"
                 };
             }
 
-            return new ApiResult<ResponceEventDTO>
+            return new ApiResult<ResponseEventDTO>
             {
                 Data = null,
                 Success = false,
                 StatusCode = HttpStatusCode.NotFound,
-                Message = "Задание не найдено"
+                Message = "Событие не найдено"
             };
         }
 
@@ -88,7 +88,7 @@ namespace WebAPI.Controllers
                 {
                     Success = true,
                     StatusCode = HttpStatusCode.Created,
-                    Message = "Задание создано"
+                    Message = "Событие создано"
                 };
             }
             catch (Exception e)
@@ -117,7 +117,7 @@ namespace WebAPI.Controllers
                 {
                     Success = true,
                     StatusCode = HttpStatusCode.NoContent,
-                    Message = "Задание создано"
+                    Message = "Событие обновлено"
                 };
             }
             catch (Exception e)
@@ -152,7 +152,7 @@ namespace WebAPI.Controllers
             {
                 Success = true,
                 StatusCode = HttpStatusCode.NoContent,
-                Message = "Задание отменено"
+                Message = "Собтыие отменено"
             };
         }
 
@@ -162,9 +162,9 @@ namespace WebAPI.Controllers
         /// </summary>
         /// <param name="currentEvent">Доменное событие</param>
         /// <returns>DTO для отправки</returns>
-        private ResponceEventDTO MapToDTO(Event currentEvent)
+        private ResponseEventDTO MapToDTO(Event currentEvent)
         {
-            return new ResponceEventDTO()
+            return new ResponseEventDTO()
             {
                 Id = currentEvent.Id,
                 Title = currentEvent.Title,
