@@ -8,7 +8,7 @@ namespace WebAPI.Application
     {
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
-            services.AddScoped<IEventService, EventService>();
+            services.AddSingleton<IEventService, EventService>();
             return services;
         }
     }
