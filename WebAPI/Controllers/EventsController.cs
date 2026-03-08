@@ -16,22 +16,11 @@ namespace WebAPI.Controllers
         /// Получить список всех событий
         /// </summary>
         [HttpGet]
-        public ApiBaseResult GetAllEvents()
+        public ApiResult<IEnumerable<ResponseEventDTO>> GetAllEvents()
         {
             logger.LogDebug($"Обработка запроса GET {nameof(GetAllEvents)}");
 
             var response = eventService.GetEvents().Select(MapToDTO);
-
-            if (!response.Any())
-            {
-                return new ApiBaseResult()
-                {
-                    Success = false,
-                    StatusCode = HttpStatusCode.NoContent,
-                    Message = "В базе нет события"
-                };
-            }
-
 
             return new ApiResult<IEnumerable<ResponseEventDTO>>
             {
