@@ -67,7 +67,7 @@ namespace WebAPI.Application.Services
         /// <returns>DTO для отправки</returns>
         private ResponseEventDTO MapToDTO(Event currentEvent)
         {
-            return new ResponseEventDTO()
+            return new ResponseEventDTO
             {
                 Id = currentEvent.Id,
                 Title = currentEvent.Title,

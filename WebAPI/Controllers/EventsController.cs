@@ -32,7 +32,7 @@ namespace WebAPI.Controllers
         /// <summary>
         /// Получить событие по id
         /// </summary>
-        [HttpGet("{id}")]
+        [HttpGet("{id:guid}")]
         public ApiBaseResult GetEvent(Guid id)
         {
             logger.LogDebug($"Обработка запроса GET {nameof(GetEvent)}");
@@ -92,7 +92,7 @@ namespace WebAPI.Controllers
         /// <summary>
         /// Обновить событие целиком
         /// </summary>
-        [HttpPut("{id}")]
+        [HttpPut("{id:guid}")]
         public ApiResult ChangeEvent(Guid id, [FromBody] UpdateEventDTO request)
         {
             logger.LogDebug($"Обработка запроса PUT {nameof(ChangeEvent)}");
@@ -122,7 +122,7 @@ namespace WebAPI.Controllers
         /// <summary>
         /// Удалить событие
         /// </summary>
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:guid}")]
         public ApiBaseResult CancelEvent(Guid id)
         {
             logger.LogDebug($"Обработка запроса DELETE {nameof(CancelEvent)}");

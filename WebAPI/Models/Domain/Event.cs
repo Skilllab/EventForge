@@ -29,7 +29,13 @@ public class Event
     /// </summary>
     public DateTime EndAt { get; private set; }
 
-    
+    /// <summary>
+    /// Обновление события
+    /// </summary>
+    /// <param name="title">Заголовок события</param>
+    /// <param name="startDate">Дата начала события</param>
+    /// <param name="endDate">Дата окончания события</param>
+    /// <param name="description">Описание события</param>
     public void UpdateEvent(string title, DateTime startDate, DateTime endDate, string? description = null)
     {
         Title = title;
