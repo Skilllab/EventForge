@@ -1,12 +1,11 @@
 ﻿namespace WebAPI.Models.DTO;
 
 /// <summary>
-/// DTO класс для ответов
+/// DTO класс для изменения события
 /// </summary>
-public class ResponseEventDTO
+public class UpdateEventDTO
 {
-    public Guid Id { get; init; }
-    public string Title { get; init; } 
+    public string Title { get; init; }
     public string Description { get; init; }
     public DateTime StartAt { get; init; }
     public DateTime EndAt { get; init; }

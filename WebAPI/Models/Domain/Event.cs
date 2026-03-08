@@ -8,27 +8,35 @@ public class Event
     /// <summary>
     /// Уникальный идентификатор события
     /// </summary>
-    public Guid Id { get;  }
+    public Guid Id { get; private set; }
 
     /// <summary>
     /// Название события
     /// </summary>
-    public string Title { get; }
+    public string Title { get; private set; }
 
     /// <summary>
     /// Описание события
     /// </summary>
-    public string? Description { get; }
+    public string? Description { get; private set; }
     /// <summary>
     /// Дата начала события
     /// </summary>
-    public DateTime StartAt { get; }
+    public DateTime StartAt { get; private set; }
 
     /// <summary>
     /// Дата завершения события
     /// </summary>
-    public DateTime EndAt { get; }
+    public DateTime EndAt { get; private set; }
 
+    
+    public void UpdateEvent(string title, DateTime startDate, DateTime endDate, string? description = null)
+    {
+        Title = title;
+        StartAt = startDate;
+        EndAt = endDate;
+        Description = description;
+    }
 
     private Event(string title, DateTime startDate, DateTime endDate, string? description = null) 
     {

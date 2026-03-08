@@ -92,14 +92,14 @@ namespace WebAPI.Controllers
         /// <summary>
         /// Обновить событие целиком
         /// </summary>
-        [HttpPut]
-        public ApiResult ChangeEvent([FromBody] EventDto request)
+        [HttpPut("{id}")]
+        public ApiResult ChangeEvent(Guid id, [FromBody] UpdateEventDTO request)
         {
             logger.LogDebug($"Обработка запроса PUT {nameof(ChangeEvent)}");
 
             try
             {
-                //eventService.ChangeEvent(MapToEvent(request));
+                eventService.ChangeEvent(id, request);
                 return new ApiResult
                 {
                     Success = true,
@@ -139,7 +139,7 @@ namespace WebAPI.Controllers
             {
                 Success = true,
                 StatusCode = HttpStatusCode.NoContent,
-                Message = "Собтыие отменено"
+                Message = "Событие отменено"
             };
         }
     }

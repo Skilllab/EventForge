@@ -44,9 +44,9 @@ namespace WebAPI.Application.Services
             return false;
         }
 
-        public void ChangeEvent(Event currentEvent)
+        public void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent)
         {
-            if (!_events.TryGetValue(currentEvent.Id, out var existedEvent))
+            if (!_events.TryGetValue(eventId, out var existedEvent))
             {
                 throw new ArgumentException("Событие с таким ID не найдено");
             }
@@ -56,9 +56,8 @@ namespace WebAPI.Application.Services
                 throw new ArgumentException("У события не может быть дата начала меньше даты завершения");
             }
 
-            //existedEvent.Title = currentEvent.Title;
-            //existedEvent.StartAt = currentEvent.StartAt;
-            //existedEvent.EndAt = currentEvent.EndAt;
+            existedEvent.UpdateEvent(currentEvent.Title, currentEvent.StartAt, currentEvent.EndAt, currentEvent.Description);
+           
         }
 
         /// <summary>

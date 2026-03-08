@@ -9,6 +9,6 @@ namespace WebAPI.Application.Interfaces
         bool CancelEvent(Guid eventId);
         List<ResponseEventDTO> GetEvents();
         bool GetEvent(Guid eventId, out ResponseEventDTO @event);
-        void ChangeEvent(Event currentEvent);
+        void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent);
     }
 }
