@@ -5,10 +5,10 @@ namespace WebAPI.Application.Interfaces
 {
     public interface IEventService
     {
-        void CreateEvent(Event currentEvent);
+        ResponseEventDTO CreateEvent(CreateEventDTO currentEvent);
         bool CancelEvent(Guid eventId);
-        List<Event> GetEvents();
-        bool GetEvent(Guid eventId, out Event @event);
+        List<ResponseEventDTO> GetEvents();
+        bool GetEvent(Guid eventId, out ResponseEventDTO @event);
         void ChangeEvent(Event currentEvent);
     }
 }

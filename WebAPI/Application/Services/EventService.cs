@@ -1,5 +1,6 @@
 ﻿using WebAPI.Application.Interfaces;
 using WebAPI.Models.Domain;
+using WebAPI.Models.DTO;
 
 namespace WebAPI.Application.Services
 {
@@ -7,12 +8,18 @@ namespace WebAPI.Application.Services
     {
         static readonly Dictionary<Guid, Event> _events = new();
 
-        public void CreateEvent(Event newEvent)
+        public ResponseEventDTO CreateEvent(CreateEventDTO newEventDTO)
         {
-            if (_events.TryGetValue(newEvent.Id, out var value))
-                throw new ArgumentException("Событие с таким ID уже существует в базе");
+
+            var newEvent = Event.Create(
+                newEventDTO.Title,
+                newEventDTO.StartAt,
+                newEventDTO.EndAt,
+                newEventDTO.Description
+            );
 
             _events.Add(newEvent.Id, newEvent);
+            return MapToDTO(newEvent);
         }
 
         public bool CancelEvent(Guid eventId)
@@ -20,14 +27,21 @@ namespace WebAPI.Application.Services
             return _events.Remove(eventId);
         }
 
-        public List<Event> GetEvents()
+        public List<ResponseEventDTO> GetEvents()
         {
-            return _events.Values.ToList();
+            return _events.Values.Select(MapToDTO).ToList();
         }
 
-        public bool GetEvent(Guid eventId, out Event existedEvent)
+        public bool GetEvent(Guid eventId, out ResponseEventDTO responseEvent)
         {
-            return _events.TryGetValue(eventId, out existedEvent);
+            if (_events.TryGetValue(eventId, out var existedEvent))
+            {
+                responseEvent= MapToDTO(existedEvent);
+                return true;
+            }
+
+            responseEvent = null;
+            return false;
         }
 
         public void ChangeEvent(Event currentEvent)
@@ -42,9 +56,27 @@ namespace WebAPI.Application.Services
                 throw new ArgumentException("У события не может быть дата начала меньше даты завершения");
             }
 
-            existedEvent.Title = currentEvent.Title;
-            existedEvent.StartAt = currentEvent.StartAt;
-            existedEvent.EndAt = currentEvent.EndAt;
+            //existedEvent.Title = currentEvent.Title;
+            //existedEvent.StartAt = currentEvent.StartAt;
+            //existedEvent.EndAt = currentEvent.EndAt;
         }
+
+        /// <summary>
+        /// Метод для мапирования из события в DTO 
+        /// </summary>
+        /// <param name="currentEvent">Доменное событие</param>
+        /// <returns>DTO для отправки</returns>
+        private ResponseEventDTO MapToDTO(Event currentEvent)
+        {
+            return new ResponseEventDTO()
+            {
+                Id = currentEvent.Id,
+                Title = currentEvent.Title,
+                Description = currentEvent.Description,
+                StartAt = currentEvent.StartAt,
+                EndAt = currentEvent.EndAt
+            };
+        }
+
     }
 }

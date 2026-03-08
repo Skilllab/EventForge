@@ -20,11 +20,9 @@ namespace WebAPI.Controllers
         {
             logger.LogDebug($"Обработка запроса GET {nameof(GetAllEvents)}");
 
-            var response = eventService.GetEvents().Select(MapToDTO);
-
             return new ApiResult<IEnumerable<ResponseEventDTO>>
             {
-                Data = response,
+                Data = eventService.GetEvents(),
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
                 Message = "Получены все события из базы"
@@ -35,16 +33,16 @@ namespace WebAPI.Controllers
         /// Получить событие по id
         /// </summary>
         [HttpGet("{id}")]
-        public ApiResult<ResponseEventDTO> GetEvent(Guid id)
+        public ApiBaseResult GetEvent(Guid id)
         {
             logger.LogDebug($"Обработка запроса GET {nameof(GetEvent)}");
 
 
-            if (eventService.GetEvent(id, out var @event))
+            if (eventService.GetEvent(id, out var responseEvent))
             {
                 return new ApiResult<ResponseEventDTO>
                 {
-                    Data = MapToDTO(@event),
+                    Data = responseEvent,
                     Success = true,
                     StatusCode = HttpStatusCode.OK,
                     Message = "Событие найдено"
@@ -64,17 +62,17 @@ namespace WebAPI.Controllers
         /// Создать новое событие
         /// </summary>
         [HttpPost]
-        public ApiResult CreateEvent([FromBody] EventDto request)
+        public ApiBaseResult CreateEvent([FromBody] CreateEventDTO request)
         {
 
             logger.LogDebug($"Обработка запроса POST {nameof(CreateEvent)}");
 
             try
             {
-                eventService.CreateEvent(MapToEvent(request));
-
-                return new ApiResult
+                var response = eventService.CreateEvent(request);
+                return new ApiResult<ResponseEventDTO>
                 {
+                    Data = response,
                     Success = true,
                     StatusCode = HttpStatusCode.Created,
                     Message = "Событие создано"
@@ -101,7 +99,7 @@ namespace WebAPI.Controllers
 
             try
             {
-                eventService.ChangeEvent(MapToEvent(request));
+                //eventService.ChangeEvent(MapToEvent(request));
                 return new ApiResult
                 {
                     Success = true,
@@ -142,41 +140,6 @@ namespace WebAPI.Controllers
                 Success = true,
                 StatusCode = HttpStatusCode.NoContent,
                 Message = "Собтыие отменено"
-            };
-        }
-
-
-        /// <summary>
-        /// Метод для мапирования из события в DTO 
-        /// </summary>
-        /// <param name="currentEvent">Доменное событие</param>
-        /// <returns>DTO для отправки</returns>
-        private ResponseEventDTO MapToDTO(Event currentEvent)
-        {
-            return new ResponseEventDTO()
-            {
-                Id = currentEvent.Id,
-                Title = currentEvent.Title,
-                Description = currentEvent.Description,
-                StartAt = currentEvent.StartAt,
-                EndAt = currentEvent.EndAt
-            };
-        }
-
-        /// <summary>
-        ///  Метод для мапирования из DTO в событие
-        /// </summary>
-        /// <param name="currentEvent">DTO событие</param>
-        /// <returns>Доменное событие</returns>
-        private Event MapToEvent(EventDto currentEvent)
-        {
-            return new Event()
-            {
-                Id = currentEvent.Id,
-                Title = currentEvent.Title,
-                Description = currentEvent.Description,
-                StartAt = currentEvent.StartAt,
-                EndAt = currentEvent.EndAt
             };
         }
     }
