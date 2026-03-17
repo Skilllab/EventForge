@@ -55,29 +55,16 @@ namespace WebAPI.Controllers
         [HttpPost]
         public ApiBaseResult CreateEvent([FromBody] CreateEventDTO request)
         {
-
             logger.LogDebug($"Обработка запроса POST {nameof(CreateEvent)}");
 
-            try
+            var response = eventService.CreateEvent(request);
+            return new ApiResult<ResponseEventDTO>
             {
-                var response = eventService.CreateEvent(request);
-                return new ApiResult<ResponseEventDTO>
-                {
-                    Data = response,
-                    Success = true,
-                    StatusCode = HttpStatusCode.Created,
-                    Message = "Событие создано"
-                };
-            }
-            catch (Exception e)
-            {
-                return new ApiResult
-                {
-                    Success = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = e.Message
-                };
-            }
+                Data = response,
+                Success = true,
+                StatusCode = HttpStatusCode.Created,
+                Message = "Событие создано"
+            };
         }
 
         /// <summary>

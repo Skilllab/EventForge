@@ -1,4 +1,6 @@
-﻿namespace WebAPI.Models.Domain;
+﻿using WebAPI.Application.Exceptions;
+
+namespace WebAPI.Models.Domain;
 
 /// <summary>
 /// Событие сервиса управления
@@ -65,7 +67,7 @@ public class Event
     public static Event Create(string title, DateTime startDate, DateTime endDate, string? description = null)
     {
         if (endDate<startDate)
-            throw new ArgumentException("Дата окончания события не может быть раньше даты начала");
+            throw new ValidationCustomException(nameof(Event), Guid.Empty, "Дата окончания события не может быть раньше даты начала");
 
         return new Event(title, startDate, endDate, description);
     }
