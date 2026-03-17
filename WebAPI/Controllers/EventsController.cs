@@ -73,29 +73,17 @@ namespace WebAPI.Controllers
         [HttpPut("{id:guid}")]
         public ApiResult ChangeEvent(Guid id, [FromBody] UpdateEventDTO request)
         {
+
             logger.LogDebug($"Обработка запроса PUT {nameof(ChangeEvent)}");
 
-            try
+            eventService.ChangeEvent(id, request);
+            return new ApiResult
             {
-                eventService.ChangeEvent(id, request);
-                return new ApiResult
-                {
-                    Success = true,
-                    StatusCode = HttpStatusCode.NoContent,
-                    Message = "Событие обновлено"
-                };
-            }
-            catch (Exception e)
-            {
-                return new ApiResult
-                {
-                    Success = false,
-                    StatusCode = HttpStatusCode.BadRequest,
-                    Message = e.Message
-                };
-            }
+                Success = true,
+                StatusCode = HttpStatusCode.NoContent,
+                Message = "Событие обновлено"
+            };
         }
-
 
         /// <summary>
         /// Удалить событие

@@ -47,12 +47,12 @@ namespace WebAPI.Application.Services
         {
             if (!_events.TryGetValue(eventId, out var existedEvent))
             {
-                throw new ArgumentException("Событие с таким ID не найдено");
+                throw new NotFoundException(nameof(UpdateEventDTO), eventId, "Событие с таким ID не найдено");
             }
 
             if (currentEvent.EndAt < currentEvent.StartAt)
             {
-                throw new ArgumentException("У события не может быть дата начала меньше даты завершения");
+                throw new ValidationCustomException(nameof(UpdateEventDTO), eventId, "У события не может быть дата начала меньше даты завершения");
             }
 
             existedEvent.UpdateEvent(currentEvent.Title, currentEvent.StartAt, currentEvent.EndAt, currentEvent.Description);
