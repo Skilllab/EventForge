@@ -5,7 +5,7 @@ namespace WebAPI.Application.Interfaces;
 public interface IEventService
 {
     ResponseEventDTO CreateEvent(CreateEventDTO currentEvent);
-    bool CancelEvent(Guid eventId);
+    void CancelEvent(Guid eventId);
     List<ResponseEventDTO> GetEvents();
     ResponseEventDTO GetEvent(Guid eventId);
     void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent);

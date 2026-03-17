@@ -93,13 +93,7 @@ namespace WebAPI.Controllers
         {
             logger.LogDebug($"Обработка запроса DELETE {nameof(CancelEvent)}");
 
-            if (!eventService.CancelEvent(id))
-                return new ApiResult
-                {
-                    Success = true,
-                    StatusCode = HttpStatusCode.NotFound,
-                    Message = $"Событие с ID: {id} не найдено"
-                };
+            eventService.CancelEvent(id);
 
             return new ApiResult
             {

@@ -23,9 +23,12 @@ namespace WebAPI.Application.Services
             return MapToDTO(newEvent);
         }
 
-        public bool CancelEvent(Guid eventId)
+        public void CancelEvent(Guid eventId)
         {
-            return _events.Remove(eventId);
+            if (!_events.Remove(eventId))
+            {
+                throw new NotFoundException(nameof(Event), eventId);
+            }
         }
 
         public List<ResponseEventDTO> GetEvents()
