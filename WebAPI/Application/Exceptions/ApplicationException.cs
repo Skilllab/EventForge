@@ -1,6 +1,8 @@
 ﻿namespace WebAPI.Application.Exceptions
 {
-    //Базовый класс для кастом исключений
+    /// <summary>
+    /// Базовый класс для кастом исключений
+    /// </summary>
     public abstract class ApplicationException : Exception
     {
         protected ApplicationException(string message) : base(message) { }

@@ -1,4 +1,5 @@
-﻿using WebAPI.Application.Interfaces;
+﻿using WebAPI.Application.Exceptions;
+using WebAPI.Application.Interfaces;
 using WebAPI.Models.Domain;
 using WebAPI.Models.DTO;
 
@@ -32,16 +33,14 @@ namespace WebAPI.Application.Services
             return _events.Values.Select(MapToDTO).ToList();
         }
 
-        public bool GetEvent(Guid eventId, out ResponseEventDTO responseEvent)
+        public ResponseEventDTO GetEvent(Guid eventId)
         {
             if (_events.TryGetValue(eventId, out var existedEvent))
             {
-                responseEvent= MapToDTO(existedEvent);
-                return true;
+                return MapToDTO(existedEvent);
             }
 
-            responseEvent = null;
-            return false;
+            throw new NotFoundException(nameof(Event), eventId);
         }
 
         public void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent)

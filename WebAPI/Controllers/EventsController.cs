@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using WebAPI.Application.Interfaces;
+using WebAPI.Application.Services;
 using WebAPI.Models.Domain;
 using WebAPI.Models.DTO;
 
@@ -37,24 +38,14 @@ namespace WebAPI.Controllers
         {
             logger.LogDebug($"Обработка запроса GET {nameof(GetEvent)}");
 
-
-            if (eventService.GetEvent(id, out var responseEvent))
-            {
-                return new ApiResult<ResponseEventDTO>
-                {
-                    Data = responseEvent,
-                    Success = true,
-                    StatusCode = HttpStatusCode.OK,
-                    Message = "Событие найдено"
-                };
-            }
+            var responseEvent = eventService.GetEvent(id);
 
             return new ApiResult<ResponseEventDTO>
             {
-                Data = null,
-                Success = false,
-                StatusCode = HttpStatusCode.NotFound,
-                Message = "Событие не найдено"
+                Data = responseEvent,
+                Success = true,
+                StatusCode = HttpStatusCode.OK,
+                Message = "Событие найдено"
             };
         }
 

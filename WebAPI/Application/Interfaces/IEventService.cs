@@ -7,6 +7,6 @@ public interface IEventService
     ResponseEventDTO CreateEvent(CreateEventDTO currentEvent);
     bool CancelEvent(Guid eventId);
     List<ResponseEventDTO> GetEvents();
-    bool GetEvent(Guid eventId, out ResponseEventDTO @event);
+    ResponseEventDTO GetEvent(Guid eventId);
     void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent);
 }

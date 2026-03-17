@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using WebAPI.Application.Exceptions;
+using WebAPI.Models.Domain;
 
 namespace WebAPI.Middleware
 {
@@ -29,10 +31,11 @@ namespace WebAPI.Middleware
             }
         }
 
-        private async Task HandleException(HttpContext httpContext, Exception ex)
+        private async Task HandleException(HttpContext httpContext, Exception exception)
         {
+
             _logger.LogError(
-                ex,
+                exception,
                 "Unhandled exception. Method={Method}, Path={Path}, RequestId={RequestId}",
                 httpContext.Request.Method,
                 httpContext.Request.Path,
@@ -43,16 +46,34 @@ namespace WebAPI.Middleware
                 return;
             }
 
-            var statusCode = MapStatusCode(ex);
+            var statusCode = MapStatusCode(exception);
+            var error = exception switch
+            {
+                NotFoundException nfe => new ProblemDetails
+                {
+                    Type = nfe.EntityName,
+                    Instance = nfe.EntityId,
+                    Status = statusCode,
+                    Detail = nfe.Message
+                },
+                ValidationCustomException ver => new ProblemDetails
+                {
+                    Type = ver.EntityName,
+                    Instance = ver.EntityId,
+                    Status = statusCode,
+                    Detail = ver.Message
+                },
+                _ => new ProblemDetails()
+                {
+                    Status = statusCode,
+                    Detail = exception.Message
+                }
+            };
 
             httpContext.Response.StatusCode = statusCode;
             httpContext.Response.ContentType = "application/json";
 
-            var error = new ProblemDetails
-            {
-                Status = statusCode,
-                Detail = ex.Message
-            };
+         
 
             await httpContext.Response.WriteAsJsonAsync(error);
         }
@@ -60,7 +81,7 @@ namespace WebAPI.Middleware
         private static int MapStatusCode(Exception ex)
             => ex switch
             {
-                ValidationException => StatusCodes.Status400BadRequest,
+                ValidationCustomException or ValidationException => StatusCodes.Status400BadRequest,
                 NotFoundException => StatusCodes.Status404NotFound,
                 UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
                 _ => StatusCodes.Status500InternalServerError
