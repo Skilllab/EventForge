@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net;
 using WebAPI.Application.Interfaces;
-using WebAPI.Application.Services;
 using WebAPI.Models.Domain;
 using WebAPI.Models.DTO;
 
@@ -17,13 +16,13 @@ namespace WebAPI.Controllers
         /// Получить список всех событий
         /// </summary>
         [HttpGet]
-        public ApiResult<IEnumerable<ResponseEventDTO>> GetAllEvents()
+        public ApiResult<PaginatedResult> GetAllEvents([FromQuery] EventsFilter filter)
         {
             logger.LogDebug($"Обработка запроса GET {nameof(GetAllEvents)}");
 
-            return new ApiResult<IEnumerable<ResponseEventDTO>>
+            return new ApiResult<PaginatedResult>
             {
-                Data = eventService.GetEvents(),
+                Data = eventService.GetEvents(filter),
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
                 Message = "Получены все события из базы"

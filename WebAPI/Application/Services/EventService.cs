@@ -31,9 +31,32 @@ namespace WebAPI.Application.Services
             }
         }
 
-        public List<ResponseEventDTO> GetEvents()
+        public PaginatedResult GetEvents(EventsFilter filter)
         {
-            return _events.Values.Select(MapToDTO).ToList();
+            var query = _events.Values.AsQueryable();
+
+
+            if (!string.IsNullOrEmpty(filter.title))
+                query = query.Where(p => p.Title.Contains(filter.title, StringComparison.CurrentCultureIgnoreCase));
+
+            if (filter.from.HasValue)
+                query = query.Where(p => p.StartAt <= filter.from);
+
+            if (filter.to.HasValue)
+                query = query.Where(p => p.EndAt >= filter.to);
+
+            var filteredCount = query.Count();
+
+            var items = query
+                .OrderBy(c => c.Title)
+                .Skip((filter.page - 1) * filter.pageSize)
+                .Take(filter.pageSize)
+                .Select(MapToDTO)
+                .ToList();
+
+            //var totalPages = (int)Math.Ceiling((double)filteredCount / filter.pageSize);
+
+            return new PaginatedResult(filteredCount, items, filter.page, filter.pageSize);
         }
 
         public ResponseEventDTO GetEvent(Guid eventId)
@@ -78,6 +101,5 @@ namespace WebAPI.Application.Services
                 EndAt = currentEvent.EndAt
             };
         }
-
     }
 }
