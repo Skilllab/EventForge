@@ -2,5 +2,6 @@
   <Folder Name="/Элементы решения/">
     <File Path="README.md" />
   </Folder>
-  <Project Path="WebAPI/WebAPI.csproj" />
+  <Project Path="EventService.Tests/EventService.Tests.csproj" Id="efc8433a-0fae-4414-b24f-0c9b7b9d1086" />
+  <Project Path="WebAPI/EventService.WebAPI.csproj" />
 </Solution>
