@@ -2,6 +2,9 @@
 
 namespace EventBookingService.WebAPI.Application.Interfaces;
 
+/// <summary>
+/// Основной интерфейс сервиса
+/// </summary>
 public interface IEventService
 {
     ResponseEventDTO CreateEvent(CreateEventDTO currentEvent);
