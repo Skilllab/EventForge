@@ -1,6 +1,6 @@
-using WebAPI.Application;
-using WebAPI.Middleware;
-using WebAPI.Presentation;
+using EventBookingService.WebAPI.Application;
+using EventBookingService.WebAPI.Middleware;
+using EventBookingService.WebAPI.Presentation;
 
 var builder = WebApplication.CreateBuilder(args);
 

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace WebAPI.Models.DTO;
+namespace EventBookingService.WebAPI.Models.DTO;
 
 /// <summary>
 /// DTO класс для создания события

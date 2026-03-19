@@ -1,10 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
-using System.Net;
-using WebAPI.Application.Exceptions;
-using WebAPI.Models.Domain;
+﻿using System.ComponentModel.DataAnnotations;
+using EventBookingService.WebAPI.Application.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 
-namespace WebAPI.Middleware
+namespace EventBookingService.WebAPI.Middleware
 {
     public class GlobalExceptionHandlingMiddleware
     {

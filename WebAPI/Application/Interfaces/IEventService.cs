@@ -1,6 +1,6 @@
-﻿using WebAPI.Models.DTO;
+﻿using EventBookingService.WebAPI.Models.DTO;
 
-namespace WebAPI.Application.Interfaces;
+namespace EventBookingService.WebAPI.Application.Interfaces;
 
 public interface IEventService
 {

@@ -1,4 +1,4 @@
-﻿namespace WebAPI.Application.Exceptions
+﻿namespace EventBookingService.WebAPI.Application.Exceptions
 {
     /// <summary>
     /// Исключение, которое выбрасывается в случае если сущность не была найдена 

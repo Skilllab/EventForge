@@ -1,8 +1,7 @@
-﻿
-using WebAPI.Application.Interfaces;
-using WebAPI.Application.Services;
+﻿using EventBookingService.WebAPI.Application.Interfaces;
+using EventBookingService.WebAPI.Application.Services;
 
-namespace WebAPI.Application
+namespace EventBookingService.WebAPI.Application
 {
     public static class DependencyInjection
     {

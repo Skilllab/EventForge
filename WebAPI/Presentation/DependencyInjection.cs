@@ -1,6 +1,6 @@
 ﻿using System.Reflection;
 
-namespace WebAPI.Presentation;
+namespace EventBookingService.WebAPI.Presentation;
 
 public static class DependencyInjection
 {

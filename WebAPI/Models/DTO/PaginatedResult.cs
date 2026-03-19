@@ -1,4 +1,4 @@
-﻿namespace WebAPI.Models.DTO
+﻿namespace EventBookingService.WebAPI.Models.DTO
 {
     /// <summary>
     /// Перечень событий с фильтрацией и пагинацией

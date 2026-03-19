@@ -1,9 +1,9 @@
-﻿using WebAPI.Application.Exceptions;
-using WebAPI.Application.Interfaces;
-using WebAPI.Models.Domain;
-using WebAPI.Models.DTO;
+﻿using EventBookingService.WebAPI.Application.Exceptions;
+using EventBookingService.WebAPI.Application.Interfaces;
+using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.WebAPI.Models.DTO;
 
-namespace WebAPI.Application.Services
+namespace EventBookingService.WebAPI.Application.Services
 {
     public class EventService : IEventService
     {

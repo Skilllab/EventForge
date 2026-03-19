@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace WebAPI.Models.Domain;
+namespace EventBookingService.WebAPI.Models.Domain;
 
 // Класс ApiResult c возвращаемыми данными
 // Наследуемся от базового класса с основными параметрами

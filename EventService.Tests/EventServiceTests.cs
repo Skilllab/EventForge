@@ -1,4 +1,4 @@
-﻿namespace EventService.Tests
+﻿namespace EventBookingService.Tests
 {
     public class EventServiceTests
     {

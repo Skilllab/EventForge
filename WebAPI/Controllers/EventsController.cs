@@ -1,11 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.Net;
-using WebAPI.Application.Interfaces;
-using WebAPI.Models.Domain;
-using WebAPI.Models.DTO;
+﻿using System.Net;
+using EventBookingService.WebAPI.Application.Interfaces;
+using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.WebAPI.Models.DTO;
+using Microsoft.AspNetCore.Mvc;
 
-
-namespace WebAPI.Controllers
+namespace EventBookingService.WebAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
