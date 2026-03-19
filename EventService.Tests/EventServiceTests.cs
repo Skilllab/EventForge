@@ -1,4 +1,7 @@
-﻿using EventBookingService.WebAPI.Application.Exceptions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using EventBookingService.WebAPI.Application.Exceptions;
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Application.Services;
 using EventBookingService.WebAPI.Models.Domain;
@@ -6,6 +9,7 @@ using EventBookingService.WebAPI.Models.DTO;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
+using Xunit;
 
 namespace EventBookingService.Tests
 {
