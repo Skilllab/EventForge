@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using EventBookingService.WebAPI.Application.Exceptions;
+﻿using EventBookingService.WebAPI.Application.Exceptions;
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Application.Services;
 using EventBookingService.WebAPI.Models.Domain;
@@ -9,7 +6,6 @@ using EventBookingService.WebAPI.Models.DTO;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Xunit;
 
 namespace EventBookingService.Tests
 {
@@ -120,7 +116,7 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var filter = new EventsFilter(){title = "встреча"};
+            var filter = new EventsFilter() { title = "встреча" };
             var fakeEvents = new List<Event>
             {
                 Event.Create("Деловая всТреча", DateTime.Now, DateTime.Now.AddHours(1)),
@@ -147,7 +143,7 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var filter = new EventsFilter() { from  = DateTime.Now.AddHours(2) };
+            var filter = new EventsFilter() { from = DateTime.Now.AddHours(2) };
             var fakeEvents = new List<Event>
             {
                 Event.Create("Встреча 1", DateTime.Now.AddHours(1), DateTime.Now.AddHours(5)),

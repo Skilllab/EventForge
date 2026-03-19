@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\WebAPI\EventBookingService.WebAPI.csproj" />
+    <ProjectReference Include="..\EventBookingService.WebAPI\EventBookingService.WebAPI.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -2,6 +2,6 @@
   <Folder Name="/Элементы решения/">
     <File Path="README.md" />
   </Folder>
-  <Project Path="EventService.Tests/EventBookingService.Tests.csproj" Id="efc8433a-0fae-4414-b24f-0c9b7b9d1086" />
-  <Project Path="WebAPI/EventBookingService.WebAPI.csproj" />
+  <Project Path="EventBookingService.Tests/EventBookingService.Tests.csproj" Id="c64449d8-de18-4a1d-a442-eebe1c3f93d2" />
+  <Project Path="EventBookingService.WebAPI/EventBookingService.WebAPI.csproj" />
 </Solution>

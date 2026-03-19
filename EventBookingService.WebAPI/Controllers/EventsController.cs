@@ -24,7 +24,7 @@ namespace EventBookingService.WebAPI.Controllers
                 Data = eventService.GetEvents(filter),
                 Success = true,
                 StatusCode = HttpStatusCode.OK,
-                Message = "Получены все события из базы"
+                Message = "Получены все события из базы согласно фильтрации"
             };
         }
 
