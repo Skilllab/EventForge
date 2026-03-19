@@ -5,11 +5,11 @@ using EventBookingService.WebAPI.Models.DTO;
 
 namespace EventBookingService.WebAPI.Application.Services;
 
-public class EventService(IEventRepository _repository) : IEventService
+public class EventService(IEventRepository _repository, ILogger<EventService>_logger) : IEventService
 {
     public ResponseEventDTO CreateEvent(CreateEventDTO newEventDTO)
     {
-
+        _logger.LogInformation("Создание нового события: {Title}", newEventDTO.Title);
         var newEvent = Event.Create(
             newEventDTO.Title,
             newEventDTO.StartAt,
@@ -18,19 +18,24 @@ public class EventService(IEventRepository _repository) : IEventService
         );
 
         _repository.Add(newEvent);
+        _logger.LogInformation("Событие успешно создано. ID: {Id}", newEvent.Id);
         return MapToDTO(newEvent);
     }
 
     public void CancelEvent(Guid eventId)
     {
+        _logger.LogError("Попытка удаления события с ID: {Id}", eventId);
         if (!_repository.Delete(eventId))
         {
             throw new NotFoundException(nameof(Event), eventId);
         }
+        _logger.LogInformation("Событие успешно удалено. ID: {Id} ", eventId);
     }
 
     public PaginatedResult GetEvents(EventsFilter filter)
     {
+        _logger.LogInformation("Запрос списка событий. Страница: {Page}, Фильтр: {Filter}", filter.page, filter.title);
+
         var query = _repository.GetAll();
 
         if (!string.IsNullOrEmpty(filter.title))
@@ -58,22 +63,33 @@ public class EventService(IEventRepository _repository) : IEventService
     {
         var existedEvent = _repository.GetById(eventId);
         if (existedEvent == null)
+        {
+            _logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
             throw new NotFoundException(nameof(Event), eventId);
+        }
 
         return MapToDTO(existedEvent);
     }
 
     public void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent)
     {
+        _logger.LogInformation("Обновление события {Id}", eventId);
         var existedEvent = _repository.GetById(eventId);
         if (existedEvent == null)
+        {
+            _logger.LogError("Ошибка обновления: событие не существует. ID: {Id}", eventId);
             throw new NotFoundException(nameof(Event), eventId, "Событие с таким ID не найдено");
+        }
 
         if (currentEvent.EndAt < currentEvent.StartAt)
+        {
+            _logger.LogError("Ошибка валидации дат для события {Id}", eventId);
             throw new ValidationCustomException(nameof(UpdateEventDTO), eventId, "У события не может быть дата начала меньше даты завершения");
+        }
 
         existedEvent.UpdateEvent(currentEvent.Title, currentEvent.StartAt, currentEvent.EndAt, currentEvent.Description);
         _repository.Update(existedEvent);
+        _logger.LogInformation("Событие успешно обновлено. ID: {Id}", eventId);
     }
 
     /// <summary>
