@@ -24,7 +24,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
 
     public void CancelEvent(Guid eventId)
     {
-        _logger.LogError("Попытка удаления события с ID: {Id}", eventId);
+        _logger.LogDebug("Попытка удаления события с ID: {Id}", eventId);
         if (!_repository.Delete(eventId))
         {
             throw new NotFoundException(nameof(Event), eventId);
@@ -83,7 +83,21 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             throw new NotFoundException(nameof(Event), eventId, "Событие с таким ID не найдено");
         }
 
-        existedEvent.UpdateEvent(currentEvent.Title, currentEvent.StartAt, currentEvent.EndAt, currentEvent.Description);
+        // Проверка для Nullable типов внутри сервиса
+        if (currentEvent.StartAt.HasValue && currentEvent.EndAt.HasValue &&
+            currentEvent.EndAt.Value < currentEvent.StartAt.Value)
+        {
+            _logger.LogWarning("Ошибка валидации дат для события {Id}", eventId);
+            throw new ValidationCustomException(nameof(UpdateEventDTO), eventId, "У события не может быть дата начала меньше даты завершения");
+        }
+
+
+        existedEvent.UpdateEvent(
+            currentEvent.Title ?? existedEvent.Title,
+            currentEvent.StartAt ?? existedEvent.StartAt,
+            currentEvent.EndAt ?? existedEvent.EndAt,
+            currentEvent.Description ?? existedEvent.Description);
+
         _repository.Update(existedEvent);
         _logger.LogInformation("Событие успешно обновлено. ID: {Id}", eventId);
     }

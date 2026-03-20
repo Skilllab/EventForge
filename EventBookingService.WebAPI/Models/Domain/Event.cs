@@ -38,15 +38,12 @@ public class Event
     /// <param name="startDate">Дата начала события</param>
     /// <param name="endDate">Дата окончания события</param>
     /// <param name="description">Описание события</param>
-    public void UpdateEvent(string? title, DateTime? startDate, DateTime? endDate, string? description = null)
+    public void UpdateEvent(string title, DateTime startDate, DateTime endDate, string? description)
     {
-        if (!string.IsNullOrEmpty(title)) Title = title;
-
-        if (startDate.HasValue) StartAt = startDate.Value;
-
-        if (endDate.HasValue) EndAt = endDate.Value;
-
-        if (!string.IsNullOrEmpty(description)) Description = description;
+        Title = title;
+        StartAt = startDate;
+        EndAt = endDate;
+        Description = description;
     }
 
     private Event(string title, DateTime startDate, DateTime endDate, string? description = null) 
