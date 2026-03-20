@@ -276,7 +276,6 @@ namespace EventBookingService.Tests
 
         #endregion
 
-
         #region GetEvent tests
         [Fact]
         [Trait("Category", "GetEvent")]
@@ -430,6 +429,44 @@ namespace EventBookingService.Tests
 
             // Проверяем, что сервис вызвал Update у репозитория ровно один раз с этим объектом
             repositoryMock.Verify(r => r.Update(existedEvent), Times.Once);
+        }
+
+        #endregion
+
+        #region CancelEvent tests
+
+        [Fact]
+        public void CancelEvent_ShouldDeleteEvent_WhenEventExists()
+        {
+            // Arrange
+            var eventId = Guid.NewGuid();
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            repositoryMock.Setup(r => r.Delete(eventId)).Returns(true);
+
+            // Act
+            service.CancelEvent(eventId);
+
+            // Assert
+            repositoryMock.Verify(r => r.Delete(eventId), Times.Once);
+        }
+
+        [Fact]
+        public void CancelEvent_ShouldThrowNotFoundException_WhenEventDoesNotExist()
+        {
+            // Arrange
+            var eventId = Guid.NewGuid();
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            repositoryMock.Setup(r => r.Delete(eventId)).Returns(false);
+
+            // Act
+            Action act = () => service.CancelEvent(eventId);
+
+            // Assert
+            act.Should().Throw<NotFoundException>();
         }
 
         #endregion
