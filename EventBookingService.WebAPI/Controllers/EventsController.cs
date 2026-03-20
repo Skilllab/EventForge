@@ -1,6 +1,4 @@
-﻿using System.Net;
-using EventBookingService.WebAPI.Application.Interfaces;
-using EventBookingService.WebAPI.Models.Domain;
+﻿using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,90 +13,61 @@ namespace EventBookingService.WebAPI.Controllers
         /// Получить список всех событий
         /// </summary>
         [HttpGet]
-        public ApiResult<PaginatedResult> GetAllEvents([FromQuery] EventsFilter filter)
+        public IActionResult GetAllEvents([FromQuery] EventsFilter filter)
         {
-            logger.LogDebug($"Обработка запроса GET {nameof(GetAllEvents)}");
+            logger.LogDebug("Обработка запроса GET {methodName}", nameof(GetAllEvents));
 
-            return new ApiResult<PaginatedResult>
-            {
-                Data = eventService.GetEvents(filter),
-                Success = true,
-                StatusCode = HttpStatusCode.OK,
-                Message = "Получены все события из базы согласно фильтрации"
-            };
+            var result = eventService.GetEvents(filter);
+            return Ok(result);
         }
 
         /// <summary>
         /// Получить событие по id
         /// </summary>
         [HttpGet("{id:guid}")]
-        public ApiBaseResult GetEvent(Guid id)
+        public IActionResult GetEvent(Guid id)
         {
-            logger.LogDebug($"Обработка запроса GET {nameof(GetEvent)}");
+            logger.LogDebug("Обработка запроса GET {methodName} по id: {id} ", nameof(GetEvent), id);
 
             var responseEvent = eventService.GetEvent(id);
-
-            return new ApiResult<ResponseEventDTO>
-            {
-                Data = responseEvent,
-                Success = true,
-                StatusCode = HttpStatusCode.OK,
-                Message = "Событие найдено"
-            };
+            return Ok(responseEvent);
         }
 
         /// <summary>
         /// Создать новое событие
         /// </summary>
         [HttpPost]
-        public ApiBaseResult CreateEvent([FromBody] CreateEventDTO request)
+        public IActionResult CreateEvent([FromBody] CreateEventDTO request)
         {
-            logger.LogDebug($"Обработка запроса POST {nameof(CreateEvent)}");
+            logger.LogDebug("Обработка запроса POST {methodName}", nameof(CreateEvent));
 
             var response = eventService.CreateEvent(request);
-            return new ApiResult<ResponseEventDTO>
-            {
-                Data = response,
-                Success = true,
-                StatusCode = HttpStatusCode.Created,
-                Message = "Событие создано"
-            };
+            return CreatedAtAction(nameof(CreateEvent), new { id = response.Id }, response);
         }
 
         /// <summary>
         /// Обновить событие целиком
         /// </summary>
         [HttpPut("{id:guid}")]
-        public ApiResult ChangeEvent(Guid id, [FromBody] UpdateEventDTO request)
+        public IActionResult ChangeEvent(Guid id, [FromBody] UpdateEventDTO request)
         {
 
-            logger.LogDebug($"Обработка запроса PUT {nameof(ChangeEvent)}");
+            logger.LogDebug("Обработка запроса PUT {methodName} c id: {id}", nameof(ChangeEvent), id);
 
             eventService.ChangeEvent(id, request);
-            return new ApiResult
-            {
-                Success = true,
-                StatusCode = HttpStatusCode.NoContent,
-                Message = "Событие обновлено"
-            };
+            return NoContent();
         }
 
         /// <summary>
         /// Удалить событие
         /// </summary>
         [HttpDelete("{id:guid}")]
-        public ApiBaseResult CancelEvent(Guid id)
+        public IActionResult CancelEvent(Guid id)
         {
-            logger.LogDebug($"Обработка запроса DELETE {nameof(CancelEvent)}");
+            logger.LogDebug("Обработка запроса DELETE {methodName} с id: {id}", nameof(CancelEvent), id);
 
             eventService.CancelEvent(id);
-
-            return new ApiResult
-            {
-                Success = true,
-                StatusCode = HttpStatusCode.NoContent,
-                Message = "Событие отменено"
-            };
+            return NoContent();
         }
     }
 }
