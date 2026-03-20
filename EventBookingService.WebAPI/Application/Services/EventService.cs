@@ -41,11 +41,13 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         if (!string.IsNullOrEmpty(filter.title))
             query = query.Where(p => p.Title.Contains(filter.title, StringComparison.CurrentCultureIgnoreCase));
 
+        // события, которые начинаются не раньше указанной даты
         if (filter.from.HasValue)
-            query = query.Where(p => p.StartAt <= filter.from);
+            query = query.Where(p => p.StartAt >= filter.from);
 
+        //события, которые заканчиваются не позже указанной даты
         if (filter.to.HasValue)
-            query = query.Where(p => p.EndAt >= filter.to);
+            query = query.Where(p => p.EndAt <= filter.to);
 
         var filteredCount = query.Count();
 
@@ -79,12 +81,6 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         {
             _logger.LogError("Ошибка обновления: событие не существует. ID: {Id}", eventId);
             throw new NotFoundException(nameof(Event), eventId, "Событие с таким ID не найдено");
-        }
-
-        if (currentEvent.EndAt < currentEvent.StartAt)
-        {
-            _logger.LogError("Ошибка валидации дат для события {Id}", eventId);
-            throw new ValidationCustomException(nameof(UpdateEventDTO), eventId, "У события не может быть дата начала меньше даты завершения");
         }
 
         existedEvent.UpdateEvent(currentEvent.Title, currentEvent.StartAt, currentEvent.EndAt, currentEvent.Description);
