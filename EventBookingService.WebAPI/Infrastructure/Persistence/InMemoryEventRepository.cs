@@ -2,7 +2,7 @@
 using EventBookingService.WebAPI.Models.Domain;
 using System.Collections.Concurrent;
 
-namespace EventBookingService.WebAPI.Infrastructure;
+namespace EventBookingService.WebAPI.Infrastructure.Persistence;
 
 /// <summary>
 /// Репозиторий для in-memory коллекции
