@@ -81,11 +81,12 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var filter = new EventsFilter();
+            var now = DateTime.Now;
             var fakeEvents = new List<Event>
             {
-                Event.Create("тестовое событие 1", DateTime.Now, DateTime.Now.AddHours(1)),
-                Event.Create("тестовое событие 34", DateTime.Now, DateTime.Now.AddHours(2)),
-                Event.Create("тестовое событие 2", DateTime.Now, DateTime.Now.AddHours(3)),
+                Event.Create("тестовое событие 1", now, now.AddHours(1)),
+                Event.Create("тестовое событие 34", now, now.AddHours(2)),
+                Event.Create("тестовое событие 2", now, now.AddHours(3)),
             }.AsQueryable();
 
             repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
@@ -116,12 +117,14 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var filter = new EventsFilter() { title = "встреча" };
+            var filteredWord = "встреча";
+            var filter = new EventsFilter() { title = filteredWord };
+            var now = DateTime.Now;
             var fakeEvents = new List<Event>
             {
-                Event.Create("Деловая всТреча", DateTime.Now, DateTime.Now.AddHours(1)),
-                Event.Create("Ужин при свечах", DateTime.Now, DateTime.Now.AddHours(2)),
-                Event.Create("встречА на высшем уровне", DateTime.Now, DateTime.Now.AddHours(3)),
+                Event.Create("Деловая всТреча", now, now.AddHours(1)),
+                Event.Create("Ужин при свечах", now, now.AddHours(2)),
+                Event.Create("встречА на высшем уровне", now, now.AddHours(3)),
             }.AsQueryable();
 
             repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
@@ -132,6 +135,7 @@ namespace EventBookingService.Tests
             // Assert
             result.Should().NotBeNull();
             result.Events.Should().HaveCount(2); // Проверяем количество в текущей выборке
+            result.Events.Should().OnlyContain(t => t.Title.Contains(filteredWord, StringComparison.CurrentCultureIgnoreCase));
             repositoryMock.Verify(r => r.GetAll(), Times.Once);
         }
 
@@ -143,12 +147,13 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var filter = new EventsFilter() { from = DateTime.Now.AddHours(2) };
+            var now = DateTime.Now;
+            var filter = new EventsFilter() { from = now.AddHours(2) };
             var fakeEvents = new List<Event>
             {
-                Event.Create("Встреча 1", DateTime.Now.AddHours(1), DateTime.Now.AddHours(5)),
-                Event.Create("Ужин при свечах", DateTime.Now.AddHours(3), DateTime.Now.AddHours(5)),
-                Event.Create("Встреча 2", DateTime.Now.AddHours(1), DateTime.Now.AddHours(5)),
+                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(5)),
+                Event.Create("Встреча 2", now.AddHours(2), now.AddHours(5)),
+                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(5))
             }.AsQueryable();
 
             repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
@@ -170,12 +175,14 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var filter = new EventsFilter() { to = DateTime.Now.AddHours(2) };
+            var now = DateTime.Now;
+            var filter = new EventsFilter() { to = now.AddHours(2) };
+
             var fakeEvents = new List<Event>
             {
-                Event.Create("Встреча 1", DateTime.Now.AddHours(1), DateTime.Now.AddHours(1)),
-                Event.Create("Ужин при свечах", DateTime.Now.AddHours(3), DateTime.Now.AddHours(12)),
-                Event.Create("Встреча 2", DateTime.Now.AddHours(1), DateTime.Now.AddHours(1)),
+                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(1)),
+                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(12)),
+                Event.Create("Встреча 2", now.AddHours(1), now.AddHours(1)),
             }.AsQueryable();
 
             repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
@@ -185,7 +192,7 @@ namespace EventBookingService.Tests
 
             // Assert
             result.Should().NotBeNull();
-            result.Events.Should().HaveCount(1); // Проверяем количество в текущей выборке
+            result.Events.Should().HaveCount(2); // Проверяем количество в текущей выборке
             repositoryMock.Verify(r => r.GetAll(), Times.Once);
         }
 
@@ -198,16 +205,16 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var filter = new EventsFilter { page = 2, pageSize = 3 };
-
+            var now = DateTime.Now;
             // Создаем список тестовых данных, которые "якобы" есть в репозитории
             var fakeEvents = new List<Event>
             {
-                Event.Create("Событие 1", DateTime.Now, DateTime.Now.AddHours(1)),
-                Event.Create("Событие 2", DateTime.Now, DateTime.Now.AddHours(1)),
-                Event.Create("Событие 3", DateTime.Now, DateTime.Now.AddHours(1)),
-                Event.Create("Событие 4", DateTime.Now, DateTime.Now.AddHours(1)),
-                Event.Create("Событие 5", DateTime.Now, DateTime.Now.AddHours(1)),
-                Event.Create("Событие 6", DateTime.Now, DateTime.Now.AddHours(1))
+                Event.Create("Событие 1", now, now.AddHours(1)),
+                Event.Create("Событие 2", now, now.AddHours(1)),
+                Event.Create("Событие 3", now, now.AddHours(1)),
+                Event.Create("Событие 4", now, now.AddHours(1)),
+                Event.Create("Событие 5", now, now.AddHours(1)),
+                Event.Create("Событие 6", now, now.AddHours(1))
             }.AsQueryable();
 
             // Настраиваем Mock репозитория возвращать этот список
@@ -235,16 +242,16 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var targetDate = DateTime.Now.AddHours(3);
-
+            var now = DateTime.Now;
             // Создаем список тестовых данных, которые "якобы" есть в репозитории
             var fakeEvents = new List<Event>
             {
-                Event.Create("Событие 1", targetDate, DateTime.Now.AddHours(5)),
-                Event.Create("Неважная встреча", DateTime.Now.AddHours(1), DateTime.Now.AddHours(5)),
-                Event.Create("Событие 3", DateTime.Now, DateTime.Now.AddHours(5)),
-                Event.Create("Поразить цель с 10 шагов", targetDate, DateTime.Now.AddHours(5)),
-                Event.Create("Поужинать ", DateTime.Now.AddHours(2), DateTime.Now.AddHours(5)),
-                Event.Create("Событие 6", DateTime.Now.AddHours(1), DateTime.Now.AddHours(5))
+                Event.Create("Событие 1", targetDate, now.AddHours(5)),
+                Event.Create("Неважная встреча", now.AddHours(1), now.AddHours(5)),
+                Event.Create("Событие 3", now, now.AddHours(5)),
+                Event.Create("Поразить цель с 10 шагов", targetDate, now.AddHours(5)),
+                Event.Create("Поужинать ", now.AddHours(2), now.AddHours(5)),
+                Event.Create("Событие 6", now.AddHours(1), now.AddHours(5))
             }.AsQueryable();
 
             // Настраиваем Mock репозитория возвращать этот список
@@ -272,6 +279,55 @@ namespace EventBookingService.Tests
 
             repositoryMock.Verify(r => r.GetAll(), Times.Once);
 
+        }
+
+        [Fact]
+        [Trait("Category", "GetEvents")]
+        public void GetEvents_ShouldApplyPagination_CorrectSkipAndTake()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var now = DateTime.Now;
+
+            //События добавлены в отсортированном порядке
+            var fakeEvents = new List<Event>
+            {
+                Event.Create("Неважная встреча",
+                    now.AddHours(1), now.AddHours(5)),
+
+                Event.Create("Поразить цель с 10 шагов",
+                    now.AddHours(3), now.AddHours(5)),
+
+                Event.Create("Поужинать ",
+                    now.AddHours(2), now.AddHours(5)),
+
+                Event.Create("Событие 1",
+                    now.AddHours(3), now.AddHours(5)),
+
+                Event.Create("Событие 3",
+                    now, now.AddHours(5)),
+
+                Event.Create("Событие 6",
+                    now.AddHours(1), now.AddHours(5))
+
+            }.AsQueryable();
+
+            repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
+
+            // 2-я страница по 2 элемента
+            var filter = new EventsFilter { page = 2, pageSize = 2 };
+
+            // Act
+            var result = service.GetEvents(filter);
+
+            // Assert
+            result.EventsTotalCount.Should().Be(6); // Общее количество не меняется
+            result.Events.Should().HaveCount(2);   // На странице только 2
+
+            result.Events.Should().Contain(e => e.Title.Equals("Поужинать ", StringComparison.CurrentCultureIgnoreCase));
+            result.Events.Should().Contain(e => e.Title.Equals("Событие 1", StringComparison.CurrentCultureIgnoreCase));
         }
 
         #endregion
@@ -362,31 +418,27 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-
-            // 1. Создаем существующее событие (сначала валидное)
-            var existedEvent = Event.Create("Тестовое событие 1", DateTime.Now, DateTime.Now.AddHours(1));
+            var now = DateTime.Now;
+            var existedEvent = Event.Create("Старое событие", now, now.AddHours(1));
             var eventId = existedEvent.Id;
 
-            // 2. Подготавливаем НЕВАЛИДНЫЕ данные для обновления (конец раньше начала)
+            // Подготавливаем НЕВАЛИДНЫЕ данные: Начало (5ч) > Конец (2ч)
             var invalidUpdateDto = new UpdateEventDTO
             {
-                Title = "Тестовое событие 2",
-                StartAt = DateTime.Now.AddHours(5),
-                EndAt = DateTime.Now.AddHours(2), // ОШИБКА: Конец < Начало
+                Title = "Обновление",
+                StartAt = now.AddHours(5),
+                EndAt = now.AddHours(2)
             };
 
-            // 3. Настраиваем Mock: репозиторий находит старое событие
             repositoryMock.Setup(r => r.GetById(eventId)).Returns(existedEvent);
 
             // Act
-            // Оборачиваем вызов в Action для перехвата исключения
             Action act = () => service.ChangeEvent(eventId, invalidUpdateDto);
 
             // Assert
-            // Проверяем, что выброшено нужное исключение с правильным сообщением
+            // Проверяем выброс исключения (логика внутри ChangeEvent должна проверять .Value у Nullable дат)
             act.Should().Throw<ValidationCustomException>();
 
-            // Проверяем, что репозиторий НЕ вызывал метод Update, так как валидация провалилась
             repositoryMock.Verify(r => r.Update(It.IsAny<Event>()), Times.Never);
         }
 
@@ -399,28 +451,25 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            // 1. Создаем существующее событие в "базе"
-            var existedEvent = Event.Create("Старое название", DateTime.UtcNow, DateTime.UtcNow.AddHours(1), "Старое описание");
+            var now = DateTime.Now;
+
+            var existedEvent = Event.Create("Старое название", now, now.AddHours(1), "Старое описание");
             var eventId = existedEvent.Id;
 
-            // 2. Данные для обновления
             var updateDto = new UpdateEventDTO
             {
                 Title = "Новое название",
-                StartAt = DateTime.UtcNow.AddDays(1),
-                EndAt = DateTime.UtcNow.AddDays(1).AddHours(2),
+                StartAt = now.AddDays(1),
+                EndAt = now.AddDays(1).AddHours(2),
                 Description = "Новое описание"
             };
 
-            // 3. Настраиваем Mock репозитория
             repositoryMock.Setup(r => r.GetById(eventId)).Returns(existedEvent);
 
             // Act
             service.ChangeEvent(eventId, updateDto);
 
             // Assert
-            // Проверяем, что поля объекта действительно изменились на данные из DTO
-
             existedEvent.Should().BeEquivalentTo(updateDto, options => options
                 .Including(x => x.Title)
                 .Including(x => x.StartAt)
