@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EventBookingService.WebAPI.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [Produces("application/json")]
     public class EventsController(IEventService eventService, ILogger<EventsController> logger) : ControllerBase
     {
