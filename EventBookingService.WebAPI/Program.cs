@@ -1,5 +1,6 @@
-using WebAPI.Application;
-using WebAPI.Presentation;
+using EventBookingService.WebAPI.Application;
+using EventBookingService.WebAPI.Middleware;
+using EventBookingService.WebAPI.Presentation;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,9 @@ builder.Services.AddPresentation();
 
 
 var app = builder.Build();
+
+
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 
 if (app.Environment.IsDevelopment())
@@ -29,7 +33,8 @@ else
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
-
+// Глобальный обработчик ошибок
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.MapControllers();
 
 app.Run();
