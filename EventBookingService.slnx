@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/Элементы решения/">
+    <File Path=".editorconfig" />
     <File Path="README.md" />
   </Folder>
   <Project Path="EventBookingService.Tests/EventBookingService.Tests.csproj" Id="c64449d8-de18-4a1d-a442-eebe1c3f93d2" />
