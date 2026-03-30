@@ -7,6 +7,7 @@ namespace EventBookingService.WebAPI.Application.Services;
 
 public class EventService(IEventRepository _repository, ILogger<EventService>_logger) : IEventService
 {
+    /// <inheritdoc/>
     public ResponseEventDTO CreateEvent(CreateEventDTO newEventDTO)
     {
         _logger.LogInformation("Создание нового события: {Title}", newEventDTO.Title);
@@ -22,6 +23,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         return MapToDTO(newEvent);
     }
 
+    /// <inheritdoc/>
     public void CancelEvent(Guid eventId)
     {
         _logger.LogDebug("Попытка удаления события с ID: {Id}", eventId);
@@ -32,6 +34,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         _logger.LogInformation("Событие успешно удалено. ID: {Id} ", eventId);
     }
 
+    /// <inheritdoc/>
     public PaginatedResult GetEvents(EventsFilter filter)
     {
         _logger.LogInformation("Запрос списка событий. Страница: {Page}, Фильтр: {Filter}", filter.page, filter.title);
@@ -61,6 +64,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         return new PaginatedResult(filteredCount, items, filter.page, filter.pageSize);
     }
 
+    /// <inheritdoc/>
     public ResponseEventDTO GetEvent(Guid eventId)
     {
         var existedEvent = _repository.GetById(eventId);
@@ -73,6 +77,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         return MapToDTO(existedEvent);
     }
 
+    /// <inheritdoc/>
     public void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent)
     {
         _logger.LogInformation("Обновление события {Id}", eventId);

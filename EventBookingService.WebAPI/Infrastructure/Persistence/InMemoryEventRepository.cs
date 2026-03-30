@@ -10,18 +10,20 @@ namespace EventBookingService.WebAPI.Infrastructure.Persistence;
 public class InMemoryEventRepository : IEventRepository
 {
     private static readonly ConcurrentDictionary<Guid, Event> _events = new();
-    
 
+    /// <inheritdoc/>
     public void Add(Event @event)
     {
         _events.TryAdd(@event.Id, @event);
     }
 
+    /// <inheritdoc/>
     public bool Delete(Guid id)
     {
         return _events.TryRemove(id, out _);
     }
 
+    /// <inheritdoc/>
     public Event? GetById(Guid id)
     {
         _events.TryGetValue(id, out var @event);
@@ -36,6 +38,7 @@ public class InMemoryEventRepository : IEventRepository
         return _events.Values.AsQueryable();
     }
 
+    /// <inheritdoc/>
     public void Update(Event @event)
     {
         _events[@event.Id] = @event;
