@@ -12,20 +12,26 @@ public class InMemoryEventRepository : IEventRepository
     private static readonly ConcurrentDictionary<Guid, Event> _events = new();
 
     /// <inheritdoc/>
-    public async Task AddAsync(Event @event)
+    public async Task AddAsync(Event @event, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         await Task.FromResult(_events.TryAdd(@event.Id, @event));
     }
 
     /// <inheritdoc/>
-    public async Task<bool> DeleteAsync(Guid id)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         return await Task.FromResult(_events.TryRemove(id, out _));
     }
 
     /// <inheritdoc/>
-    public async Task<Event?> GetByIdAsync(Guid id)
+    public async Task<Event?> GetByIdAsync(Guid id, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         _events.TryGetValue(id, out var @event);
         return await Task.FromResult(@event);
     }
@@ -37,8 +43,9 @@ public class InMemoryEventRepository : IEventRepository
     }
 
     /// <inheritdoc/>
-    public async Task UpdateAsync(Event @event)
+    public async Task UpdateAsync(Event @event, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
         _events[@event.Id] = @event;
         await Task.CompletedTask;
     }

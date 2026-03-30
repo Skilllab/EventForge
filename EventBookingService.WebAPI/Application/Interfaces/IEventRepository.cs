@@ -11,19 +11,22 @@ public interface IEventRepository
     /// Добавление события в репозиторий
     /// </summary>
     /// <param name="event">Само событие</param>
-    Task AddAsync(Event @event);
+    /// <param name="ct"></param>
+    Task AddAsync(Event @event, CancellationToken ct);
 
     /// <summary>
     /// Удаление события из репозитория
     /// </summary>
     /// <param name="id">ID события</param>
-    Task<bool> DeleteAsync(Guid id);
+    /// <param name="ct"></param>
+    Task<bool> DeleteAsync(Guid id, CancellationToken ct);
 
     /// <summary>
     /// Получение события по ID
     /// </summary>
     /// <param name="id">ID события</param>
-    Task<Event?> GetByIdAsync(Guid id);
+    /// <param name="ct"></param>
+    Task<Event?> GetByIdAsync(Guid id, CancellationToken ct);
 
     /// <summary>
     /// Получение всех событий и возврат как AsQueryable, чтобы сервис мог накладывать фильтры
@@ -34,5 +37,6 @@ public interface IEventRepository
     /// Обновление события
     /// </summary>
     /// <param name="event">Само событие</param>
-    Task UpdateAsync(Event @event);
+    /// <param name="ct"></param>
+    Task UpdateAsync(Event @event, CancellationToken ct);
 }
