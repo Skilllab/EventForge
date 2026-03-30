@@ -1,10 +1,13 @@
-﻿using EventBookingService.WebAPI.Application.Exceptions;
+using EventBookingService.WebAPI.Application.Exceptions;
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Application.Services;
 using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO;
+
 using FluentAssertions;
+
 using Microsoft.Extensions.Logging;
+
 using Moq;
 
 namespace EventBookingService.Tests
@@ -15,7 +18,7 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "CreateEvent")]
-        public void CreateEvent_ShouldReturnResponseEventDTO_WhenCreateEventDTOIsValid()
+        public async Task CreateEvent_ShouldReturnResponseEventDTO_WhenCreateEventDTOIsValid()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -30,7 +33,7 @@ namespace EventBookingService.Tests
             };
 
             // Act
-            var result = service.CreateEvent(dto);
+            var result = await service.CreateEventAsync(dto);
 
             // Assert
             result.Should().NotBeNull();
@@ -40,12 +43,12 @@ namespace EventBookingService.Tests
                 .Including(x => x.EndAt));
 
             // Проверяем, что репозиторий действительно вызывался один раз
-            repositoryMock.Verify(r => r.Add(It.IsAny<Event>()), Times.Once);
+            repositoryMock.Verify(r => r.AddAsync(It.IsAny<Event>()), Times.Once);
         }
 
         [Fact]
         [Trait("Category", "CreateEvent")]
-        public void CreateEvent_ShouldThrowValidationException_WhenCreateEventDTOAreInvalid()
+        public async Task CreateEvent_ShouldThrowValidationException_WhenCreateEventDTOAreInvalid()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -59,13 +62,13 @@ namespace EventBookingService.Tests
             };
 
             // Act
-            Action act = () => service.CreateEvent(dto);
+            Func<Task> act = async () => await service.CreateEventAsync(dto);
 
             // Assert
-            act.Should().Throw<ValidationCustomException>();
+            await act.Should().ThrowAsync<ValidationCustomException>();
 
             // Проверяем, что метод добавления в репозиторий не вызывался, так как данные невалидные
-            repositoryMock.Verify(r => r.Add(It.IsAny<Event>()), Times.Never);
+            repositoryMock.Verify(r => r.AddAsync(It.IsAny<Event>()), Times.Never);
         }
 
         #endregion
@@ -74,7 +77,7 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "GetEvents")]
-        public void GetEvents_ShouldReturnPaginatedResultWithAllEvents()
+        public async Task GetEvents_ShouldReturnPaginatedResultWithAllEvents()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -92,7 +95,7 @@ namespace EventBookingService.Tests
             repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
 
             // Act
-            var result = service.GetEvents(filter);
+            var result = await service.GetEventsAsync(filter);
 
             // Assert
             result.Should().NotBeNull();
@@ -111,7 +114,7 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "GetEvents")]
-        public void GetEvents_ShouldReturnPaginatedResultWithEventsFilteredByName()
+        public async Task GetEvents_ShouldReturnPaginatedResultWithEventsFilteredByName()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -130,7 +133,7 @@ namespace EventBookingService.Tests
             repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
 
             // Act
-            var result = service.GetEvents(filter);
+            var result = await service.GetEventsAsync(filter);
 
             // Assert
             result.Should().NotBeNull();
@@ -141,7 +144,7 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "GetEvents")]
-        public void GetEvents_ShouldReturnPaginatedResultWithEventsFilteredByStartDate_ReturnEqualOrBefore()
+        public async Task GetEvents_ShouldReturnPaginatedResultWithEventsFilteredByStartDate_ReturnEqualOrBefore()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -159,7 +162,7 @@ namespace EventBookingService.Tests
             repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
 
             // Act
-            var result = service.GetEvents(filter);
+            var result = await service.GetEventsAsync(filter);
 
             // Assert
             result.Should().NotBeNull();
@@ -169,7 +172,7 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "GetEvents")]
-        public void GetEvents_ShouldReturnPaginatedResultWithEventsFilteredByEndDate_ReturnEqualOrGreater()
+        public async Task GetEvents_ShouldReturnPaginatedResultWithEventsFilteredByEndDate_ReturnEqualOrGreater()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -188,7 +191,7 @@ namespace EventBookingService.Tests
             repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
 
             // Act
-            var result = service.GetEvents(filter);
+            var result = await service.GetEventsAsync(filter);
 
             // Assert
             result.Should().NotBeNull();
@@ -198,7 +201,7 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "GetEvents")]
-        public void GetEvents_ShouldReturnPaginatedResultWithSecondPageWithCountThree()
+        public async Task GetEvents_ShouldReturnPaginatedResultWithSecondPageWithCountThree()
         {
             // Arrange (Подготовка)
             var repositoryMock = new Mock<IEventRepository>();
@@ -221,7 +224,7 @@ namespace EventBookingService.Tests
             repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
 
             // Act (Действие)
-            var result = service.GetEvents(filter);
+            var result = await service.GetEventsAsync(filter);
 
             // Assert (Проверка)
             result.Should().NotBeNull();
@@ -235,7 +238,7 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "GetEvents")]
-        public void GetEvents_ShouldReturnPaginatedResultWithOneEventWithManyFilters()
+        public async Task GetEvents_ShouldReturnPaginatedResultWithOneEventWithManyFilters()
         {
             // Arrange (Подготовка)
             var repositoryMock = new Mock<IEventRepository>();
@@ -268,7 +271,7 @@ namespace EventBookingService.Tests
 
 
             // Act (Действие)
-            var result = service.GetEvents(filter);
+            var result = await service.GetEventsAsync(filter);
 
             // Assert (Проверка)
             result.Should().NotBeNull();
@@ -283,7 +286,7 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "GetEvents")]
-        public void GetEvents_ShouldApplyPagination_CorrectSkipAndTake()
+        public async Task GetEvents_ShouldApplyPagination_CorrectSkipAndTake()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -320,7 +323,7 @@ namespace EventBookingService.Tests
             var filter = new EventsFilter { page = 2, pageSize = 2 };
 
             // Act
-            var result = service.GetEvents(filter);
+            var result = await service.GetEventsAsync(filter);
 
             // Assert
             result.EventsTotalCount.Should().Be(6); // Общее количество не меняется
@@ -335,7 +338,7 @@ namespace EventBookingService.Tests
         #region GetEvent tests
         [Fact]
         [Trait("Category", "GetEvent")]
-        public void GetEvent_ShouldReturnResponseEventDTO_IfEventExist()
+        public async Task GetEvent_ShouldReturnResponseEventDTO_IfEventExist()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -343,10 +346,10 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var domainEvent = Event.Create("Тестовое событие 1", DateTime.Now, DateTime.Now.AddHours(2));
             var generatedId = domainEvent.Id;
-            repositoryMock.Setup(r => r.GetById(generatedId)).Returns(domainEvent);
+            repositoryMock.Setup(r => r.GetByIdAsync(generatedId)).ReturnsAsync(domainEvent);
 
             // Act
-            var result = service.GetEvent(generatedId);
+            var result = await service.GetEventAsync(generatedId);
 
             // Assert
             result.Should().NotBeNull();
@@ -356,27 +359,27 @@ namespace EventBookingService.Tests
                 .Including(x => x.EndAt)
                 .Including(x => x.Id));
 
-            repositoryMock.Verify(r => r.GetById(generatedId), Times.Once);
+            repositoryMock.Verify(r => r.GetByIdAsync(generatedId), Times.Once);
         }
 
         [Fact]
         [Trait("Category", "GetEvent")]
-        public void GetEvent_ShouldThrowNotFoundException_IfEventDoesNotExist()
+        public async Task GetEvent_ShouldThrowNotFoundException_IfEventDoesNotExist()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var generatedId = Guid.NewGuid();
-            repositoryMock.Setup(r => r.GetById(generatedId)).Returns((Event?)null);
+            repositoryMock.Setup(r => r.GetByIdAsync(generatedId)).ReturnsAsync((Event?) null);
 
             // Act
-            Action act = () => service.GetEvent(generatedId);
+            Func<Task> act = async () => await service.GetEventAsync(generatedId);
 
             // Assert
-            act.Should().Throw<NotFoundException>();
+            await act.Should().ThrowAsync<NotFoundException>();
 
-            repositoryMock.Verify(r => r.GetById(generatedId), Times.Once);
+            repositoryMock.Verify(r => r.GetByIdAsync(generatedId), Times.Once);
         }
 
         #endregion
@@ -385,7 +388,7 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "ChangeEvent")]
-        public void ChangeEvent_ShouldThrowNotFoundException_IfEventDoesNotExist()
+        public async Task ChangeEvent_ShouldThrowNotFoundException_IfEventDoesNotExist()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -398,21 +401,21 @@ namespace EventBookingService.Tests
                 StartAt = DateTime.Now,
                 EndAt = DateTime.Now.AddHours(1),
             };
-            repositoryMock.Setup(r => r.GetById(nonExistentId)).Returns((Event?)null);
+            repositoryMock.Setup(r => r.GetByIdAsync(nonExistentId)).ReturnsAsync((Event?) null);
 
             // Act
-            Action act = () => service.ChangeEvent(nonExistentId, updateDto);
+            Func<Task> act = async () => await service.ChangeEventAsync(nonExistentId, updateDto);
 
             // Assert
-            act.Should().Throw<NotFoundException>();
+            await act.Should().ThrowAsync<NotFoundException>();
 
             // Проверяем, что метод Update у репозитория НИКОГДА не вызывался
-            repositoryMock.Verify(r => r.Update(It.IsAny<Event>()), Times.Never);
+            repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Event>()), Times.Never);
         }
 
         [Fact]
         [Trait("Category", "ChangeEvent")]
-        public void ChangeEvent_ShouldThrowValidationCustomException_IfUpdateEventDTOAreInvalid()
+        public async Task ChangeEvent_ShouldThrowValidationCustomException_IfUpdateEventDTOAreInvalid()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -430,22 +433,22 @@ namespace EventBookingService.Tests
                 EndAt = now.AddHours(2)
             };
 
-            repositoryMock.Setup(r => r.GetById(eventId)).Returns(existedEvent);
+            repositoryMock.Setup(r => r.GetByIdAsync(eventId)).ReturnsAsync(existedEvent);
 
             // Act
-            Action act = () => service.ChangeEvent(eventId, invalidUpdateDto);
+            Func<Task> act = async () => await service.ChangeEventAsync(eventId, invalidUpdateDto);
 
             // Assert
             // Проверяем выброс исключения (логика внутри ChangeEvent должна проверять .Value у Nullable дат)
-            act.Should().Throw<ValidationCustomException>();
+           await act.Should().ThrowAsync<ValidationCustomException>();
 
-            repositoryMock.Verify(r => r.Update(It.IsAny<Event>()), Times.Never);
+            repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Event>()), Times.Never);
         }
 
 
         [Fact]
         [Trait("Category", "ChangeEvent")]
-        public void ChangeEvent_ShouldChangeAllEventsData()
+        public async Task ChangeEvent_ShouldChangeAllEventsData()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -464,10 +467,10 @@ namespace EventBookingService.Tests
                 Description = "Новое описание"
             };
 
-            repositoryMock.Setup(r => r.GetById(eventId)).Returns(existedEvent);
+            repositoryMock.Setup(r => r.GetByIdAsync(eventId)).ReturnsAsync(existedEvent);
 
             // Act
-            service.ChangeEvent(eventId, updateDto);
+            await service.ChangeEventAsync(eventId, updateDto);
 
             // Assert
             existedEvent.Should().BeEquivalentTo(updateDto, options => options
@@ -477,7 +480,7 @@ namespace EventBookingService.Tests
             );
 
             // Проверяем, что сервис вызвал Update у репозитория ровно один раз с этим объектом
-            repositoryMock.Verify(r => r.Update(existedEvent), Times.Once);
+            repositoryMock.Verify(r => r.UpdateAsync(existedEvent), Times.Once);
         }
 
         #endregion
@@ -485,37 +488,37 @@ namespace EventBookingService.Tests
         #region CancelEvent tests
 
         [Fact]
-        public void CancelEvent_ShouldDeleteEvent_WhenEventExists()
+        public async Task CancelEvent_ShouldDeleteEvent_WhenEventExists()
         {
             // Arrange
             var eventId = Guid.NewGuid();
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            repositoryMock.Setup(r => r.Delete(eventId)).Returns(true);
+            repositoryMock.Setup(r => r.DeleteAsync(eventId)).ReturnsAsync(true);
 
             // Act
-            service.CancelEvent(eventId);
+            await service.CancelEventAsync(eventId);
 
             // Assert
-            repositoryMock.Verify(r => r.Delete(eventId), Times.Once);
+            repositoryMock.Verify(r => r.DeleteAsync(eventId), Times.Once);
         }
 
         [Fact]
-        public void CancelEvent_ShouldThrowNotFoundException_WhenEventDoesNotExist()
+        public async Task CancelEvent_ShouldThrowNotFoundException_WhenEventDoesNotExist()
         {
             // Arrange
             var eventId = Guid.NewGuid();
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            repositoryMock.Setup(r => r.Delete(eventId)).Returns(false);
+            repositoryMock.Setup(r => r.DeleteAsync(eventId)).ReturnsAsync(false);
 
             // Act
-            Action act = () => service.CancelEvent(eventId);
+            Func<Task> act = async () => await service.CancelEventAsync(eventId);
 
             // Assert
-            act.Should().Throw<NotFoundException>();
+            await act.Should().ThrowAsync<NotFoundException>();
         }
 
         #endregion

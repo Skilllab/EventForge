@@ -1,4 +1,4 @@
-﻿using EventBookingService.WebAPI.Models.DTO;
+using EventBookingService.WebAPI.Models.DTO;
 
 namespace EventBookingService.WebAPI.Application.Interfaces;
 
@@ -11,30 +11,30 @@ public interface IEventService
     /// Создание события
     /// </summary>
     /// <param name="currentEvent">Входящая DTO</param>
-    ResponseEventDTO CreateEvent(CreateEventDTO currentEvent);
+    Task<ResponseEventDTO> CreateEventAsync(CreateEventDTO currentEvent);
 
     /// <summary>
     /// Отмена события
     /// </summary>
     /// <param name="eventId">ID события</param>
-    void CancelEvent(Guid eventId);
+    Task CancelEventAsync(Guid eventId);
 
     /// <summary>
     /// Получение событий с пагинацией
     /// </summary>
     /// <param name="filter">Фильтр для применения пагинации</param>
-    PaginatedResult GetEvents(EventsFilter filter );
+    Task<PaginatedResult> GetEventsAsync(EventsFilter filter );
 
     /// <summary>
     /// Поиск события
     /// </summary>
     /// <param name="eventId">ID события</param>
-    ResponseEventDTO GetEvent(Guid eventId);
+    Task<ResponseEventDTO> GetEventAsync(Guid eventId);
 
     /// <summary>
     /// Изменение события
     /// </summary>
     /// <param name="eventId">ID события</param>
     /// <param name="currentEvent">Свойства из DTO для обновления события</param>
-    void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent);
+    Task ChangeEventAsync(Guid eventId, UpdateEventDTO currentEvent);
 }

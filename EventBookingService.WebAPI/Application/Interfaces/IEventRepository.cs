@@ -1,4 +1,4 @@
-﻿using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.WebAPI.Models.Domain;
 
 namespace EventBookingService.WebAPI.Application.Interfaces;
 
@@ -11,19 +11,19 @@ public interface IEventRepository
     /// Добавление события в репозиторий
     /// </summary>
     /// <param name="event">Само событие</param>
-    void Add(Event @event);
+    Task AddAsync(Event @event);
 
     /// <summary>
     /// Удаление события из репозитория
     /// </summary>
     /// <param name="id">ID события</param>
-    bool Delete(Guid id);
+    Task<bool> DeleteAsync(Guid id);
 
     /// <summary>
     /// Получение события по ID
     /// </summary>
     /// <param name="id">ID события</param>
-    Event? GetById(Guid id);
+    Task<Event?> GetByIdAsync(Guid id);
 
     /// <summary>
     /// Получение всех событий и возврат как AsQueryable, чтобы сервис мог накладывать фильтры
@@ -34,5 +34,5 @@ public interface IEventRepository
     /// Обновление события
     /// </summary>
     /// <param name="event">Само событие</param>
-    void Update(Event @event);
+    Task UpdateAsync(Event @event);
 }

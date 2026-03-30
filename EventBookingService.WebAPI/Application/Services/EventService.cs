@@ -1,4 +1,4 @@
-﻿using EventBookingService.WebAPI.Application.Exceptions;
+using EventBookingService.WebAPI.Application.Exceptions;
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO;
@@ -8,7 +8,7 @@ namespace EventBookingService.WebAPI.Application.Services;
 public class EventService(IEventRepository _repository, ILogger<EventService>_logger) : IEventService
 {
     /// <inheritdoc/>
-    public ResponseEventDTO CreateEvent(CreateEventDTO newEventDTO)
+    public async Task<ResponseEventDTO> CreateEventAsync(CreateEventDTO newEventDTO)
     {
         _logger.LogInformation("Создание нового события: {Title}", newEventDTO.Title);
         var newEvent = Event.Create(
@@ -18,16 +18,16 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             newEventDTO.Description
         );
 
-        _repository.Add(newEvent);
+        await _repository.AddAsync(newEvent);
         _logger.LogInformation("Событие успешно создано. ID: {Id}", newEvent.Id);
         return MapToDTO(newEvent);
     }
 
     /// <inheritdoc/>
-    public void CancelEvent(Guid eventId)
+    public async Task CancelEventAsync(Guid eventId)
     {
         _logger.LogDebug("Попытка удаления события с ID: {Id}", eventId);
-        if (!_repository.Delete(eventId))
+        if (!await _repository.DeleteAsync(eventId))
         {
             throw new NotFoundException(nameof(Event), eventId);
         }
@@ -35,7 +35,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
     }
 
     /// <inheritdoc/>
-    public PaginatedResult GetEvents(EventsFilter filter)
+    public async Task<PaginatedResult> GetEventsAsync(EventsFilter filter)
     {
         _logger.LogInformation("Запрос списка событий. Страница: {Page}, Фильтр: {Filter}", filter.page, filter.title);
 
@@ -65,9 +65,9 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
     }
 
     /// <inheritdoc/>
-    public ResponseEventDTO GetEvent(Guid eventId)
+    public async Task<ResponseEventDTO> GetEventAsync(Guid eventId)
     {
-        var existedEvent = _repository.GetById(eventId);
+        var existedEvent = await _repository.GetByIdAsync(eventId);
         if (existedEvent == null)
         {
             _logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
@@ -78,10 +78,10 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
     }
 
     /// <inheritdoc/>
-    public void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent)
+    public async Task ChangeEventAsync(Guid eventId, UpdateEventDTO currentEvent)
     {
         _logger.LogInformation("Обновление события {Id}", eventId);
-        var existedEvent = _repository.GetById(eventId);
+        var existedEvent = await _repository.GetByIdAsync(eventId);
         if (existedEvent == null)
         {
             _logger.LogError("Ошибка обновления: событие не существует. ID: {Id}", eventId);
@@ -103,7 +103,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             currentEvent.EndAt ?? existedEvent.EndAt,
             currentEvent.Description ?? existedEvent.Description);
 
-        _repository.Update(existedEvent);
+        await _repository.UpdateAsync(existedEvent);
         _logger.LogInformation("Событие успешно обновлено. ID: {Id}", eventId);
     }
 

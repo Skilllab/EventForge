@@ -1,4 +1,4 @@
-﻿using EventBookingService.WebAPI.Application.Interfaces;
+using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.Domain;
 using System.Collections.Concurrent;
 
@@ -12,35 +12,34 @@ public class InMemoryEventRepository : IEventRepository
     private static readonly ConcurrentDictionary<Guid, Event> _events = new();
 
     /// <inheritdoc/>
-    public void Add(Event @event)
+    public async Task AddAsync(Event @event)
     {
-        _events.TryAdd(@event.Id, @event);
+        await Task.FromResult(_events.TryAdd(@event.Id, @event));
     }
 
     /// <inheritdoc/>
-    public bool Delete(Guid id)
+    public async Task<bool> DeleteAsync(Guid id)
     {
-        return _events.TryRemove(id, out _);
+        return await Task.FromResult(_events.TryRemove(id, out _));
     }
 
     /// <inheritdoc/>
-    public Event? GetById(Guid id)
+    public async Task<Event?> GetByIdAsync(Guid id)
     {
         _events.TryGetValue(id, out var @event);
-        return @event;
+        return await Task.FromResult(@event);
     }
 
-    /// <summary>
-    /// Возвращаем как AsQueryable, чтобы сервис мог накладывать фильтры
-    /// </summary>
+    /// <inheritdoc/>
     public IQueryable<Event> GetAll()
     {
         return _events.Values.AsQueryable();
     }
 
     /// <inheritdoc/>
-    public void Update(Event @event)
+    public async Task UpdateAsync(Event @event)
     {
         _events[@event.Id] = @event;
+        await Task.CompletedTask;
     }
 }
