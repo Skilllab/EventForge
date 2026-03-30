@@ -45,7 +45,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
 
         _logger.LogInformation("Запрос списка событий. Страница: {Page}, Фильтр: {Filter}", filter.page, filter.title);
 
-        IQueryable<Event> query = _repository.GetAll();
+        IQueryable<Event> query = _repository.GetAll(ct);
 
         if (!string.IsNullOrEmpty(filter.title))
             query = query.Where(p => p.Title.Contains(filter.title, StringComparison.CurrentCultureIgnoreCase));

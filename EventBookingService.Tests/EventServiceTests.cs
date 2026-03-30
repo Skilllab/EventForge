@@ -92,7 +92,7 @@ namespace EventBookingService.Tests
                 Event.Create("тестовое событие 2", now, now.AddHours(3)),
             }.AsQueryable();
 
-            repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
 
             // Act
             var result = await service.GetEventsAsync(filter, CancellationToken.None);
@@ -108,7 +108,7 @@ namespace EventBookingService.Tests
                 .Including(x => x.EndAt)
             );
 
-            repositoryMock.Verify(r => r.GetAll(), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
         }
 
 
@@ -130,7 +130,7 @@ namespace EventBookingService.Tests
                 Event.Create("встречА на высшем уровне", now, now.AddHours(3)),
             }.AsQueryable();
 
-            repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
 
             // Act
             var result = await service.GetEventsAsync(filter, CancellationToken.None);
@@ -139,7 +139,7 @@ namespace EventBookingService.Tests
             result.Should().NotBeNull();
             result.Events.Should().HaveCount(2); // Проверяем количество в текущей выборке
             result.Events.Should().OnlyContain(t => t.Title.Contains(filteredWord, StringComparison.CurrentCultureIgnoreCase));
-            repositoryMock.Verify(r => r.GetAll(), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
         }
 
         [Fact]
@@ -159,7 +159,7 @@ namespace EventBookingService.Tests
                 Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(5))
             }.AsQueryable();
 
-            repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
 
             // Act
             var result = await service.GetEventsAsync(filter, CancellationToken.None);
@@ -167,7 +167,7 @@ namespace EventBookingService.Tests
             // Assert
             result.Should().NotBeNull();
             result.Events.Should().HaveCount(2); // Проверяем количество в текущей выборке
-            repositoryMock.Verify(r => r.GetAll(), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
         }
 
         [Fact]
@@ -188,7 +188,7 @@ namespace EventBookingService.Tests
                 Event.Create("Встреча 2", now.AddHours(1), now.AddHours(1)),
             }.AsQueryable();
 
-            repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
 
             // Act
             var result = await service.GetEventsAsync(filter, CancellationToken.None);
@@ -196,7 +196,7 @@ namespace EventBookingService.Tests
             // Assert
             result.Should().NotBeNull();
             result.Events.Should().HaveCount(2); // Проверяем количество в текущей выборке
-            repositoryMock.Verify(r => r.GetAll(), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
         }
 
         [Fact]
@@ -221,7 +221,7 @@ namespace EventBookingService.Tests
             }.AsQueryable();
 
             // Настраиваем Mock репозитория возвращать этот список
-            repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
 
             // Act (Действие)
             var result = await service.GetEventsAsync(filter, CancellationToken.None);
@@ -233,7 +233,7 @@ namespace EventBookingService.Tests
             result.Events.Should().ContainSingle(e => e.Title == "Событие 5");
             result.Events.Should().BeInAscendingOrder(e => e.Title); // Проверяем сортировку, которая есть в сервисе
 
-            repositoryMock.Verify(r => r.GetAll(), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
         }
 
         [Fact]
@@ -258,7 +258,7 @@ namespace EventBookingService.Tests
             }.AsQueryable();
 
             // Настраиваем Mock репозитория возвращать этот список
-            repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
 
             // Фильтр: ищем "10" и дату начала <= 3 часа от текущей
             var filter = new EventsFilter
@@ -280,7 +280,7 @@ namespace EventBookingService.Tests
             result.Events.First().Title.Should().Contain("цель");
             result.Events.First().StartAt.Should().BeOnOrBefore(targetDate);
 
-            repositoryMock.Verify(r => r.GetAll(), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
 
         }
 
@@ -317,7 +317,7 @@ namespace EventBookingService.Tests
 
             }.AsQueryable();
 
-            repositoryMock.Setup(r => r.GetAll()).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
 
             // 2-я страница по 2 элемента
             var filter = new EventsFilter { page = 2, pageSize = 2 };

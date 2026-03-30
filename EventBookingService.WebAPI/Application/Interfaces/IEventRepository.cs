@@ -31,7 +31,7 @@ public interface IEventRepository
     /// <summary>
     /// Получение всех событий и возврат как AsQueryable, чтобы сервис мог накладывать фильтры
     /// </summary>
-    IQueryable<Event> GetAll();
+    IQueryable<Event> GetAll(CancellationToken ct);
 
     /// <summary>
     /// Обновление события

@@ -37,8 +37,10 @@ public class InMemoryEventRepository : IEventRepository
     }
 
     /// <inheritdoc/>
-    public IQueryable<Event> GetAll()
+    public IQueryable<Event> GetAll(CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         return _events.Values.AsQueryable();
     }
 
