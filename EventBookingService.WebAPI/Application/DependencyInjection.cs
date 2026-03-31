@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
 
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IBookingService, BookingService>();
 
         return services;
     }

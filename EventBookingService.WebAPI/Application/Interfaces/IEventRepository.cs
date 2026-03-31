@@ -11,21 +11,21 @@ public interface IEventRepository
     /// Добавление события в репозиторий
     /// </summary>
     /// <param name="event">Само событие</param>
-    /// <param name="ct"></param>
+    /// <param name="ct">Токен отмены</param>
     Task AddAsync(Event @event, CancellationToken ct);
 
     /// <summary>
     /// Удаление события из репозитория
     /// </summary>
     /// <param name="id">ID события</param>
-    /// <param name="ct"></param>
+    /// <param name="ct">Токен отмены</param>
     Task<bool> DeleteAsync(Guid id, CancellationToken ct);
 
     /// <summary>
     /// Получение события по ID
     /// </summary>
     /// <param name="id">ID события</param>
-    /// <param name="ct"></param>
+    /// <param name="ct">Токен отмены</param>
     Task<Event?> GetByIdAsync(Guid id, CancellationToken ct);
 
     /// <summary>
@@ -37,6 +37,6 @@ public interface IEventRepository
     /// Обновление события
     /// </summary>
     /// <param name="event">Само событие</param>
-    /// <param name="ct"></param>
+    /// <param name="ct">Токен отмены</param>
     Task UpdateAsync(Event @event, CancellationToken ct);
 }
