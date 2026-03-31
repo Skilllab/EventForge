@@ -1,3 +1,4 @@
+using EventBookingService.WebAPI.Application.Exceptions;
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO;
@@ -39,13 +40,17 @@ namespace EventBookingService.WebAPI.Application.Services
         }
 
         /// <inheritdoc/>
-        public async Task GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
+        public async Task<BookingInfo> GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
             logger.LogInformation("Получение бронирования : {bookingId}", bookingId);
 
-            await repository.GetByIdAsync(bookingId, ct);
+            var booking =  await repository.GetByIdAsync(bookingId, ct);
+            if(booking == null)
+                throw new NotFoundException(nameof(Booking), bookingId);
+                
+            return MapToDTO(booking);
         }
     }
 }
