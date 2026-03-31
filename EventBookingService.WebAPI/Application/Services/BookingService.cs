@@ -1,5 +1,6 @@
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.WebAPI.Models.DTO;
 
 namespace EventBookingService.WebAPI.Application.Services
 {
@@ -10,7 +11,7 @@ namespace EventBookingService.WebAPI.Application.Services
     {
 
         /// <inheritdoc/>
-        public async Task CreateBookingAsync(Guid eventId, CancellationToken ct)
+        public async Task<BookingInfo> CreateBookingAsync(Guid eventId, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -26,7 +27,15 @@ namespace EventBookingService.WebAPI.Application.Services
 
             await repository.AddAsync(newBooking, ct);
             logger.LogInformation("Бронирование успешно создано. ID: {Id} ", newBooking.Id);
+            return MapToDTO(newBooking);
+        }
 
+        private BookingInfo MapToDTO(Booking newBooking)
+        {
+            return new BookingInfo()
+            {
+                ID = newBooking.Id, EventID = newBooking.EventId, Status = newBooking.Status.ToString(),
+            };
         }
 
         /// <inheritdoc/>

@@ -9,9 +9,7 @@ builder.Logging.AddConsole();
 builder.Services.AddApplication();
 builder.Services.AddPresentation();
 
-
 var app = builder.Build();
-
 
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
@@ -24,6 +22,7 @@ if (app.Environment.IsDevelopment())
         options.ValidateScopes = true;
         options.ValidateOnBuild = true;
     });
+
 
     app.UseSwagger();
     app.UseSwaggerUI();

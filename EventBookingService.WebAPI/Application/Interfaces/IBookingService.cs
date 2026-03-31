@@ -1,3 +1,5 @@
+using EventBookingService.WebAPI.Models.DTO;
+
 namespace EventBookingService.WebAPI.Application.Interfaces
 {
     /// <summary>
@@ -10,7 +12,7 @@ namespace EventBookingService.WebAPI.Application.Interfaces
         /// </summary>
         /// <param name="eventId">ID события</param>
         /// <param name="ct">Токен отмены</param>
-        Task CreateBookingAsync(Guid eventId, CancellationToken ct);
+        Task<BookingInfo> CreateBookingAsync(Guid eventId, CancellationToken ct);
 
         /// <summary>
         /// Получение брони по идентификатору

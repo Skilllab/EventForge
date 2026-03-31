@@ -1,5 +1,9 @@
+using System.ComponentModel.DataAnnotations;
+
 using EventBookingService.WebAPI.Application.Interfaces;
+using EventBookingService.WebAPI.Application.Services;
 using EventBookingService.WebAPI.Models.DTO;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventBookingService.WebAPI.Controllers
@@ -7,12 +11,13 @@ namespace EventBookingService.WebAPI.Controllers
     [ApiController]
     [Route("[controller]")]
     [Produces("application/json")]
-    public class EventsController(IEventService eventService, ILogger<EventsController> logger) : ControllerBase
+    public class EventsController(IEventService eventService, IBookingService bookingService, ILogger<EventsController> logger) : ControllerBase
     {
         /// <summary>
         /// Получить список всех событий
         /// </summary>
         [HttpGet]
+        [Tags("API для событий")]
         public async Task<IActionResult> GetAllEvents([FromQuery] EventsFilter filter, CancellationToken ct)
         {
             logger.LogDebug("Обработка запроса GET {methodName}", nameof(GetAllEvents));
@@ -24,12 +29,13 @@ namespace EventBookingService.WebAPI.Controllers
         /// <summary>
         /// Получить событие по id
         /// </summary>
-        [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetEvent(Guid id, CancellationToken ct)
+        [HttpGet("{eventId:guid}")]
+        [Tags("API для событий")]
+        public async Task<IActionResult> GetEvent([Required]Guid eventId, CancellationToken ct)
         {
-            logger.LogDebug("Обработка запроса GET {methodName} по id: {id} ", nameof(GetEvent), id);
+            logger.LogDebug("Обработка запроса GET {methodName} по id: {id} ", nameof(GetEvent), eventId);
 
-            var responseEvent = await eventService.GetEventAsync(id, ct);
+            var responseEvent = await eventService.GetEventAsync(eventId, ct);
             return Ok(responseEvent);
         }
 
@@ -37,7 +43,8 @@ namespace EventBookingService.WebAPI.Controllers
         /// Создать новое событие
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> CreateEvent([FromBody] CreateEventDTO request, CancellationToken ct)
+        [Tags("API для событий")]
+        public async Task<IActionResult> CreateEvent([FromBody][Required]CreateEventDTO request, CancellationToken ct)
         {
             logger.LogDebug("Обработка запроса POST {methodName}", nameof(CreateEvent));
 
@@ -48,26 +55,41 @@ namespace EventBookingService.WebAPI.Controllers
         /// <summary>
         /// Обновить событие целиком
         /// </summary>
-        [HttpPut("{id:guid}")]
-        public async Task<IActionResult> ChangeEvent(Guid id, [FromBody] UpdateEventDTO request, CancellationToken ct)
+        [HttpPut("{eventId:guid}")]
+        [Tags("API для событий")]
+        public async Task<IActionResult> ChangeEvent([Required]Guid eventId, [FromBody] UpdateEventDTO request, CancellationToken ct)
         {
 
-            logger.LogDebug("Обработка запроса PUT {methodName} c id: {id}", nameof(ChangeEvent), id);
+            logger.LogDebug("Обработка запроса PUT {methodName} c id: {id}", nameof(ChangeEvent), eventId);
 
-            await eventService.ChangeEventAsync(id, request, ct);
+            await eventService.ChangeEventAsync(eventId, request, ct);
             return NoContent();
         }
 
         /// <summary>
         /// Удалить событие
         /// </summary>
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> CancelEvent(Guid id, CancellationToken ct)
+        [HttpDelete("{eventId:guid}")]
+        [Tags("API для событий")]
+        public async Task<IActionResult> CancelEvent([Required]Guid eventId, CancellationToken ct)
         {
-            logger.LogDebug("Обработка запроса DELETE {methodName} с id: {id}", nameof(CancelEvent), id);
+            logger.LogDebug("Обработка запроса DELETE {methodName} с id: {id}", nameof(CancelEvent), eventId);
 
-            await eventService.CancelEventAsync(id, ct);
+            await eventService.CancelEventAsync(eventId, ct);
             return NoContent();
+        }
+
+        /// <summary>
+        /// Создать новое бронирование
+        /// </summary>
+        [HttpPost("{eventId:guid}/book")]
+        [Tags("API для бронирования")]
+        public async Task<IActionResult> CreateBook([Required]Guid eventId, CancellationToken ct)
+        {
+            logger.LogDebug("Обработка запроса POST {methodName}", nameof(CreateBook));
+
+            var bookingDto = await bookingService.CreateBookingAsync(eventId, ct);
+            return AcceptedAtAction(nameof(CreateBook), bookingDto);
         }
     }
 }
