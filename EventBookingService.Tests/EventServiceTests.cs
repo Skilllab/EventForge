@@ -24,16 +24,17 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-
+            var ct = CancellationToken.None;
             var dto = new CreateEventDTO
             {
                 Title = "Тестовое событие",
                 StartAt = DateTime.Now,
                 EndAt = DateTime.Now.AddHours(1)
             };
+            repositoryMock.Setup(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
 
             // Act
-            var result = await service.CreateEventAsync(dto, CancellationToken.None);
+            var result = await service.CreateEventAsync(dto, ct);
 
             // Assert
             result.Should().NotBeNull();
@@ -43,7 +44,7 @@ namespace EventBookingService.Tests
                 .Including(x => x.EndAt));
 
             // Проверяем, что репозиторий действительно вызывался один раз
-            repositoryMock.Verify(r => r.AddAsync(It.IsAny<Event>(), CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -54,22 +55,52 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var ct = CancellationToken.None;
             var dto = new CreateEventDTO
             {
                 Title = "Тестовое событие с невалидной моделью данных",
                 StartAt = DateTime.Now.AddHours(2),
                 EndAt = DateTime.Now.AddHours(1)
             };
+            repositoryMock.Setup(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
 
             // Act
-            Func<Task> act = async () => await service.CreateEventAsync(dto, CancellationToken.None);
+            Func<Task> act = async () => await service.CreateEventAsync(dto, ct);
 
             // Assert
             await act.Should().ThrowAsync<ValidationCustomException>();
 
             // Проверяем, что метод добавления в репозиторий не вызывался, так как данные невалидные
-            repositoryMock.Verify(r => r.AddAsync(It.IsAny<Event>(), CancellationToken.None), Times.Never);
+            repositoryMock.Verify(r => r.AddAsync(It.IsAny<Event>(), ct), Times.Never);
         }
+
+        [Fact]
+        [Trait("Category", "CreateEvent")]
+        public async Task CreateEvent_ShouldThrowIfCancelled()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            var dto = new CreateEventDTO
+            {
+                Title = "Тестовое событие",
+                StartAt = DateTime.Now.AddHours(1),
+                EndAt = DateTime.Now.AddHours(2) // Конец позже начала
+            };
+            repositoryMock.Setup(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
+
+            // Act
+            Func<Task> act = async () => await service.CreateEventAsync(dto, cts.Token);
+
+            // Assert
+            await act.Should().ThrowAsync<OperationCanceledException>();
+            repositoryMock.Verify(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        }
+
 
         #endregion
 
@@ -85,6 +116,7 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var filter = new EventsFilter();
             var now = DateTime.Now;
+            var ct = CancellationToken.None;
             var fakeEvents = new List<Event>
             {
                 Event.Create("тестовое событие 1", now, now.AddHours(1)),
@@ -92,10 +124,10 @@ namespace EventBookingService.Tests
                 Event.Create("тестовое событие 2", now, now.AddHours(3)),
             }.AsQueryable();
 
-            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(It.IsAny<CancellationToken>())).Returns(fakeEvents);
 
             // Act
-            var result = await service.GetEventsAsync(filter, CancellationToken.None);
+            var result = await service.GetEventsAsync(filter, ct);
 
             // Assert
             result.Should().NotBeNull();
@@ -108,7 +140,7 @@ namespace EventBookingService.Tests
                 .Including(x => x.EndAt)
             );
 
-            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(It.IsAny<CancellationToken>()), Times.Once);
         }
 
 
@@ -121,6 +153,7 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var filteredWord = "встреча";
+            var ct = CancellationToken.None;
             var filter = new EventsFilter() { title = filteredWord };
             var now = DateTime.Now;
             var fakeEvents = new List<Event>
@@ -130,16 +163,16 @@ namespace EventBookingService.Tests
                 Event.Create("встречА на высшем уровне", now, now.AddHours(3)),
             }.AsQueryable();
 
-            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(It.IsAny<CancellationToken>())).Returns(fakeEvents);
 
             // Act
-            var result = await service.GetEventsAsync(filter, CancellationToken.None);
+            var result = await service.GetEventsAsync(filter, ct);
 
             // Assert
             result.Should().NotBeNull();
             result.Events.Should().HaveCount(2); // Проверяем количество в текущей выборке
             result.Events.Should().OnlyContain(t => t.Title.Contains(filteredWord, StringComparison.CurrentCultureIgnoreCase));
-            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -152,6 +185,7 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var now = DateTime.Now;
             var filter = new EventsFilter() { from = now.AddHours(2) };
+            var ct = CancellationToken.None;
             var fakeEvents = new List<Event>
             {
                 Event.Create("Встреча 1", now.AddHours(1), now.AddHours(5)),
@@ -159,15 +193,15 @@ namespace EventBookingService.Tests
                 Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(5))
             }.AsQueryable();
 
-            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(It.IsAny<CancellationToken>())).Returns(fakeEvents);
 
             // Act
-            var result = await service.GetEventsAsync(filter, CancellationToken.None);
+            var result = await service.GetEventsAsync(filter, ct);
 
             // Assert
             result.Should().NotBeNull();
             result.Events.Should().HaveCount(2); // Проверяем количество в текущей выборке
-            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -180,7 +214,7 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var now = DateTime.Now;
             var filter = new EventsFilter() { to = now.AddHours(2) };
-
+            var ct = CancellationToken.None;
             var fakeEvents = new List<Event>
             {
                 Event.Create("Встреча 1", now.AddHours(1), now.AddHours(1)),
@@ -188,15 +222,15 @@ namespace EventBookingService.Tests
                 Event.Create("Встреча 2", now.AddHours(1), now.AddHours(1)),
             }.AsQueryable();
 
-            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(It.IsAny<CancellationToken>())).Returns(fakeEvents);
 
             // Act
-            var result = await service.GetEventsAsync(filter, CancellationToken.None);
+            var result = await service.GetEventsAsync(filter, ct);
 
             // Assert
             result.Should().NotBeNull();
             result.Events.Should().HaveCount(2); // Проверяем количество в текущей выборке
-            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -209,6 +243,7 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var filter = new EventsFilter { page = 2, pageSize = 3 };
             var now = DateTime.Now;
+            var ct = CancellationToken.None;
             // Создаем список тестовых данных, которые "якобы" есть в репозитории
             var fakeEvents = new List<Event>
             {
@@ -221,10 +256,10 @@ namespace EventBookingService.Tests
             }.AsQueryable();
 
             // Настраиваем Mock репозитория возвращать этот список
-            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(It.IsAny<CancellationToken>())).Returns(fakeEvents);
 
             // Act (Действие)
-            var result = await service.GetEventsAsync(filter, CancellationToken.None);
+            var result = await service.GetEventsAsync(filter, ct);
 
             // Assert (Проверка)
             result.Should().NotBeNull();
@@ -233,7 +268,7 @@ namespace EventBookingService.Tests
             result.Events.Should().ContainSingle(e => e.Title == "Событие 5");
             result.Events.Should().BeInAscendingOrder(e => e.Title); // Проверяем сортировку, которая есть в сервисе
 
-            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -246,6 +281,7 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var targetDate = DateTime.Now.AddHours(3);
             var now = DateTime.Now;
+            var ct = CancellationToken.None;
             // Создаем список тестовых данных, которые "якобы" есть в репозитории
             var fakeEvents = new List<Event>
             {
@@ -258,7 +294,7 @@ namespace EventBookingService.Tests
             }.AsQueryable();
 
             // Настраиваем Mock репозитория возвращать этот список
-            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(It.IsAny<CancellationToken>())).Returns(fakeEvents);
 
             // Фильтр: ищем "10" и дату начала <= 3 часа от текущей
             var filter = new EventsFilter
@@ -271,7 +307,7 @@ namespace EventBookingService.Tests
 
 
             // Act (Действие)
-            var result = await service.GetEventsAsync(filter, CancellationToken.None);
+            var result = await service.GetEventsAsync(filter, ct);
 
             // Assert (Проверка)
             result.Should().NotBeNull();
@@ -280,7 +316,7 @@ namespace EventBookingService.Tests
             result.Events.First().Title.Should().Contain("цель");
             result.Events.First().StartAt.Should().BeOnOrBefore(targetDate);
 
-            repositoryMock.Verify(r => r.GetAll(CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.GetAll(It.IsAny<CancellationToken>()), Times.Once);
 
         }
 
@@ -293,6 +329,7 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var now = DateTime.Now;
+            var ct = CancellationToken.None;
 
             //События добавлены в отсортированном порядке
             var fakeEvents = new List<Event>
@@ -317,20 +354,47 @@ namespace EventBookingService.Tests
 
             }.AsQueryable();
 
-            repositoryMock.Setup(r => r.GetAll(CancellationToken.None)).Returns(fakeEvents);
+            repositoryMock.Setup(r => r.GetAll(It.IsAny<CancellationToken>())).Returns(fakeEvents);
 
             // 2-я страница по 2 элемента
             var filter = new EventsFilter { page = 2, pageSize = 2 };
 
             // Act
-            var result = await service.GetEventsAsync(filter, CancellationToken.None);
+            var result = await service.GetEventsAsync(filter, ct);
 
             // Assert
             result.EventsTotalCount.Should().Be(6); // Общее количество не меняется
             result.Events.Should().HaveCount(2);   // На странице только 2
-
             result.Events.Should().Contain(e => e.Title.Equals("Поужинать ", StringComparison.CurrentCultureIgnoreCase));
             result.Events.Should().Contain(e => e.Title.Equals("Событие 1", StringComparison.CurrentCultureIgnoreCase));
+
+            repositoryMock.Verify(r => r.GetAll(It.IsAny<CancellationToken>()), Times.Once);
+
+        }
+
+        [Fact]
+        [Trait("Category", "GetEvents")]
+        public async Task GetEvents_ShouldThrowIfCancelled()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            var fakeEvents = new List<Event>
+            {
+                Event.Create("Событие 1", DateTime.Now.AddHours(1), DateTime.Now.AddHours(2)),
+            }.AsQueryable();
+            var filter = new EventsFilter { page = 2, pageSize = 2 };
+            repositoryMock.Setup(r => r.GetAll(It.IsAny<CancellationToken>())).Returns(fakeEvents);
+
+            // Act
+            Func<Task> act = async () => await service.GetEventsAsync(filter, cts.Token);
+
+            // Assert
+            await act.Should().ThrowAsync<OperationCanceledException>();
+            repositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         #endregion
@@ -346,10 +410,11 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var domainEvent = Event.Create("Тестовое событие 1", DateTime.Now, DateTime.Now.AddHours(2));
             var generatedId = domainEvent.Id;
-            repositoryMock.Setup(r => r.GetByIdAsync(generatedId, CancellationToken.None)).ReturnsAsync(domainEvent);
+            var ct = CancellationToken.None;
+            repositoryMock.Setup(r => r.GetByIdAsync(generatedId, It.IsAny<CancellationToken>())).ReturnsAsync(domainEvent);
 
             // Act
-            var result = await service.GetEventAsync(generatedId, CancellationToken.None);
+            var result = await service.GetEventAsync(generatedId, ct);
 
             // Assert
             result.Should().NotBeNull();
@@ -359,7 +424,7 @@ namespace EventBookingService.Tests
                 .Including(x => x.EndAt)
                 .Including(x => x.Id));
 
-            repositoryMock.Verify(r => r.GetByIdAsync(generatedId, CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.GetByIdAsync(generatedId, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
@@ -371,16 +436,39 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var generatedId = Guid.NewGuid();
-            repositoryMock.Setup(r => r.GetByIdAsync(generatedId, CancellationToken.None)).ReturnsAsync((Event?) null);
+            var ct = CancellationToken.None;
+
+            repositoryMock.Setup(r => r.GetByIdAsync(generatedId, It.IsAny<CancellationToken>())).ReturnsAsync((Event?) null);
 
             // Act
-            Func<Task> act = async () => await service.GetEventAsync(generatedId, CancellationToken.None);
+            Func<Task> act = async () => await service.GetEventAsync(generatedId, ct);
 
             // Assert
             await act.Should().ThrowAsync<NotFoundException>();
 
-            repositoryMock.Verify(r => r.GetByIdAsync(generatedId, CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.GetByIdAsync(generatedId, It.IsAny<CancellationToken>()), Times.Once);
         }
+
+        [Fact]
+        [Trait("Category", "GetEvent")]
+        public async Task GetEvent_ShouldThrowIfCancelled()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            repositoryMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(It.IsAny<Event>());
+
+            // Act
+            Func<Task> act = async () => await service.GetEventAsync(It.IsAny<Guid>(), cts.Token);
+
+            // Assert
+            await act.Should().ThrowAsync<OperationCanceledException>();
+            repositoryMock.Verify(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
 
         #endregion
 
@@ -395,22 +483,24 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var nonExistentId = Guid.NewGuid();
+            var ct = CancellationToken.None;
+
             var updateDto = new UpdateEventDTO
             {
                 Title = "Тестовое событие 1",
                 StartAt = DateTime.Now,
                 EndAt = DateTime.Now.AddHours(1),
             };
-            repositoryMock.Setup(r => r.GetByIdAsync(nonExistentId, CancellationToken.None)).ReturnsAsync((Event?) null);
+            repositoryMock.Setup(r => r.GetByIdAsync(nonExistentId, It.IsAny<CancellationToken>())).ReturnsAsync((Event?) null);
 
             // Act
-            Func<Task> act = async () => await service.ChangeEventAsync(nonExistentId, updateDto, CancellationToken.None);
+            Func<Task> act = async () => await service.ChangeEventAsync(nonExistentId, updateDto, ct);
 
             // Assert
             await act.Should().ThrowAsync<NotFoundException>();
 
             // Проверяем, что метод Update у репозитория НИКОГДА не вызывался
-            repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Event>(), CancellationToken.None), Times.Never);
+            repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         [Fact]
@@ -424,6 +514,8 @@ namespace EventBookingService.Tests
             var now = DateTime.Now;
             var existedEvent = Event.Create("Старое событие", now, now.AddHours(1));
             var eventId = existedEvent.Id;
+            var ct = CancellationToken.None;
+
 
             // Подготавливаем НЕВАЛИДНЫЕ данные: Начало (5ч) > Конец (2ч)
             var invalidUpdateDto = new UpdateEventDTO
@@ -433,16 +525,16 @@ namespace EventBookingService.Tests
                 EndAt = now.AddHours(2)
             };
 
-            repositoryMock.Setup(r => r.GetByIdAsync(eventId, CancellationToken.None)).ReturnsAsync(existedEvent);
+            repositoryMock.Setup(r => r.GetByIdAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync(existedEvent);
 
             // Act
-            Func<Task> act = async () => await service.ChangeEventAsync(eventId, invalidUpdateDto, CancellationToken.None);
+            Func<Task> act = async () => await service.ChangeEventAsync(eventId, invalidUpdateDto, ct);
 
             // Assert
             // Проверяем выброс исключения (логика внутри ChangeEvent должна проверять .Value у Nullable дат)
            await act.Should().ThrowAsync<ValidationCustomException>();
 
-            repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Event>(), CancellationToken.None), Times.Never);
+            repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
 
@@ -455,6 +547,7 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var now = DateTime.Now;
+            var ct = CancellationToken.None;
 
             var existedEvent = Event.Create("Старое название", now, now.AddHours(1), "Старое описание");
             var eventId = existedEvent.Id;
@@ -467,10 +560,10 @@ namespace EventBookingService.Tests
                 Description = "Новое описание"
             };
 
-            repositoryMock.Setup(r => r.GetByIdAsync(eventId, CancellationToken.None)).ReturnsAsync(existedEvent);
+            repositoryMock.Setup(r => r.GetByIdAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync(existedEvent);
 
             // Act
-            await service.ChangeEventAsync(eventId, updateDto, CancellationToken.None);
+            await service.ChangeEventAsync(eventId, updateDto, ct);
 
             // Assert
             existedEvent.Should().BeEquivalentTo(updateDto, options => options
@@ -480,7 +573,27 @@ namespace EventBookingService.Tests
             );
 
             // Проверяем, что сервис вызвал Update у репозитория ровно один раз с этим объектом
-            repositoryMock.Verify(r => r.UpdateAsync(existedEvent, CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.UpdateAsync(existedEvent, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        [Trait("Category", "ChangeEvent")]
+        public async Task ChangeEvent_ShouldThrowIfCancelled()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            repositoryMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(It.IsAny<Event>());
+
+            // Act
+            Func<Task> act = async () => await service.ChangeEventAsync(It.IsAny<Guid>(), It.IsAny<UpdateEventDTO>(), cts.Token);
+
+            // Assert
+            await act.Should().ThrowAsync<OperationCanceledException>();
+            repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()), Times.Never);
         }
 
         #endregion
@@ -488,6 +601,7 @@ namespace EventBookingService.Tests
         #region CancelEvent tests
 
         [Fact]
+        [Trait("Category", "CancelEvent")]
         public async Task CancelEvent_ShouldDeleteEvent_WhenEventExists()
         {
             // Arrange
@@ -495,16 +609,19 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            repositoryMock.Setup(r => r.DeleteAsync(eventId, CancellationToken.None)).ReturnsAsync(true);
+            var ct = CancellationToken.None;
+
+            repositoryMock.Setup(r => r.DeleteAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
             // Act
-            await service.CancelEventAsync(eventId, CancellationToken.None);
+            await service.CancelEventAsync(eventId, ct);
 
             // Assert
-            repositoryMock.Verify(r => r.DeleteAsync(eventId, CancellationToken.None), Times.Once);
+            repositoryMock.Verify(r => r.DeleteAsync(eventId, It.IsAny<CancellationToken>()), Times.Once);
         }
 
         [Fact]
+        [Trait("Category", "CancelEvent")]
         public async Task CancelEvent_ShouldThrowNotFoundException_WhenEventDoesNotExist()
         {
             // Arrange
@@ -512,13 +629,37 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            repositoryMock.Setup(r => r.DeleteAsync(eventId, CancellationToken.None)).ReturnsAsync(false);
+            var ct = CancellationToken.None;
+
+            repositoryMock.Setup(r => r.DeleteAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
 
             // Act
-            Func<Task> act = async () => await service.CancelEventAsync(eventId, CancellationToken.None);
+            Func<Task> act = async () => await service.CancelEventAsync(eventId, ct);
 
             // Assert
             await act.Should().ThrowAsync<NotFoundException>();
+            repositoryMock.Verify(r => r.DeleteAsync(eventId, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        [Trait("Category", "CancelEvent")]
+        public async Task CancelEvent_ShouldThrowIfCancelled()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            var id = Guid.NewGuid();
+            repositoryMock.Setup(r => r.DeleteAsync(id, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+
+            // Act
+            Func<Task> act = async () => await service.CancelEventAsync(id, cts.Token);
+
+            // Assert
+            await act.Should().ThrowAsync<OperationCanceledException>();
+            repositoryMock.Verify(r => r.DeleteAsync(id, It.IsAny<CancellationToken>()), Times.Never);
         }
 
         #endregion
