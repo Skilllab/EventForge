@@ -47,20 +47,12 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
 
         _logger.LogInformation("Запрос списка событий. Страница: {Page}, Фильтр: {Filter}", filter.page, filter.title);
 
-        //Собираем фильтр для передачи в репозиторий
-        Func<Event, bool> query = e => true;
-        if (!string.IsNullOrEmpty(filter.title))
-            query += p => p.Title.Contains(filter.title, StringComparison.CurrentCultureIgnoreCase);
+        Func<Event, bool> query = e =>
+            (string.IsNullOrEmpty(filter.title) || e.Title.Contains(filter.title, StringComparison.OrdinalIgnoreCase)) &&
+            (!filter.from.HasValue || e.StartAt >= filter.from) &&
+            (!filter.to.HasValue || e.EndAt <= filter.to);
 
-        // события, которые начинаются не раньше указанной даты
-        if (filter.from.HasValue)
-            query = p => p.StartAt >= filter.from;
-
-        //события, которые заканчиваются не позже указанной даты
-        if (filter.to.HasValue)
-            query = p => p.EndAt <= filter.to;
-
-        var result = _repository.GetAll(query, filter.page, filter.pageSize, ct);
+        var result = _repository.GetAll(query, filter.page, filter.pageSize, ct).OrderBy(e=>e.Title);
 
         var filteredCount = _repository.GetTotalCount(ct);
 
