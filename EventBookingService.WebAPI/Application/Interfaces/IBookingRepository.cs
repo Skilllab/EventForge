@@ -28,10 +28,13 @@ namespace EventBookingService.WebAPI.Application.Interfaces
         /// <param name="ct">Токен отмены</param>
         Task<Booking?> GetByIdAsync(Guid id, CancellationToken ct);
 
+
         /// <summary>
-        /// Получение всех бронирований и возврат как AsQueryable, чтобы сервис мог накладывать фильтры
+        /// Получение всех бронирований с фильтрацией
         /// </summary>
-        IQueryable<Booking> GetAll(CancellationToken ct);
+        /// <param name="query">Предикат для фильтрации бронирований</param>
+        /// <param name="ct">Токен отмены</param>
+        List<Booking> GetAll(Func<Booking, bool> query, CancellationToken ct);
 
         /// <summary>
         /// Обновление бронирования

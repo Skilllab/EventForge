@@ -54,7 +54,7 @@ namespace EventBookingService.Tests
             //Мокаем именно получение события, а не создание, потому что именно этот метод "GetEventAsync" участвует в методе "CreateBookingAsync"
             eventServiceMock
                 .Setup(s => s.GetEventAsync(eventId, ct))
-                .ThrowsAsync(new NotFoundException("Event", eventId));
+                .ThrowsAsync(new NotFoundException(nameof(Event), eventId));
 
             // Act
             Func<Task> act = async () => await service.CreateBookingAsync(eventId, ct);
@@ -95,7 +95,7 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<BookingService>>();
             var service = new BookingService(eventServiceMock.Object, repositoryMock.Object, loggerMock.Object);
             var bookingId = Guid.NewGuid();
-            repositoryMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()));
+            repositoryMock.Setup(r => r.AddAsync(bookingId, It.IsAny<CancellationToken>()));
 
             // Act
             await service.GetBookingByIdAsync(bookingId, CancellationToken.None);

@@ -29,14 +29,26 @@ public interface IEventRepository
     Task<Event?> GetByIdAsync(Guid id, CancellationToken ct);
 
     /// <summary>
-    /// Получение всех событий и возврат как AsQueryable, чтобы сервис мог накладывать фильтры
-    /// </summary>
-    IQueryable<Event> GetAll(CancellationToken ct);
-
-    /// <summary>
     /// Обновление события
     /// </summary>
     /// <param name="event">Само событие</param>
     /// <param name="ct">Токен отмены</param>
     Task UpdateAsync(Event @event, CancellationToken ct);
+
+
+    /// <summary>
+    /// Получение всех событий с фильтрацией и пагинацией
+    /// </summary>
+    /// <param name="query">Предикат для фильтрации событий</param>
+    /// <param name="page">Номер страницы с данными для возврата</param>
+    /// <param name="pageSize">Количество элементов на странице</param>
+    /// <param name="ct">Токен отмены</param>
+    List<Event> GetAll(Func<Event, bool> query, int page, int pageSize, CancellationToken ct);
+
+    /// <summary>
+    /// Получение общего количества элементов в базе
+    /// </summary>
+    /// <param name="ct">Токен отмены</param>
+
+    long GetTotalCount(CancellationToken ct);
 }

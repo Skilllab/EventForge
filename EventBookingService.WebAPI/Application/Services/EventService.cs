@@ -1,3 +1,5 @@
+using System.Collections;
+
 using EventBookingService.WebAPI.Application.Exceptions;
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.Domain;
@@ -45,27 +47,24 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
 
         _logger.LogInformation("Запрос списка событий. Страница: {Page}, Фильтр: {Filter}", filter.page, filter.title);
 
-        IQueryable<Event> query = _repository.GetAll(ct);
-
+        //Собираем фильтр для передачи в репозиторий
+        Func<Event, bool> query = e => true;
         if (!string.IsNullOrEmpty(filter.title))
-            query = query.Where(p => p.Title.Contains(filter.title, StringComparison.CurrentCultureIgnoreCase));
+            query += p => p.Title.Contains(filter.title, StringComparison.CurrentCultureIgnoreCase);
 
         // события, которые начинаются не раньше указанной даты
         if (filter.from.HasValue)
-            query = query.Where(p => p.StartAt >= filter.from);
+            query = p => p.StartAt >= filter.from;
 
         //события, которые заканчиваются не позже указанной даты
         if (filter.to.HasValue)
-            query = query.Where(p => p.EndAt <= filter.to);
+            query = p => p.EndAt <= filter.to;
 
-        var filteredCount = query.Count();
+        var result = _repository.GetAll(query, filter.page, filter.pageSize, ct);
 
-        var items = query
-            .OrderBy(c => c.Title)
-            .Skip((filter.page - 1) * filter.pageSize)
-            .Take(filter.pageSize)
-            .Select(MapToDTO)
-            .ToList();
+        var filteredCount = _repository.GetTotalCount(ct);
+
+        var items = result.Select(MapToDTO).ToList();
 
         return new PaginatedResult(filteredCount, items, filter.page, filter.pageSize);
     }

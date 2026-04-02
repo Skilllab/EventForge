@@ -11,6 +11,7 @@ builder.Services.AddPresentation();
 
 var app = builder.Build();
 
+// Глобальный обработчик ошибок
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 
@@ -32,8 +33,7 @@ else
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
-// Глобальный обработчик ошибок
-app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
 app.MapControllers();
 
 app.Run();

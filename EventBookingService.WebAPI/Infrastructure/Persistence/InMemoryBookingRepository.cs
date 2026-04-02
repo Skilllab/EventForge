@@ -37,11 +37,16 @@ namespace EventBookingService.WebAPI.Infrastructure.Persistence
         }
 
         /// <inheritdoc/>
-        public IQueryable<Booking> GetAll(CancellationToken ct)
+        public List<Booking> GetAll(Func<Booking, bool> query, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
+            
+            var bookings = _bookings.Values;
+            
+            if (query != null) 
+                bookings = bookings.Where(query).ToList();
 
-            return _bookings.Values.AsQueryable();
+            return bookings.ToList();
         }
 
         /// <inheritdoc/>

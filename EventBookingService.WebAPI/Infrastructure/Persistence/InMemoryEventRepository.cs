@@ -37,11 +37,20 @@ public class InMemoryEventRepository : IEventRepository
     }
 
     /// <inheritdoc/>
-    public IQueryable<Event> GetAll(CancellationToken ct)
+    public List<Event> GetAll(Func<Event, bool> query, int page, int pageSize, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
+        if (page == 0)
+            throw new ArgumentException("Номер страницы пагинации не может быть менье 1");
 
-        return _events.Values.AsQueryable();
+        if (pageSize==0 && pageSize >100 )
+            throw new ArgumentException("Размер страницы должен быть в пределах от 1 до 100");
+
+        return _events.Values.Where(query)
+            .OrderBy(c => c.Title)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
     }
 
     /// <inheritdoc/>
@@ -51,4 +60,10 @@ public class InMemoryEventRepository : IEventRepository
         _events[@event.Id] = @event;
         await Task.CompletedTask;
     }
+
+    public long GetTotalCount(CancellationToken ct)
+    {
+        return  _events.LongCount();
+    }
+
 }
