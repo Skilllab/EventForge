@@ -17,7 +17,7 @@ app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseDeveloperExceptionPage();
+    //app.UseDeveloperExceptionPage();
     builder.Host.UseDefaultServiceProvider(options =>
     {
         options.ValidateScopes = true;

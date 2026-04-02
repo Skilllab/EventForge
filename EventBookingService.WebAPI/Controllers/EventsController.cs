@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Application.Services;
+using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO;
 
 using Microsoft.AspNetCore.Mvc;
@@ -89,7 +90,13 @@ namespace EventBookingService.WebAPI.Controllers
             logger.LogDebug("Обработка запроса POST {methodName}", nameof(CreateBook));
 
             var bookingDto = await bookingService.CreateBookingAsync(eventId, ct);
-            return AcceptedAtAction(nameof(CreateBook), bookingDto);
+
+            return AcceptedAtAction(
+                actionName: "GetBooking",
+                controllerName: "Bookings",
+                routeValues: new { bookingId = bookingDto.ID },
+                value: bookingDto
+            );
         }
     }
 }
