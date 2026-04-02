@@ -10,12 +10,12 @@ public class Booking
     /// <summary>
     /// Уникальный идентификатор брони
     /// </summary>
-    public Guid Id { get; set; }
+    public Guid Id { get; init; }
 
     /// <summary>
     /// Идентификатор события, к которому относится бронь
     /// </summary>
-    public Guid EventId { get; set; }
+    public Guid EventId { get; init; }
 
     /// <summary>
     /// Текущий статус брони
@@ -25,12 +25,12 @@ public class Booking
     /// <summary>
     /// Дата и время создания брони
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public DateTime CreatedAt { get; init; }
 
     /// <summary>
     /// Дата и время обработки брони
     /// </summary>
-    public DateTime ProcessedAt { get; set; }
+    public DateTime? ProcessedAt { get; set; }
 
     private Booking(Guid eventId, DateTime createdAt)
     {
@@ -44,7 +44,7 @@ public class Booking
     /// Метод создания события
     /// </summary>
     /// <param name="eventId">Идентификатор привязанного события</param>
-    /// <param name="createdAt">Время создания брони</param>
+    /// <param name="createdAt">Время создания брони. Может быть разное в зависимости от региона</param>
     /// <returns></returns>
     public static Booking Create(Guid eventId, DateTime createdAt) => new(eventId, createdAt);
 }

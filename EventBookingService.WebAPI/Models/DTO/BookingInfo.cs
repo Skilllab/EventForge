@@ -1,11 +1,22 @@
-using EventBookingService.WebAPI.Models.Domain;
+namespace EventBookingService.WebAPI.Models.DTO;
 
-namespace EventBookingService.WebAPI.Models.DTO
+/// <summary>
+/// DTO класс для ответа по созданию бронирования
+/// </summary>
+public class BookingInfo
 {
-    public class BookingInfo
-    {
-        public Guid ID { get; init; }
-        public Guid EventID { get; init; }
-        public string Status { get; init; }
-    }
+    /// <summary>
+    /// Идентификатор бронирования
+    /// </summary>
+    public Guid ID { get; init; }
+
+    /// <summary>
+    /// Идентификатор события по которому создано бронирование
+    /// </summary>
+    public Guid EventID { get; init; }
+
+    /// <summary>
+    /// Статус бронирования
+    /// </summary>
+    public string Status { get; init; }
 }

@@ -8,9 +8,9 @@ namespace EventBookingService.WebAPI.Models.Domain;
 public enum BookingStatus
 {
     /// <summary>
-    /// В процессе
+    /// Бронь создана, ожидает обработки
     /// </summary>
-    [Description("В процессе")]
+    [Description("Бронь создана, ожидает обработки")]
     Pending = 0,
 
     /// <summary>
@@ -20,8 +20,8 @@ public enum BookingStatus
     Confirmed = 1,
 
     /// <summary>
-    /// Бронь отменена
+    /// Бронь отклонена
     /// </summary>
-    [Description("Бронь отменена")]
+    [Description("Бронь отклонена")]
     Rejected = 2,
 }
