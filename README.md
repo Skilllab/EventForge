@@ -43,7 +43,7 @@
    ```
 4. Запустите выполнение тестов
    ```sh
-    dotnet test EventBookingService.Tests
+   dotnet test --project EventBookingService.Tests
    ```
 5. Запустите проект
    ```sh
