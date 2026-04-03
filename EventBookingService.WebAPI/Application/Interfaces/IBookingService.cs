@@ -12,7 +12,7 @@ namespace EventBookingService.WebAPI.Application.Interfaces
         /// </summary>
         /// <param name="eventId">ID события</param>
         /// <param name="ct">Токен отмены</param>
-        Task<BookingInfo> CreateBookingAsync(Guid eventId, CancellationToken ct);
+        Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct);
 
         /// <summary>
         /// Получение брони по идентификатору
@@ -20,6 +20,6 @@ namespace EventBookingService.WebAPI.Application.Interfaces
         /// <param name="bookingId">ID бронирования</param>
         /// <param name="ct">Токен отмены</param>
         /// <returns></returns>
-        Task<BookingInfo> GetBookingByIdAsync(Guid bookingId, CancellationToken ct);
+        Task<BookingInfoDTO> GetBookingByIdAsync(Guid bookingId, CancellationToken ct);
     }
 }

@@ -30,6 +30,7 @@ namespace EventBookingService.WebAPI.Application.Services
                         booking.Status = BookingStatus.Confirmed;
                         booking.ProcessedAt = DateTime.UtcNow;
                         await bookingRepository.UpdateAsync(booking, stoppingToken);
+                        logger.LogInformation("Обработка события {currentBooking} завершена {date} и переведена в статус {status}", booking.Id, booking.ProcessedAt, booking.Status.ToString() );
                     }
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

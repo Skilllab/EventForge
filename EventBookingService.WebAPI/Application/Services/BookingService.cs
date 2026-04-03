@@ -12,7 +12,7 @@ namespace EventBookingService.WebAPI.Application.Services
     {
 
         /// <inheritdoc/>
-        public async Task<BookingInfo> CreateBookingAsync(Guid eventId, CancellationToken ct)
+        public async Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -31,16 +31,16 @@ namespace EventBookingService.WebAPI.Application.Services
             return MapToDTO(newBooking);
         }
 
-        private BookingInfo MapToDTO(Booking newBooking)
+        private BookingInfoDTO MapToDTO(Booking newBooking)
         {
-            return new BookingInfo()
+            return new BookingInfoDTO()
             {
                 ID = newBooking.Id, EventID = newBooking.EventId, Status = newBooking.Status.ToString(),
             };
         }
 
         /// <inheritdoc/>
-        public async Task<BookingInfo> GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
+        public async Task<BookingInfoDTO> GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 

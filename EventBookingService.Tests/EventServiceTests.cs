@@ -10,8 +10,6 @@ using Microsoft.Extensions.Logging;
 
 using Moq;
 
-using static System.Net.WebRequestMethods;
-
 namespace EventBookingService.Tests
 {
     public class EventServiceTests

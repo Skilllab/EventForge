@@ -3,7 +3,7 @@ namespace EventBookingService.WebAPI.Models.DTO;
 /// <summary>
 /// DTO класс для ответа по созданию бронирования
 /// </summary>
-public class BookingInfo
+public class BookingInfoDTO
 {
     /// <summary>
     /// Идентификатор бронирования
