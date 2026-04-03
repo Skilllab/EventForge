@@ -18,6 +18,8 @@ namespace EventBookingService.WebAPI.Controllers
         [Tags("API для бронирования")]
         public async Task<IActionResult> GetBooking([Required]Guid bookingId, CancellationToken ct)
         {
+            logger.LogDebug("Обработка запроса GET {methodName}. Получение информации для бронирования: {bookingId}", nameof(GetBooking), bookingId);
+
             var bookingInfo = await bookingService.GetBookingByIdAsync(bookingId, ct);          
 
             return Ok(bookingInfo);
