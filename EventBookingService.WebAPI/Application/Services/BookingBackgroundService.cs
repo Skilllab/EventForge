@@ -3,6 +3,12 @@ using EventBookingService.WebAPI.Models.Domain;
 
 namespace EventBookingService.WebAPI.Application.Services
 {
+
+    /// <summary>
+    /// Фоновый сервис для регистрации бронирований
+    /// </summary>
+    /// <param name="scopeFactory"></param>
+    /// <param name="logger"></param>
     public class BookingBackgroundService(
         IServiceScopeFactory scopeFactory,
         ILogger<BookingBackgroundService> logger)

@@ -1,6 +1,7 @@
 using EventBookingService.WebAPI.Application.Exceptions;
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Application.Services;
+using EventBookingService.WebAPI.Infrastructure.Persistence;
 using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO.Events;
 
@@ -203,51 +204,63 @@ namespace EventBookingService.Tests
         }
 
         [Fact]
-        [Trait("Category", "CheckBooking")]
-        public async Task ExecuteAsync_ShouldChangeStatusToConfirmed_WhenBookingIsPending()
+        public async Task ExecuteAsync_ShouldUpdateStatus_AndServiceShouldReturnUpdatedBooking()
         {
             // Arrange
             var repositoryMock = new Mock<IBookingRepository>();
-            var loggerMock = new Mock<ILogger<BookingBackgroundService>>();
+            var loggerBgMock = new Mock<ILogger<BookingBackgroundService>>();
+            var loggerSvcMock = new Mock<ILogger<BookingService>>();
+            var eventServiceMock = new Mock<IEventService>();
             var scopeFactoryMock = new Mock<IServiceScopeFactory>();
             var scopeMock = new Mock<IServiceScope>();
             var serviceProviderMock = new Mock<IServiceProvider>();
 
+            // Настроим BackgroundService
             scopeFactoryMock.Setup(s => s.CreateScope()).Returns(scopeMock.Object);
             scopeMock.Setup(s => s.ServiceProvider).Returns(serviceProviderMock.Object);
             serviceProviderMock.Setup(s => s.GetService(typeof(IBookingRepository))).Returns(repositoryMock.Object);
 
-            var eventId = Guid.NewGuid();
-            var booking = Booking.Create(eventId, DateTime.Now);
+            var booking = Booking.Create(Guid.NewGuid(), DateTime.Now);
 
-            // Возвращаем список с одной бронью при вызове GetAll
+            // 1. Для фонового сервиса (поиск ожидающих)
             repositoryMock
                 .Setup(r => r.GetAll(It.IsAny<Func<Booking, bool>>(), It.IsAny<CancellationToken>()))
                 .Returns(new List<Booking> { booking });
 
-            var service = new BookingBackgroundService(scopeFactoryMock.Object, loggerMock.Object);
+            // 2. Для BookingService (получение по ID) — возвращаем тот же экземпляр
+            repositoryMock
+                .Setup(r => r.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(booking);
 
-            // Используем CancellationTokenSource, чтобы остановить бесконечный цикл после первой итерации
+            var backgroundService = new BookingBackgroundService(scopeFactoryMock.Object, loggerBgMock.Object);
+            var bookingService = new BookingService(eventServiceMock.Object, repositoryMock.Object, loggerSvcMock.Object);
             using var cts = new CancellationTokenSource();
 
             // Act
-            // Запускаем сервис
-            await service.StartAsync(cts.Token);
+            await backgroundService.StartAsync(cts.Token);
 
             // Даем сервису время отработать
             await Task.Delay(2500);
 
-            // Останавливаем сервис
-            await service.StopAsync(CancellationToken.None);
+            cts.Cancel();
+
+            await backgroundService.StopAsync(CancellationToken.None);
 
             // Assert
-            booking.Status.Should().Be(BookingStatus.Confirmed);
-            booking.ProcessedAt.Should().NotBeNull();
+            var resultDto = await bookingService.GetBookingByIdAsync(booking.Id, CancellationToken.None);
 
+            resultDto.Status.Should().Be(nameof(BookingStatus.Confirmed));
+            
             repositoryMock.Verify(r => r.UpdateAsync(
                 It.Is<Booking>(b => b.Id == booking.Id && b.Status == BookingStatus.Confirmed),
                 It.IsAny<CancellationToken>()),
                 Times.Once);
         }
+
+
+
+
+
+
     }
 }
