@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 using EventBookingService.WebAPI.Infrastructure.Persistence;
 using EventBookingService.WebAPI.Models.Domain;
 

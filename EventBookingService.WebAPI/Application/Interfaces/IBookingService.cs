@@ -1,4 +1,4 @@
-using EventBookingService.WebAPI.Models.DTO;
+using EventBookingService.WebAPI.Models.DTO.Booking;
 
 namespace EventBookingService.WebAPI.Application.Interfaces
 {

@@ -1,7 +1,8 @@
-﻿using EventBookingService.WebAPI.Infrastructure.Attributes;
+using EventBookingService.WebAPI.Infrastructure.Attributes;
+
 using System.ComponentModel.DataAnnotations;
 
-namespace EventBookingService.WebAPI.Models.DTO;
+namespace EventBookingService.WebAPI.Models.DTO.Events;
 
 /// <summary>
 /// DTO класс для создания события

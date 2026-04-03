@@ -1,4 +1,4 @@
-namespace EventBookingService.WebAPI.Models.DTO;
+namespace EventBookingService.WebAPI.Models.DTO.Booking;
 
 /// <summary>
 /// DTO класс для ответа по созданию бронирования

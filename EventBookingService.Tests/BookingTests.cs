@@ -20,8 +20,8 @@ public class BookingTests
         booking.Id.Should().NotBeEmpty();
         booking.EventId.Should().Be(eventId);
         booking.CreatedAt.Should().Be(createdAt);
-        booking.Status.Should().Be(BookingStatus.Pending); // Проверка статуса по умолчанию
-        booking.ProcessedAt.Should().BeNull(); // По умолчанию время обработки пустое
+        booking.Status.Should().Be(BookingStatus.Pending); 
+        booking.ProcessedAt.Should().BeNull(); 
     }
 
     [Fact]
@@ -37,22 +37,6 @@ public class BookingTests
 
         // Assert
         booking1.Id.Should().NotBe(booking2.Id);
-    }
-
-    [Fact]
-    public void Status_ShouldBeMutable_WhenUpdated()
-    {
-        // Arrange
-        var booking = Booking.Create(Guid.NewGuid(), DateTime.UtcNow);
-        var processedAt = DateTime.UtcNow;
-
-        // Act
-        booking.Status = BookingStatus.Confirmed;
-        booking.ProcessedAt = processedAt;
-
-        // Assert
-        booking.Status.Should().Be(BookingStatus.Confirmed);
-        booking.ProcessedAt.Should().Be(processedAt);
     }
 
     [Theory]

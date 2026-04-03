@@ -3,7 +3,7 @@ using System.Collections;
 using EventBookingService.WebAPI.Application.Exceptions;
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.Domain;
-using EventBookingService.WebAPI.Models.DTO;
+using EventBookingService.WebAPI.Models.DTO.Events;
 
 namespace EventBookingService.WebAPI.Application.Services;
 
