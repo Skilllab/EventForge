@@ -24,12 +24,14 @@ public class CreateEventDTO
     /// Дата начала события
     /// </summary>
     [Required(ErrorMessage = "Дата начала события не может быть пустой")]
+    [NotMinDateTime(ErrorMessage = "Дата начал события должна быть задана")]
     public DateTime StartAt { get; set; }
 
     /// <summary>
     /// Дата завершения события
     /// </summary>
     [Required(ErrorMessage = "Дата окончания события не может быть пустой")]
+    [NotMinDateTime(ErrorMessage = "Дата окончания события должна быть задана")]
     [DateGreater(nameof(StartAt))]
     public DateTime EndAt { get; set; }
 }
