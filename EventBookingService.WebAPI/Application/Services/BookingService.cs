@@ -8,8 +8,9 @@ namespace EventBookingService.WebAPI.Application.Services
     /// <summary>
     /// Сервис для работы с бронированием
     /// </summary>
-    public class BookingService(IEventService eventService, IBookingRepository repository, ILogger<BookingService> logger) : IBookingService
+    public class BookingService(IEventService eventService, IBookingRepository repository, IEventRepository repository2,  ILogger<BookingService> logger) : IBookingService
     {
+        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
 
         /// <inheritdoc/>
         public async Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct)
@@ -18,17 +19,35 @@ namespace EventBookingService.WebAPI.Application.Services
 
             logger.LogInformation("Создание нового бронирования для события: {Event}", eventId);
 
-            //Поиск события выкинет ошибку в случае если событие не будет найдено
-            await eventService.GetEventAsync(eventId, ct);
+            var existedEvent = await repository2.GetByIdAsync(eventId, ct);
+            if (existedEvent == null)
+            {
+                logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
+                throw new NotFoundException(nameof(Event), eventId);
+            }
 
-            var newBooking = Booking.Create(
-                eventId,
-                DateTime.Now
-            );
+            await _semaphore.WaitAsync(ct);
 
-            await repository.AddAsync(newBooking, ct);
-            logger.LogInformation("Бронирование успешно создано. ID: {Id} ", newBooking.Id);
-            return MapToDTO(newBooking);
+            try
+            {
+                if (!existedEvent.TryReserveSeats())
+                    throw new  NoAvailableSeatsException(nameof(Event), existedEvent.Id.ToString());
+
+                var newBooking = Booking.Create(
+                    eventId,
+                    DateTime.Now
+                );
+
+                await repository.AddAsync(newBooking, ct);
+                await repository2.UpdateAsync(existedEvent, ct);
+                logger.LogInformation("Бронирование успешно создано. ID: {Id} ", newBooking.Id);
+                return MapToDTO(newBooking);
+            }
+            finally
+            {
+                _semaphore.Release();
+            }
+           
         }
 
         private BookingInfoDTO MapToDTO(Booking newBooking)

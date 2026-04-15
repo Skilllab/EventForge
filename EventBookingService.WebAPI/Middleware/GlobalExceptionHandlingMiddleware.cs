@@ -1,5 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.ConstrainedExecution;
+
 using EventBookingService.WebAPI.Application.Exceptions;
+
 using Microsoft.AspNetCore.Mvc;
 
 namespace EventBookingService.WebAPI.Middleware
@@ -61,6 +64,13 @@ namespace EventBookingService.WebAPI.Middleware
                     Status = statusCode,
                     Detail = ver.Message
                 },
+                NoAvailableSeatsException nae=> new ProblemDetails
+                {
+                    Type = nae.EntityName,
+                    Instance = nae.EntityId,
+                    Status = statusCode,
+                    Detail = nae.Message
+                },
                 _ => new ProblemDetails()
                 {
                     Status = statusCode,
@@ -82,6 +92,7 @@ namespace EventBookingService.WebAPI.Middleware
                 ValidationCustomException or ValidationException => StatusCodes.Status400BadRequest,
                 NotFoundException => StatusCodes.Status404NotFound,
                 UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+                NoAvailableSeatsException => StatusCodes.Status409Conflict,
                 _ => StatusCodes.Status500InternalServerError
             };
     }

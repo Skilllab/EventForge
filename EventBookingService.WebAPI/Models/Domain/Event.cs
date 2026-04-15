@@ -41,8 +41,27 @@ public class Event
     /// </summary>
     public int AvailableSeats { get; private set; }
 
+    /// <summary>
+    /// Метод освобождения места от резервирования
+    /// </summary>
+    /// <param name="count">Количество мест для освобождения</param>
+    /// <returns></returns>
     public bool ReleaseSeats(int count = 1)
     {
+        return true;
+    }
+
+    /// <summary>
+    /// Метод резервирования мест для событий
+    /// </summary>
+    /// <param name="count">Количество мест к резервированию</param>
+    /// <returns></returns>
+    public bool TryReserveSeats(int count = 1)
+    {
+        if (AvailableSeats<count)
+            return false;
+
+        AvailableSeats -= count;
         return true;
     }
 
@@ -89,7 +108,7 @@ public class Event
         if (endDate<startDate)
             throw new ValidationCustomException(nameof(Event), Guid.Empty, "Дата окончания события не может быть раньше даты начала");
 
-        if (!(totalSeats > 0))
+        if (totalSeats <0)
             throw new ValidationCustomException(nameof(Event), Guid.Empty, "Общее количество мест для события должно быть больше нуля.");
 
         return new Event(title, startDate, endDate, totalSeats, description);

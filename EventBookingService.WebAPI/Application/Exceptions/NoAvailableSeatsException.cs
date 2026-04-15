@@ -6,11 +6,12 @@ namespace EventBookingService.WebAPI.Application.Exceptions
     public class NoAvailableSeatsException : ApplicationBaseException
     {
         /// <inheritdoc />
-        public NoAvailableSeatsException(string message, object entityName, string entityId)
+        public NoAvailableSeatsException(string entityName, string entityId)
             : base($"Для элемента {entityName} c ID: {entityId} нет доступных мест для бронирования", entityName, entityId) { }
 
         /// <inheritdoc />
-        public NoAvailableSeatsException(string message, Exception innerException)
-            : base(message, innerException) { }
+        /// <inheritdoc />
+        public NoAvailableSeatsException(string entityName, object entityId, string message)
+            : base(message, entityName, entityId.ToString()) { }
     }
 }
