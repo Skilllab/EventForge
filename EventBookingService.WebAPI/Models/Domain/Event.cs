@@ -46,7 +46,7 @@ public class Event
     /// </summary>
     /// <param name="count">Количество мест для освобождения</param>
     /// <returns></returns>
-    public bool ReleaseSeats(int count = 1)
+    public void ReleaseSeats(int count = 1)
     {
         if (AvailableSeats < count)
             AvailableSeats = 0;
