@@ -19,6 +19,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             newEventDTO.Title,
             newEventDTO.StartAt,
             newEventDTO.EndAt,
+            newEventDTO.TotalSeats,
             newEventDTO.Description
         );
 
@@ -121,7 +122,9 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             Title = currentEvent.Title,
             Description = currentEvent.Description,
             StartAt = currentEvent.StartAt,
-            EndAt = currentEvent.EndAt
+            EndAt = currentEvent.EndAt,
+            TotalSeats = currentEvent.TotalSeats,
+            AvailableSeats = currentEvent.AvailableSeats
         };
     }
 }
