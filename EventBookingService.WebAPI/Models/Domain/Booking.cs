@@ -41,6 +41,20 @@ public class Booking
     }
 
     /// <summary>
+    /// Подтверждаем бронирование
+    /// </summary>
+    public void Confirm()
+    {
+        Status = BookingStatus.Confirmed;
+        ProcessedAt = DateTime.UtcNow;
+    }
+
+    public void Reject()
+    {
+        Status = BookingStatus.Rejected;
+        ProcessedAt = DateTime.UtcNow;
+    }
+    /// <summary>
     /// Метод создания события
     /// </summary>
     /// <param name="eventId">Идентификатор привязанного события</param>

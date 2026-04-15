@@ -48,7 +48,10 @@ public class Event
     /// <returns></returns>
     public bool ReleaseSeats(int count = 1)
     {
-        return true;
+        if (AvailableSeats < count)
+            AvailableSeats = 0;
+        else
+            AvailableSeats -= count;
     }
 
     /// <summary>

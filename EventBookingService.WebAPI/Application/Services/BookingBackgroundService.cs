@@ -24,20 +24,8 @@ namespace EventBookingService.WebAPI.Application.Services
                 try
                 {
                     await using var scope = scopeFactory.CreateAsyncScope();
-                    var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
-
-                    Func<Booking, bool> query = e => e.Status == BookingStatus.Pending;
-
-                    var pendingBookings = bookingRepository.GetAll(query, stoppingToken);
-
-                    foreach (var booking in pendingBookings)
-                    {
-                        await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
-                        booking.Status = BookingStatus.Confirmed;
-                        booking.ProcessedAt = DateTime.UtcNow;
-                        await bookingRepository.UpdateAsync(booking, stoppingToken);
-                        logger.LogInformation("Обработка события {currentBooking} завершена {date} и переведена в статус {status}", booking.Id, booking.ProcessedAt, booking.Status.ToString() );
-                    }
+                    var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingService>();
+                    await bookingRepository.UpdateBookingAsync(stoppingToken);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
@@ -45,13 +33,10 @@ namespace EventBookingService.WebAPI.Application.Services
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Ошибка при подтверждении бронирования");
+                    logger.LogError(ex, "Ошибка при обработке бронирований");
                 }
                 await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
-
             }
-
-
         }
 
         public override Task StopAsync(CancellationToken cancellationToken)
@@ -59,7 +44,6 @@ namespace EventBookingService.WebAPI.Application.Services
             logger.LogInformation("Остановлен {backgroundServiceName}", nameof(BookingBackgroundService));
 
             return base.StopAsync(cancellationToken);
-
         }
     }
 }

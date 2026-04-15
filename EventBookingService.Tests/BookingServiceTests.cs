@@ -24,7 +24,7 @@ namespace EventBookingService.Tests
             var eventServiceMock = new Mock<IEventService>();
             var repositoryMock = new Mock<IBookingRepository>();
             var loggerMock = new Mock<ILogger<BookingService>>();
-            var service = new BookingService(eventServiceMock.Object, repositoryMock.Object, loggerMock.Object);
+            var service = new BookingService(repositoryMock.Object, loggerMock.Object);
             var eventId = Guid.NewGuid();
             var ct = CancellationToken.None;
             var eventDto = new ResponseEventDTO { Id = eventId, Title = "Test Event" };
@@ -52,7 +52,7 @@ namespace EventBookingService.Tests
             var eventServiceMock = new Mock<IEventService>();
             var repositoryMock = new Mock<IBookingRepository>();
             var loggerMock = new Mock<ILogger<BookingService>>();
-            var service = new BookingService(eventServiceMock.Object, repositoryMock.Object, loggerMock.Object);
+            var service = new BookingService(repositoryMock.Object, loggerMock.Object);
             var eventId = Guid.NewGuid();
             var ct = CancellationToken.None;
             var eventDto = new ResponseEventDTO { Id = eventId, Title = "Test Event" };
@@ -89,7 +89,7 @@ namespace EventBookingService.Tests
             var eventServiceMock = new Mock<IEventService>();
             var repositoryMock = new Mock<IBookingRepository>();
             var loggerMock = new Mock<ILogger<BookingService>>();
-            var service = new BookingService(eventServiceMock.Object, repositoryMock.Object, loggerMock.Object);
+            var service = new BookingService(repositoryMock.Object, loggerMock.Object);
             var eventId = Guid.NewGuid();
             var ct = CancellationToken.None;
             repositoryMock.Setup(r => r.AddAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()));
@@ -115,7 +115,7 @@ namespace EventBookingService.Tests
             var eventServiceMock = new Mock<IEventService>();
             var repositoryMock = new Mock<IBookingRepository>();
             var loggerMock = new Mock<ILogger<BookingService>>();
-            var service = new BookingService(eventServiceMock.Object, repositoryMock.Object, loggerMock.Object);
+            var service = new BookingService(repositoryMock.Object, loggerMock.Object);
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             repositoryMock.Setup(r => r.AddAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()));
@@ -136,7 +136,7 @@ namespace EventBookingService.Tests
             var eventServiceMock = new Mock<IEventService>();
             var repositoryMock = new Mock<IBookingRepository>();
             var loggerMock = new Mock<ILogger<BookingService>>();
-            var service = new BookingService(eventServiceMock.Object, repositoryMock.Object, loggerMock.Object);
+            var service = new BookingService(repositoryMock.Object, loggerMock.Object);
 
             var nonExistentId = Guid.NewGuid();
             var ct = CancellationToken.None;
@@ -167,7 +167,7 @@ namespace EventBookingService.Tests
             var eventServiceMock = new Mock<IEventService>();
             var repositoryMock = new Mock<IBookingRepository>();
             var loggerMock = new Mock<ILogger<BookingService>>();
-            var service = new BookingService(eventServiceMock.Object, repositoryMock.Object, loggerMock.Object);
+            var service = new BookingService(repositoryMock.Object, loggerMock.Object);
             var booking = Booking.Create(Guid.NewGuid(), DateTime.Now);
             repositoryMock.Setup(r => r.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
 
@@ -188,7 +188,7 @@ namespace EventBookingService.Tests
             var eventServiceMock = new Mock<IEventService>();
             var repositoryMock = new Mock<IBookingRepository>();
             var loggerMock = new Mock<ILogger<BookingService>>();
-            var service = new BookingService(eventServiceMock.Object, repositoryMock.Object, loggerMock.Object);
+            var service = new BookingService(repositoryMock.Object, loggerMock.Object);
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             repositoryMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()));
@@ -233,7 +233,7 @@ namespace EventBookingService.Tests
                 .ReturnsAsync(booking);
 
             var backgroundService = new BookingBackgroundService(scopeFactoryMock.Object, loggerBgMock.Object);
-            var bookingService = new BookingService(eventServiceMock.Object, repositoryMock.Object, loggerSvcMock.Object);
+            var bookingService = new BookingService(repositoryMock.Object, loggerSvcMock.Object);
             using var cts = new CancellationTokenSource();
 
             // Act

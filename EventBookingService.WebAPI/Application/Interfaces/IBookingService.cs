@@ -15,6 +15,12 @@ namespace EventBookingService.WebAPI.Application.Interfaces
         Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct);
 
         /// <summary>
+        /// Обновить все бронирования со статусом Pending в репозитории
+        /// </summary>
+        /// <param name="ct">Токен отмены</param>
+        Task UpdateBookingAsync(CancellationToken ct);
+
+        /// <summary>
         /// Получение брони по идентификатору
         /// </summary>
         /// <param name="bookingId">ID бронирования</param>
