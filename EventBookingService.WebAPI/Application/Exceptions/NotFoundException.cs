@@ -1,30 +1,16 @@
-﻿namespace EventBookingService.WebAPI.Application.Exceptions
+namespace EventBookingService.WebAPI.Application.Exceptions
 {
     /// <summary>
     /// Исключение, которое выбрасывается в случае если сущность не была найдена 
     /// </summary>
-    public class NotFoundException : ApplicationException
+    public class NotFoundException : ApplicationBaseException
     {
-        /// <summary>
-        /// Тип сущности
-        /// </summary>
-        public string EntityName { get; }
+        /// <inheritdoc />
+        public NotFoundException(string entityName, object entityId)
+            : base($"Элемент {entityName} c ID: '{entityId}' не найден.", entityName, entityId.ToString()) { }
 
-        /// <summary>
-        /// Идентификатор сущности
-        /// </summary>
-        public string EntityId { get; }
-
-        public NotFoundException(string entityName, object entityId) : base($"Элемент {entityName} c ID: '{entityId}' не найден.")
-        {
-            EntityName = entityName;
-            EntityId = entityId.ToString();
-        }
-
-        public NotFoundException(string entityName, object entityId, string message) : base(message)
-        {
-            EntityName = entityName;
-            EntityId = entityId.ToString();
-        }
+        /// <inheritdoc />
+        public NotFoundException(string entityName, object entityId, string message)
+            : base(message, entityName, entityId.ToString()) { }
     }
 }

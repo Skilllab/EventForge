@@ -1,30 +1,16 @@
-﻿namespace EventBookingService.WebAPI.Application.Exceptions
+namespace EventBookingService.WebAPI.Application.Exceptions
 {
     /// <summary>
     /// Исключение, которое выбрасывается в случае если у сущности есть ошибки валидации 
     /// </summary>
-    public class ValidationCustomException : ApplicationException
+    public class ValidationCustomException : ApplicationBaseException
     {
-        /// <summary>
-        /// Тип сущности
-        /// </summary>
-        public string EntityName { get; }
+        /// <inheritdoc />
+        public ValidationCustomException(string entityName, object entityId)
+            : base($"Элемент {entityName} c ID: '{entityId}' имеет ошибки валидации.", entityName, entityId.ToString()) { }
 
-        /// <summary>
-        /// Идентификатор сущности
-        /// </summary>
-        public string EntityId { get; }
-
-        public ValidationCustomException(string entityName, object entityId) : base($"Элемент {entityName} c ID: '{entityId}' имеет ошибки валидации.")
-        {
-            EntityName = entityName;
-            EntityId = entityId.ToString();
-        }
-
-        public ValidationCustomException(string entityName, object entityId, string message) : base(message)
-        {
-            EntityName = entityName;
-            EntityId = entityId.ToString();
-        }
+        /// <inheritdoc />
+        public ValidationCustomException(string entityName, object entityId, string message)
+            : base(entityName, entityId, message) { }
     }
 }
