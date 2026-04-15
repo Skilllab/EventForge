@@ -1,6 +1,6 @@
-﻿using EventBookingService.WebAPI.Infrastructure.Attributes;
+using EventBookingService.WebAPI.Infrastructure.Attributes;
 
-namespace EventBookingService.WebAPI.Models.DTO;
+namespace EventBookingService.WebAPI.Models.DTO.Events;
 
 /// <summary>
 /// DTO класс для изменения события

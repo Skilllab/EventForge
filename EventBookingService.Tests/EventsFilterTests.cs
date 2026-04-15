@@ -1,5 +1,7 @@
-﻿using EventBookingService.WebAPI.Models.DTO;
 using System.ComponentModel.DataAnnotations;
+
+using EventBookingService.WebAPI.Models.DTO.Events;
+
 using FluentAssertions;
 
 namespace EventBookingService.Tests

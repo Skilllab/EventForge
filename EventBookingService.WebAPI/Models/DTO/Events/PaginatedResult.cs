@@ -1,4 +1,4 @@
-﻿namespace EventBookingService.WebAPI.Models.DTO
+namespace EventBookingService.WebAPI.Models.DTO.Events
 {
     /// <summary>
     /// Перечень событий с фильтрацией и пагинацией
@@ -12,7 +12,7 @@
         /// <param name="events">Список событий</param>
         /// <param name="currentPageNumber">Номер текущей страницы</param>
         /// <param name="eventsCountOnCurrentPage">Количество элементов на текущей странице</param>
-        public PaginatedResult(int eventsTotalCount,
+        public PaginatedResult(long eventsTotalCount,
             List<ResponseEventDTO> events,
             int currentPageNumber,
             int eventsCountOnCurrentPage)
@@ -26,7 +26,7 @@
         /// <summary>
         /// Общее количество событий
         /// </summary>
-        public int EventsTotalCount { get; set; }
+        public long EventsTotalCount { get; set; }
 
         /// <summary>
         /// Список событий

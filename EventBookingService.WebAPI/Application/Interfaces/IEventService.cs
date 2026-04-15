@@ -1,4 +1,4 @@
-﻿using EventBookingService.WebAPI.Models.DTO;
+using EventBookingService.WebAPI.Models.DTO.Events;
 
 namespace EventBookingService.WebAPI.Application.Interfaces;
 
@@ -7,13 +7,39 @@ namespace EventBookingService.WebAPI.Application.Interfaces;
 /// </summary>
 public interface IEventService
 {
-    ResponseEventDTO CreateEvent(CreateEventDTO currentEvent);
+    /// <summary>
+    /// Создание события
+    /// </summary>
+    /// <param name="currentEvent">Входящая DTO</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<ResponseEventDTO> CreateEventAsync(CreateEventDTO currentEvent, CancellationToken ct);
 
-    void CancelEvent(Guid eventId);
+    /// <summary>
+    /// Отмена события
+    /// </summary>
+    /// <param name="eventId">ID события</param>
+    /// <param name="ct">Токен отмены</param>
+    Task CancelEventAsync(Guid eventId, CancellationToken ct);
 
-    PaginatedResult GetEvents(EventsFilter filter );
+    /// <summary>
+    /// Получение событий с пагинацией
+    /// </summary>
+    /// <param name="filter">Фильтр для применения пагинации</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<PaginatedResult> GetEventsAsync(EventsFilter filter, CancellationToken ct);
 
-    ResponseEventDTO GetEvent(Guid eventId);
+    /// <summary>
+    /// Поиск события
+    /// </summary>
+    /// <param name="eventId">ID события</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<ResponseEventDTO> GetEventAsync(Guid eventId, CancellationToken ct);
 
-    void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent);
+    /// <summary>
+    /// Изменение события
+    /// </summary>
+    /// <param name="eventId">ID события</param>
+    /// <param name="currentEvent">Свойства из DTO для обновления события</param>
+    /// <param name="ct">Токен отмены</param>
+    Task ChangeEventAsync(Guid eventId, UpdateEventDTO currentEvent, CancellationToken ct);
 }

@@ -1,4 +1,4 @@
-﻿using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.WebAPI.Models.Domain;
 
 namespace EventBookingService.WebAPI.Application.Interfaces;
 
@@ -7,13 +7,48 @@ namespace EventBookingService.WebAPI.Application.Interfaces;
 /// </summary>
 public interface IEventRepository
 {
-    void Add(Event @event);
+    /// <summary>
+    /// Добавление события в репозиторий
+    /// </summary>
+    /// <param name="event">Само событие</param>
+    /// <param name="ct">Токен отмены</param>
+    Task AddAsync(Event @event, CancellationToken ct);
 
-    bool Delete(Guid id);
+    /// <summary>
+    /// Удаление события из репозитория
+    /// </summary>
+    /// <param name="id">ID события</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<bool> DeleteAsync(Guid id, CancellationToken ct);
 
-    Event? GetById(Guid id);
+    /// <summary>
+    /// Получение события по ID
+    /// </summary>
+    /// <param name="id">ID события</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<Event?> GetByIdAsync(Guid id, CancellationToken ct);
 
-    IQueryable<Event> GetAll();
+    /// <summary>
+    /// Обновление события
+    /// </summary>
+    /// <param name="event">Само событие</param>
+    /// <param name="ct">Токен отмены</param>
+    Task UpdateAsync(Event @event, CancellationToken ct);
 
-    void Update(Event @event);
+
+    /// <summary>
+    /// Получение всех событий с фильтрацией и пагинацией
+    /// </summary>
+    /// <param name="query">Предикат для фильтрации событий</param>
+    /// <param name="page">Номер страницы с данными для возврата</param>
+    /// <param name="pageSize">Количество элементов на странице</param>
+    /// <param name="ct">Токен отмены</param>
+    List<Event> GetAll(Func<Event, bool> query, int page, int pageSize, CancellationToken ct);
+
+    /// <summary>
+    /// Получение общего количества элементов в базе
+    /// </summary>
+    /// <param name="ct">Токен отмены</param>
+
+    long GetTotalCount(CancellationToken ct);
 }

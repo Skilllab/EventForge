@@ -1,14 +1,19 @@
-﻿using EventBookingService.WebAPI.Application.Exceptions;
+using System.Collections;
+
+using EventBookingService.WebAPI.Application.Exceptions;
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.Domain;
-using EventBookingService.WebAPI.Models.DTO;
+using EventBookingService.WebAPI.Models.DTO.Events;
 
 namespace EventBookingService.WebAPI.Application.Services;
 
 public class EventService(IEventRepository _repository, ILogger<EventService>_logger) : IEventService
 {
-    public ResponseEventDTO CreateEvent(CreateEventDTO newEventDTO)
+    /// <inheritdoc/>
+    public async Task<ResponseEventDTO> CreateEventAsync(CreateEventDTO newEventDTO, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         _logger.LogInformation("Создание нового события: {Title}", newEventDTO.Title);
         var newEvent = Event.Create(
             newEventDTO.Title,
@@ -17,53 +22,51 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             newEventDTO.Description
         );
 
-        _repository.Add(newEvent);
+        await _repository.AddAsync(newEvent, ct);
         _logger.LogInformation("Событие успешно создано. ID: {Id}", newEvent.Id);
         return MapToDTO(newEvent);
     }
 
-    public void CancelEvent(Guid eventId)
+    /// <inheritdoc/>
+    public async Task CancelEventAsync(Guid eventId, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         _logger.LogDebug("Попытка удаления события с ID: {Id}", eventId);
-        if (!_repository.Delete(eventId))
+        if (!await _repository.DeleteAsync(eventId, ct))
         {
             throw new NotFoundException(nameof(Event), eventId);
         }
         _logger.LogInformation("Событие успешно удалено. ID: {Id} ", eventId);
     }
 
-    public PaginatedResult GetEvents(EventsFilter filter)
+    /// <inheritdoc/>
+    public async Task<PaginatedResult> GetEventsAsync(EventsFilter filter, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         _logger.LogInformation("Запрос списка событий. Страница: {Page}, Фильтр: {Filter}", filter.page, filter.title);
 
-        var query = _repository.GetAll();
+        Func<Event, bool> query = e =>
+            (string.IsNullOrEmpty(filter.title) || e.Title.Contains(filter.title, StringComparison.OrdinalIgnoreCase)) &&
+            (!filter.from.HasValue || e.StartAt >= filter.from) &&
+            (!filter.to.HasValue || e.EndAt <= filter.to);
 
-        if (!string.IsNullOrEmpty(filter.title))
-            query = query.Where(p => p.Title.Contains(filter.title, StringComparison.CurrentCultureIgnoreCase));
+        var result = _repository.GetAll(query, filter.page, filter.pageSize, ct).OrderBy(e=>e.Title);
 
-        // события, которые начинаются не раньше указанной даты
-        if (filter.from.HasValue)
-            query = query.Where(p => p.StartAt >= filter.from);
+        var filteredCount = _repository.GetTotalCount(ct);
 
-        //события, которые заканчиваются не позже указанной даты
-        if (filter.to.HasValue)
-            query = query.Where(p => p.EndAt <= filter.to);
-
-        var filteredCount = query.Count();
-
-        var items = query
-            .OrderBy(c => c.Title)
-            .Skip((filter.page - 1) * filter.pageSize)
-            .Take(filter.pageSize)
-            .Select(MapToDTO)
-            .ToList();
+        var items = result.Select(MapToDTO).ToList();
 
         return new PaginatedResult(filteredCount, items, filter.page, filter.pageSize);
     }
 
-    public ResponseEventDTO GetEvent(Guid eventId)
+    /// <inheritdoc/>
+    public async Task<ResponseEventDTO> GetEventAsync(Guid eventId, CancellationToken ct)
     {
-        var existedEvent = _repository.GetById(eventId);
+        ct.ThrowIfCancellationRequested();
+
+        var existedEvent = await _repository.GetByIdAsync(eventId, ct);
         if (existedEvent == null)
         {
             _logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
@@ -73,10 +76,13 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         return MapToDTO(existedEvent);
     }
 
-    public void ChangeEvent(Guid eventId, UpdateEventDTO currentEvent)
+    /// <inheritdoc/>
+    public async Task ChangeEventAsync(Guid eventId, UpdateEventDTO currentEvent, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         _logger.LogInformation("Обновление события {Id}", eventId);
-        var existedEvent = _repository.GetById(eventId);
+        var existedEvent = await _repository.GetByIdAsync(eventId, ct);
         if (existedEvent == null)
         {
             _logger.LogError("Ошибка обновления: событие не существует. ID: {Id}", eventId);
@@ -98,7 +104,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             currentEvent.EndAt ?? existedEvent.EndAt,
             currentEvent.Description ?? existedEvent.Description);
 
-        _repository.Update(existedEvent);
+        await _repository.UpdateAsync(existedEvent, ct);
         _logger.LogInformation("Событие успешно обновлено. ID: {Id}", eventId);
     }
 

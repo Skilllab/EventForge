@@ -1,4 +1,4 @@
-﻿using EventBookingService.WebAPI.Application.Interfaces;
+using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.Domain;
 using System.Collections.Concurrent;
 
@@ -10,34 +10,60 @@ namespace EventBookingService.WebAPI.Infrastructure.Persistence;
 public class InMemoryEventRepository : IEventRepository
 {
     private static readonly ConcurrentDictionary<Guid, Event> _events = new();
-    
 
-    public void Add(Event @event)
+    /// <inheritdoc/>
+    public async Task AddAsync(Event @event, CancellationToken ct)
     {
-        _events.TryAdd(@event.Id, @event);
+        ct.ThrowIfCancellationRequested();
+
+        await Task.FromResult(_events.TryAdd(@event.Id, @event));
     }
 
-    public bool Delete(Guid id)
+    /// <inheritdoc/>
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
     {
-        return _events.TryRemove(id, out _);
+        ct.ThrowIfCancellationRequested();
+
+        return await Task.FromResult(_events.TryRemove(id, out _));
     }
 
-    public Event? GetById(Guid id)
+    /// <inheritdoc/>
+    public async Task<Event?> GetByIdAsync(Guid id, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
+
         _events.TryGetValue(id, out var @event);
-        return @event;
+        return await Task.FromResult(@event);
     }
 
-    /// <summary>
-    /// Возвращаем как AsQueryable, чтобы сервис мог накладывать фильтры
-    /// </summary>
-    public IQueryable<Event> GetAll()
+    /// <inheritdoc/>
+    public List<Event> GetAll(Func<Event, bool> query, int page, int pageSize, CancellationToken ct)
     {
-        return _events.Values.AsQueryable();
+        ct.ThrowIfCancellationRequested();
+        if (page == 0)
+            throw new ArgumentException("Номер страницы пагинации не может быть менье 1");
+
+        if (pageSize==0 && pageSize >100 )
+            throw new ArgumentException("Размер страницы должен быть в пределах от 1 до 100");
+
+        return _events.Values.Where(query)
+            .OrderBy(c => c.Title)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
     }
 
-    public void Update(Event @event)
+    /// <inheritdoc/>
+    public async Task UpdateAsync(Event @event, CancellationToken ct)
     {
+        ct.ThrowIfCancellationRequested();
         _events[@event.Id] = @event;
+        await Task.CompletedTask;
     }
+
+    public long GetTotalCount(CancellationToken ct)
+    {
+        return  _events.LongCount();
+    }
+
 }

@@ -1,4 +1,4 @@
-﻿using EventBookingService.WebAPI.Application.Interfaces;
+using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Application.Services;
 using EventBookingService.WebAPI.Infrastructure.Persistence;
 
@@ -10,8 +10,12 @@ public static class DependencyInjection
     {
         // Регистрируем как Singleton, чтобы данные не пропадали между запросами
         services.AddSingleton<IEventRepository, InMemoryEventRepository>();
+        services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
 
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IBookingService, BookingService>();
+
+        services.AddHostedService<BookingBackgroundService>();
 
         return services;
     }
