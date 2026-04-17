@@ -49,9 +49,10 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         _logger.LogInformation("Запрос списка событий. Страница: {Page}, Фильтр: {Filter}", filter.page, filter.title);
 
         Func<Event, bool> query = e =>
-            (string.IsNullOrEmpty(filter.title) || e.Title.Contains(filter.title, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(filter.title) ||
+             e.Title.Contains(filter.title, StringComparison.OrdinalIgnoreCase)) &&
             (!filter.from.HasValue || e.StartAt >= filter.from) &&
-            (!filter.to.HasValue || e.EndAt <= filter.to);
+            (!filter.to.HasValue || e.EndAt.Date <= filter.to.Value.Date);
 
         var result = _repository.GetAll(query, filter.page, filter.pageSize, ct).OrderBy(e=>e.Title);
 
@@ -61,6 +62,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
 
         return new PaginatedResult(filteredCount, items, filter.page, filter.pageSize);
     }
+
 
     /// <inheritdoc/>
     public async Task<ResponseEventDTO> GetEventAsync(Guid eventId, CancellationToken ct)
