@@ -16,7 +16,7 @@ public class ResponseEventDTO
     /// <summary>
     /// Описание события
     /// </summary>
-    public string Description { get; init; }
+    public string? Description { get; init; }
     /// <summary>
     /// Дата начала события
     /// </summary>

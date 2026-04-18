@@ -38,6 +38,6 @@ public class CreateEventDTO
     /// <summary>
     /// Общее количество мест на событии
     /// </summary>
-    [Required(ErrorMessage = "Общее количество мест для события должно быть больше нуля")]
+    [Range(1, int.MaxValue, ErrorMessage = "Общее количество мест для события должно быть больше нуля")]
     public int TotalSeats { get; set; }
 }

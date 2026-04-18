@@ -48,10 +48,10 @@ public class Event
     /// <returns></returns>
     public void ReleaseSeats(int count = 1)
     {
-        if (AvailableSeats < count)
-            AvailableSeats = 0;
+        if (AvailableSeats + count >= TotalSeats)
+            AvailableSeats = TotalSeats;
         else
-            AvailableSeats -= count;
+            AvailableSeats += count;
     }
 
     /// <summary>
