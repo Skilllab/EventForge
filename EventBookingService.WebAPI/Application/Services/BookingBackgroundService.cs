@@ -1,5 +1,4 @@
 using EventBookingService.WebAPI.Application.Interfaces;
-using EventBookingService.WebAPI.Models.Domain;
 
 namespace EventBookingService.WebAPI.Application.Services
 {
@@ -14,6 +13,8 @@ namespace EventBookingService.WebAPI.Application.Services
         ILogger<BookingBackgroundService> logger)
         : BackgroundService
     {
+
+        private const int delayForRepeatInSeconds = 10;
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
 
@@ -24,8 +25,8 @@ namespace EventBookingService.WebAPI.Application.Services
                 try
                 {
                     await using var scope = scopeFactory.CreateAsyncScope();
-                    var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingService>();
-                    await bookingRepository.UpdateBookingAsync(stoppingToken);
+                    var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+                    await bookingService.UpdateBookingAsync(stoppingToken);
                 }
                 catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
                 {
@@ -35,7 +36,7 @@ namespace EventBookingService.WebAPI.Application.Services
                 {
                     logger.LogError(ex, "Ошибка при обработке бронирований");
                 }
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(delayForRepeatInSeconds), stoppingToken);
             }
         }
 

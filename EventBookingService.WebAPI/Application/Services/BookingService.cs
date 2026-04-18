@@ -8,10 +8,12 @@ namespace EventBookingService.WebAPI.Application.Services
     /// <summary>
     /// Сервис для работы с бронированием
     /// </summary>
-    public class BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository,  ILogger<BookingService> logger) : IBookingService
+    public class BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger) : IBookingService
     {
         private readonly SemaphoreSlim _semaphoreCreate = new SemaphoreSlim(1, 1);
         private readonly SemaphoreSlim _semaphoreUpdate = new SemaphoreSlim(1, 1);
+
+        private const int delayConnectToBaseInSeconds = 2;
 
         /// <inheritdoc/>
         public async Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct)
@@ -46,7 +48,7 @@ namespace EventBookingService.WebAPI.Application.Services
             }
             catch (OperationCanceledException)
             {
-                logger.LogWarning("Процесс создания брони для события с ID: {Id} прерван", existedEvent.Id );
+                logger.LogWarning("Процесс создания брони для события с ID: {Id} прерван", existedEvent.Id);
                 throw;
             }
             finally
@@ -59,7 +61,9 @@ namespace EventBookingService.WebAPI.Application.Services
         {
             return new BookingInfoDTO()
             {
-                ID = newBooking.Id, EventID = newBooking.EventId, Status = newBooking.Status.ToString(),
+                ID = newBooking.Id,
+                EventID = newBooking.EventId,
+                Status = newBooking.Status.ToString(),
             };
         }
 
@@ -70,10 +74,10 @@ namespace EventBookingService.WebAPI.Application.Services
 
             logger.LogInformation("Получение бронирования : {bookingId}", bookingId);
 
-            var booking =  await bookingRepository.GetByIdAsync(bookingId, ct);
-            if(booking == null)
+            var booking = await bookingRepository.GetByIdAsync(bookingId, ct);
+            if (booking == null)
                 throw new NotFoundException(nameof(Booking), bookingId);
-                
+
             return MapToDTO(booking);
         }
 
@@ -90,25 +94,21 @@ namespace EventBookingService.WebAPI.Application.Services
         private async Task ProcessBookingAsync(Booking booking, CancellationToken ct)
         {
             //Имитируем запросы в БД
-            await Task.Delay(TimeSpan.FromSeconds(2), ct);
+            await Task.Delay(TimeSpan.FromSeconds(delayConnectToBaseInSeconds), ct);
 
             var existedEvent = await eventRepository.GetByIdAsync(booking.EventId, ct);
-           
+            if (existedEvent == null)
+            {
+                logger.LogWarning("Событие не найдено при запросе бронирования. ID: {Id}", booking.EventId);
+                throw new NotFoundException(nameof(Event), booking.EventId, "В процессе бронирования событие не было найдено в хранилище");
+            }
 
             await _semaphoreUpdate.WaitAsync(ct);
+
+            bool needUpdate = false;
             try
             {
-                if (existedEvent == null)
-                {
-                    booking.Status = BookingStatus.Rejected;
-                    logger.LogWarning("Событие не найдено при запросе бронирования. ID: {Id}", booking.EventId);
-                    throw new NotFoundException(nameof(Event), booking.EventId, "В процессе бронирования событие не было найдено в хранилище");
-                }
-
-                
                 booking.Confirm();
-                existedEvent.TryReserveSeats();
-
                 logger.LogInformation(
                     "Обработка события {currentBooking} завершена {date} и переведена в статус {status}",
                     booking.Id, booking.ProcessedAt, booking.Status.ToString());
@@ -118,25 +118,26 @@ namespace EventBookingService.WebAPI.Application.Services
                 booking.Reject();
                 existedEvent.ReleaseSeats();
                 logger.LogWarning("Процесс подтверждения брони с ID: {Id} прерван", booking.Id);
+                needUpdate = true;
+                throw;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
                 booking.Reject();
                 existedEvent.ReleaseSeats();
-                logger.LogError(e, "Ошибка при обработке подтверждения бронирования");
+                logger.LogError(ex, "Ошибка при обработке подтверждения бронирования {ID}", booking.Id);
+                needUpdate = true;
                 throw;
             }
             finally
             {
                 await bookingRepository.UpdateAsync(booking, ct);
-                if (existedEvent != null)
-                {
+                if (needUpdate) 
                     await eventRepository.UpdateAsync(existedEvent, ct);
-                }
 
                 _semaphoreUpdate.Release();
             }
-            
+
         }
     }
 }
