@@ -116,12 +116,13 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var filter = new EventsFilter();
             var now = DateTime.Now;
+            var totalSeats = 1;
             var ct = CancellationToken.None;
             var fakeEvents = new List<Event>
             {
-                Event.Create("тестовое событие 1", now, now.AddHours(1)),
-                Event.Create("тестовое событие 34", now, now.AddHours(2)),
-                Event.Create("тестовое событие 2", now, now.AddHours(3)),
+                Event.Create("тестовое событие 1", now, now.AddHours(1), totalSeats),
+                Event.Create("тестовое событие 34", now, now.AddHours(2), totalSeats),
+                Event.Create("тестовое событие 2", now, now.AddHours(3), totalSeats)
             };
             repositoryMock.Setup(r => r.GetTotalCount(It.IsAny<CancellationToken>())).Returns(fakeEvents.Count);
 
@@ -155,13 +156,14 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var filteredWord = "встреча";
             var ct = CancellationToken.None;
+            var totalSeats = 1;
             var filter = new EventsFilter() { title = filteredWord };
             var now = DateTime.Now;
             var fakeEvents = new List<Event>
             {
-                Event.Create("Деловая всТреча", now, now.AddHours(1)),
-                Event.Create("Ужин при свечах", now, now.AddHours(2)),
-                Event.Create("встречА на высшем уровне", now, now.AddHours(3)),
+                Event.Create("Деловая всТреча", now, now.AddHours(1), totalSeats),
+                Event.Create("Ужин при свечах", now, now.AddHours(2), totalSeats),
+                Event.Create("встречА на высшем уровне", now, now.AddHours(3), totalSeats)
             };
 
             repositoryMock
@@ -191,13 +193,14 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var now = DateTime.Now;
+            var totalSeats = 1;
             var filter = new EventsFilter() { from = now.AddHours(2) };
             var ct = CancellationToken.None;
             var fakeEvents = new List<Event>
             {
-                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(5)),
-                Event.Create("Встреча 2", now.AddHours(2), now.AddHours(5)),
-                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(5))
+                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(5), totalSeats),
+                Event.Create("Встреча 2", now.AddHours(2), now.AddHours(5), totalSeats),
+                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(5), totalSeats)
             };
 
             repositoryMock
@@ -226,13 +229,14 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var now = DateTime.Now;
+            var totalSeats = 1;
             var filter = new EventsFilter() { to = now.AddHours(2) };
             var ct = CancellationToken.None;
             var fakeEvents = new List<Event>
             {
-                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(1)),
-                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(12)),
-                Event.Create("Встреча 2", now.AddHours(1), now.AddHours(1)),
+                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(1), totalSeats),
+                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(12), totalSeats),
+                Event.Create("Встреча 2", now.AddHours(1), now.AddHours(1), totalSeats)
             };
 
             repositoryMock
@@ -262,16 +266,17 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var filter = new EventsFilter { page = 2, pageSize = 3 };
             var now = DateTime.Now;
+            var totalSeats = 1;
             var ct = CancellationToken.None;
             // Создаем список тестовых данных, которые "якобы" есть в репозитории
             var fakeEvents = new List<Event>
             {
-                Event.Create("Событие 1", now, now.AddHours(1)),
-                Event.Create("Событие 2", now, now.AddHours(1)),
-                Event.Create("Событие 3", now, now.AddHours(1)),
-                Event.Create("Событие 4", now, now.AddHours(1)),
-                Event.Create("Событие 5", now, now.AddHours(1)),
-                Event.Create("Событие 6", now, now.AddHours(1))
+                Event.Create("Событие 1", now, now.AddHours(1), totalSeats),
+                Event.Create("Событие 2", now, now.AddHours(1), totalSeats),
+                Event.Create("Событие 3", now, now.AddHours(1), totalSeats),
+                Event.Create("Событие 4", now, now.AddHours(1), totalSeats),
+                Event.Create("Событие 5", now, now.AddHours(1), totalSeats),
+                Event.Create("Событие 6", now, now.AddHours(1), totalSeats)
             };
 
             // Настраиваем Mock репозитория возвращать этот список
@@ -316,16 +321,17 @@ namespace EventBookingService.Tests
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var targetDate = DateTime.Now.AddHours(3);
             var now = DateTime.Now;
+            var totalSeats = 1;
             var ct = CancellationToken.None;
             // Создаем список тестовых данных, которые "якобы" есть в репозитории
             var fakeEvents = new List<Event>
             {
-                Event.Create("Событие 1", targetDate, now.AddHours(5)),
-                Event.Create("Неважная встреча", now.AddHours(1), now.AddHours(5)),
-                Event.Create("Событие 3", now, now.AddHours(5)),
-                Event.Create("Поразить цель с 10 шагов", targetDate, now.AddHours(5)),
-                Event.Create("Поужинать ", now.AddHours(2), now.AddHours(5)),
-                Event.Create("Событие 6", now.AddHours(1), now.AddHours(5))
+                Event.Create("Событие 1", targetDate, now.AddHours(5), totalSeats),
+                Event.Create("Неважная встреча", now.AddHours(1), now.AddHours(5), totalSeats),
+                Event.Create("Событие 3", now, now.AddHours(5), totalSeats),
+                Event.Create("Поразить цель с 10 шагов", targetDate, now.AddHours(5), totalSeats),
+                Event.Create("Поужинать ", now.AddHours(2), now.AddHours(5), totalSeats),
+                Event.Create("Событие 6", now.AddHours(1), now.AddHours(5), totalSeats)
             };
 
             // Настраиваем Mock репозитория возвращать этот список
@@ -372,28 +378,23 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var now = DateTime.Now;
+            var totalSeats = 1;
             var ct = CancellationToken.None;
 
             //События добавлены в отсортированном порядке
             var fakeEvents = new List<Event>
             {
-                Event.Create("Неважная встреча",
-                    now.AddHours(1), now.AddHours(5)),
+                Event.Create("Неважная встреча", now.AddHours(1), now.AddHours(5), totalSeats),
 
-                Event.Create("Поразить цель с 10 шагов",
-                    now.AddHours(3), now.AddHours(5)),
+                Event.Create("Поразить цель с 10 шагов", now.AddHours(3), now.AddHours(5), totalSeats),
 
-                Event.Create("Поужинать ",
-                    now.AddHours(2), now.AddHours(5)),
+                Event.Create("Поужинать ", now.AddHours(2), now.AddHours(5), totalSeats),
 
-                Event.Create("Событие 1",
-                    now.AddHours(3), now.AddHours(5)),
+                Event.Create("Событие 1", now.AddHours(3), now.AddHours(5), totalSeats),
 
-                Event.Create("Событие 3",
-                    now, now.AddHours(5)),
+                Event.Create("Событие 3", now, now.AddHours(5), totalSeats),
 
-                Event.Create("Событие 6",
-                    now.AddHours(1), now.AddHours(5))
+                Event.Create("Событие 6", now.AddHours(1), now.AddHours(5), totalSeats)
 
             };
             repositoryMock
@@ -428,11 +429,12 @@ namespace EventBookingService.Tests
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var totalSeats = 1;
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             var fakeEvents = new List<Event>
             {
-                Event.Create("Событие 1", DateTime.Now.AddHours(1), DateTime.Now.AddHours(2)),
+                Event.Create("Событие 1", DateTime.Now.AddHours(1), DateTime.Now.AddHours(2), totalSeats)
             };
             var filter = new EventsFilter { page = 2, pageSize = 2 };
             repositoryMock.Setup(r => r.GetAll(It.IsAny<Func<Event, bool>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).Returns(fakeEvents);
@@ -455,8 +457,9 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
+            var totalSeats = 1;
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var domainEvent = Event.Create("Тестовое событие 1", DateTime.Now, DateTime.Now.AddHours(2));
+            var domainEvent = Event.Create("Тестовое событие 1", DateTime.Now, DateTime.Now.AddHours(2), totalSeats);
             var generatedId = domainEvent.Id;
             var ct = CancellationToken.None;
             repositoryMock.Setup(r => r.GetByIdAsync(generatedId, It.IsAny<CancellationToken>())).ReturnsAsync(domainEvent);
@@ -560,7 +563,8 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var now = DateTime.Now;
-            var existedEvent = Event.Create("Старое событие", now, now.AddHours(1));
+            var totalSeats = 1;
+            var existedEvent = Event.Create("Старое событие", now, now.AddHours(1), totalSeats);
             var eventId = existedEvent.Id;
             var ct = CancellationToken.None;
 
@@ -595,9 +599,10 @@ namespace EventBookingService.Tests
             var loggerMock = new Mock<ILogger<EventService>>();
             var service = new EventService(repositoryMock.Object, loggerMock.Object);
             var now = DateTime.Now;
+            var totalSeats = 1;
             var ct = CancellationToken.None;
 
-            var existedEvent = Event.Create("Старое название", now, now.AddHours(1), "Старое описание");
+            var existedEvent = Event.Create("Старое название", now, now.AddHours(1), totalSeats, "Старое описание");
             var eventId = existedEvent.Id;
 
             var updateDto = new UpdateEventDTO
