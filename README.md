@@ -542,24 +542,24 @@ curl -X 'GET' \
 
 ```json
 {
-  "type": "Event",
-  "status": 404,
-  "detail": "Элемент Event c ID: 'b25175cf-298e-4440-a852-fa423a2ba55e' не найден.",
-  "instance": "b25175cf-298e-4440-a852-fa423a2ba55e"
+    "type": "Event",
+    "status": 404,
+    "detail": "Элемент Event c ID: 'b4d85802-6c58-4413-82b2-1e7fdbbf8fd5' не найден.",
+    "instance": "b4d85802-6c58-4413-82b2-1e7fdbbf8fd5"
 }
 ```
 </details>
 
 
 <details>
-<summary>Пример ответа при ошибках в валидации при создании события</summary>
+<summary>Пример ответа при невозможности бронирования из-за недостаточного количества мест</summary>
 
 ```json
 {
-  "type": "Event",
-  "status": 400,
-  "detail": "Дата окончания события не может быть раньше даты начала",
-  "instance": "00000000-0000-0000-0000-000000000000"
+    "type": "Event",
+    "status": 409,
+    "detail": "Для элемента Event c ID: a0949a65-e080-4d51-9fc4-247054eedc71 нет доступных мест для бронирования",
+    "instance": "a0949a65-e080-4d51-9fc4-247054eedc71"
 }
 ```
 </details>
