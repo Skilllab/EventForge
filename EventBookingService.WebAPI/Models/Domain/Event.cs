@@ -10,7 +10,7 @@ public class Event
     /// <summary>
     /// Уникальный идентификатор события
     /// </summary>
-    public Guid Id { get; private set; }
+    public Guid Id { get; init; }
 
     /// <summary>
     /// Название события
