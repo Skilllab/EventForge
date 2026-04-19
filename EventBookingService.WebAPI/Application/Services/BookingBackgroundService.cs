@@ -14,7 +14,7 @@ namespace EventBookingService.WebAPI.Application.Services
         : BackgroundService
     {
 
-        private const int delayForRepeatInSeconds = 10;
+        private const int delayForRepeatInSeconds = 5;
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
 

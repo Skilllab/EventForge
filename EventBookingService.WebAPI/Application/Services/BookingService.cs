@@ -3,141 +3,144 @@ using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO.Booking;
 
-namespace EventBookingService.WebAPI.Application.Services
+namespace EventBookingService.WebAPI.Application.Services;
+
+/// <summary>
+/// Сервис для работы с бронированием
+/// </summary>
+public class BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger) : IBookingService
 {
-    /// <summary>
-    /// Сервис для работы с бронированием
-    /// </summary>
-    public class BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger) : IBookingService
+    private readonly SemaphoreSlim _semaphoreCreate = new SemaphoreSlim(1, 1);
+    private readonly SemaphoreSlim _semaphoreUpdate = new SemaphoreSlim(1, 1);
+
+    private const int delayConnectToBaseInSeconds = 2;
+
+    /// <inheritdoc/>
+    public async Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct)
     {
-        private readonly SemaphoreSlim _semaphoreCreate = new SemaphoreSlim(1, 1);
-        private readonly SemaphoreSlim _semaphoreUpdate = new SemaphoreSlim(1, 1);
+        ct.ThrowIfCancellationRequested();
 
-        private const int delayConnectToBaseInSeconds = 2;
+        logger.LogInformation("Создание нового бронирования для события: {Event}", eventId);
 
-        /// <inheritdoc/>
-        public async Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct)
+        var existedEvent = await eventRepository.GetByIdAsync(eventId, ct);
+        if (existedEvent == null)
         {
-            ct.ThrowIfCancellationRequested();
-
-            logger.LogInformation("Создание нового бронирования для события: {Event}", eventId);
-
-            var existedEvent = await eventRepository.GetByIdAsync(eventId, ct);
-            if (existedEvent == null)
-            {
-                logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
-                throw new NotFoundException(nameof(Event), eventId);
-            }
-
-            await _semaphoreCreate.WaitAsync(ct);
-
-            try
-            {
-                if (!existedEvent.TryReserveSeats())
-                    throw new NoAvailableSeatsException(nameof(Event), existedEvent.Id.ToString());
-
-                var newBooking = Booking.Create(
-                    eventId,
-                    DateTime.Now
-                );
-
-                await bookingRepository.AddAsync(newBooking, ct);
-                await eventRepository.UpdateAsync(existedEvent, ct);
-                logger.LogInformation("Бронирование успешно создано. ID: {Id} ", newBooking.Id);
-                return MapToDTO(newBooking);
-            }
-            catch (OperationCanceledException)
-            {
-                logger.LogWarning("Процесс создания брони для события с ID: {Id} прерван", existedEvent.Id);
-                throw;
-            }
-            finally
-            {
-                _semaphoreCreate.Release();
-            }
+            logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
+            throw new NotFoundException(nameof(Event), eventId);
         }
 
-        private BookingInfoDTO MapToDTO(Booking newBooking)
+        await _semaphoreCreate.WaitAsync(ct);
+
+        try
         {
-            return new BookingInfoDTO()
-            {
-                ID = newBooking.Id,
-                EventID = newBooking.EventId,
-                Status = newBooking.Status.ToString(),
-            };
+            if (!existedEvent.TryReserveSeats())
+                throw new NoAvailableSeatsException(nameof(Event), existedEvent.Id.ToString());
+
+            var newBooking = Booking.Create(
+                eventId,
+                DateTime.Now
+            );
+
+            await bookingRepository.AddAsync(newBooking, ct);
+            await eventRepository.UpdateAsync(existedEvent, ct);
+            logger.LogInformation("Бронирование успешно создано. ID: {Id} ", newBooking.Id);
+            return MapToDTO(newBooking);
         }
-
-        /// <inheritdoc/>
-        public async Task<BookingInfoDTO> GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
+        catch (OperationCanceledException)
         {
-            ct.ThrowIfCancellationRequested();
-
-            logger.LogInformation("Получение бронирования : {bookingId}", bookingId);
-
-            var booking = await bookingRepository.GetByIdAsync(bookingId, ct);
-            if (booking == null)
-                throw new NotFoundException(nameof(Booking), bookingId);
-
-            return MapToDTO(booking);
+            logger.LogWarning("Процесс создания брони для события с ID: {Id} прерван", existedEvent.Id);
+            throw;
         }
-
-
-        /// <inheritdoc />
-        public async Task UpdateBookingAsync(CancellationToken ct)
+        finally
         {
-            Func<Booking, bool> query = e => e.Status == BookingStatus.Pending;
-            var pendingBookings = bookingRepository.GetAll(query, ct);
-            var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, ct));
-            await Task.WhenAll(tasks);
+            _semaphoreCreate.Release();
         }
+    }
 
-        private async Task ProcessBookingAsync(Booking booking, CancellationToken ct)
+    private BookingInfoDTO MapToDTO(Booking newBooking)
+    {
+        return new BookingInfoDTO()
         {
-            //Имитируем запросы в БД
+            ID = newBooking.Id,
+            EventID = newBooking.EventId,
+            Status = newBooking.Status.ToString(),
+        };
+    }
+
+    /// <inheritdoc/>
+    public async Task<BookingInfoDTO> GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        logger.LogInformation("Получение бронирования : {bookingId}", bookingId);
+
+        var booking = await bookingRepository.GetByIdAsync(bookingId, ct);
+        if (booking == null)
+            throw new NotFoundException(nameof(Booking), bookingId);
+
+        return MapToDTO(booking);
+    }
+
+
+    /// <inheritdoc />
+    public async Task UpdateBookingAsync(CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        Func<Booking, bool> query = e => e.Status == BookingStatus.Pending;
+        var pendingBookings = bookingRepository.GetAll(query, ct);
+        var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, ct));
+        await Task.WhenAll(tasks);
+    }
+
+    private async Task ProcessBookingAsync(Booking booking, CancellationToken ct)
+    {
+        Event? existedEvent = null;
+
+        try
+        {
             await Task.Delay(TimeSpan.FromSeconds(delayConnectToBaseInSeconds), ct);
 
-            var existedEvent = await eventRepository.GetByIdAsync(booking.EventId, ct);
+            existedEvent = await eventRepository.GetByIdAsync(booking.EventId, ct);
+
             if (existedEvent == null)
             {
-                logger.LogWarning("Событие не найдено при запросе бронирования. ID: {Id}", booking.EventId);
-                throw new NotFoundException(nameof(Event), booking.EventId, "В процессе бронирования событие не было найдено в хранилище");
+                logger.LogWarning("Событие не найдено. ID: {Id}", booking.EventId);
+                booking.Reject();
+                return;
             }
 
             await _semaphoreUpdate.WaitAsync(ct);
-
-            bool needUpdate = false;
             try
             {
                 booking.Confirm();
-                logger.LogInformation(
-                    "Обработка события {currentBooking} завершена {date} и переведена в статус {status}",
-                    booking.Id, booking.ProcessedAt, booking.Status.ToString());
-            }
-            catch (OperationCanceledException)
-            {
-                booking.Reject();
-                existedEvent.ReleaseSeats();
-                logger.LogWarning("Процесс подтверждения брони с ID: {Id} прерван", booking.Id);
-                needUpdate = true;
-                throw;
-            }
-            catch (Exception ex)
-            {
-                booking.Reject();
-                existedEvent.ReleaseSeats();
-                logger.LogError(ex, "Ошибка при обработке подтверждения бронирования {ID}", booking.Id);
-                needUpdate = true;
-                throw;
+                logger.LogInformation("Бронь {Id} подтверждена", booking.Id);
             }
             finally
             {
-                await bookingRepository.UpdateAsync(booking, ct);
-                if (needUpdate) 
-                    await eventRepository.UpdateAsync(existedEvent, ct);
-
                 _semaphoreUpdate.Release();
             }
-
         }
+        catch (Exception ex)
+        {
+            booking.Reject();
+            if (existedEvent != null)
+            {
+                existedEvent.ReleaseSeats();
+                await eventRepository.UpdateAsync(existedEvent, ct);
+                logger.LogInformation("Места для события {Id} восстановлены после ошибки", existedEvent.Id);
+            }
+
+            if (ex is not OperationCanceledException)
+                logger.LogError(ex, "Ошибка при обработке бронирования {ID}", booking.Id);
+
+            throw; 
+        }
+        finally
+        {
+            // 5. Сохраняем бронь ВСЕГДА (Confirmed или Rejected)
+            await bookingRepository.UpdateAsync(booking, ct);
+        }
+
     }
 }
