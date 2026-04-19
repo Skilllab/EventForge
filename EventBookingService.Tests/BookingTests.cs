@@ -2,6 +2,9 @@ using EventBookingService.WebAPI.Models.Domain;
 
 using FluentAssertions;
 
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Extensions.Time.Testing;
+
 namespace EventBookingService.Tests;
 
 public class BookingTests
@@ -53,5 +56,58 @@ public class BookingTests
 
         // Assert
         booking.Status.Should().Be(status);
+    }
+
+    [Fact]
+    public void BookingStatus_ShouldSetStatusToConfirmed_AndFillProcessedAt()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var now = fixedUtcNow.UtcDateTime;
+        var booking = Booking.Create(eventId, now);
+
+
+        // Начальное состояние
+        booking.Status.Should().Be(BookingStatus.Pending);
+        booking.ProcessedAt.Should().BeNull();
+
+        // Act
+        booking.Confirm(now);
+
+        // Assert
+        booking.Status.Should().Be(BookingStatus.Confirmed);
+
+        booking.ProcessedAt.Should().NotBeNull();
+
+        booking.ProcessedAt.Value.Should().BeCloseTo(now, TimeSpan.FromSeconds(3));
+
+        booking.CreatedAt.Should().Be(now);
+        booking.EventId.Should().Be(eventId);
+    }
+
+    [Fact]
+    public void BookingStatus_ShouldSetStatusToRejected_AndFillProcessedAt()
+    {
+        // Arrange
+        var eventId = Guid.NewGuid();
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var now = fixedUtcNow.UtcDateTime;
+        var booking = Booking.Create(eventId, now);
+
+
+        // Act
+        booking.Reject(now);
+
+        // Assert
+        booking.Status.Should().Be(BookingStatus.Rejected);
+
+        booking.ProcessedAt.Should().NotBeNull();
+
+        booking.ProcessedAt.Value.Should().BeCloseTo(now, TimeSpan.FromSeconds(2));
     }
 }
