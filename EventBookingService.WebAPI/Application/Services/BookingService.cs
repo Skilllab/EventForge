@@ -8,7 +8,7 @@ namespace EventBookingService.WebAPI.Application.Services;
 /// <summary>
 /// Сервис для работы с бронированием
 /// </summary>
-public class BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger) : IBookingService
+public class BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger, TimeProvider timeProvider) : IBookingService
 {
     private readonly SemaphoreSlim _semaphoreCreate = new SemaphoreSlim(1, 1);
     private readonly SemaphoreSlim _semaphoreUpdate = new SemaphoreSlim(1, 1);
@@ -38,7 +38,7 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
 
             var newBooking = Booking.Create(
                 eventId,
-                DateTime.Now
+                timeProvider.GetUtcNow().UtcDateTime
             );
 
             await bookingRepository.AddAsync(newBooking, ct);
@@ -96,24 +96,24 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
     private async Task ProcessBookingAsync(Booking booking, CancellationToken ct)
     {
         Event? existedEvent = null;
-
+        var processingTime = timeProvider.GetUtcNow().UtcDateTime;
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(delayConnectToBaseInSeconds), ct);
+            await Task.Delay(TimeSpan.FromSeconds(delayConnectToBaseInSeconds), timeProvider, ct);
 
             existedEvent = await eventRepository.GetByIdAsync(booking.EventId, ct);
 
             if (existedEvent == null)
             {
                 logger.LogWarning("Событие не найдено. ID: {Id}", booking.EventId);
-                booking.Reject();
+                booking.Reject(processingTime);
                 return;
             }
 
             await _semaphoreUpdate.WaitAsync(ct);
             try
             {
-                booking.Confirm();
+                booking.Confirm(processingTime);
                 logger.LogInformation("Бронь {Id} подтверждена", booking.Id);
             }
             finally
@@ -123,7 +123,7 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
         }
         catch (Exception ex)
         {
-            booking.Reject();
+            booking.Reject(timeProvider.GetUtcNow().UtcDateTime);
             if (existedEvent != null)
             {
                 existedEvent.ReleaseSeats();

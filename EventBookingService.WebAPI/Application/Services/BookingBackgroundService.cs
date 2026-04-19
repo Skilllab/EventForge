@@ -6,11 +6,9 @@ namespace EventBookingService.WebAPI.Application.Services
     /// <summary>
     /// Фоновый сервис для регистрации бронирований
     /// </summary>
-    /// <param name="scopeFactory"></param>
-    /// <param name="logger"></param>
     public class BookingBackgroundService(
         IServiceScopeFactory scopeFactory,
-        ILogger<BookingBackgroundService> logger)
+        ILogger<BookingBackgroundService> logger, TimeProvider timeProvider)
         : BackgroundService
     {
 
@@ -36,7 +34,7 @@ namespace EventBookingService.WebAPI.Application.Services
                 {
                     logger.LogError(ex, "Ошибка при обработке бронирований");
                 }
-                await Task.Delay(TimeSpan.FromSeconds(delayForRepeatInSeconds), stoppingToken);
+                await Task.Delay(TimeSpan.FromSeconds(delayForRepeatInSeconds), timeProvider, stoppingToken);
             }
         }
 
