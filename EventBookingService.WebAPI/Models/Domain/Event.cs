@@ -1,5 +1,7 @@
 using EventBookingService.WebAPI.Application.Exceptions;
 
+using static System.Runtime.InteropServices.JavaScript.JSType;
+
 namespace EventBookingService.WebAPI.Models.Domain;
 
 /// <summary>
@@ -48,6 +50,9 @@ public class Event
     /// <returns></returns>
     public void ReleaseSeats(int count = 1)
     {
+        if (count < 0)
+            return;
+
         if (AvailableSeats + count >= TotalSeats)
             AvailableSeats = TotalSeats;
         else
@@ -61,7 +66,7 @@ public class Event
     /// <returns></returns>
     public bool TryReserveSeats(int count = 1)
     {
-        if (AvailableSeats<count)
+        if (count < 0 || AvailableSeats < count)
             return false;
 
         AvailableSeats -= count;
@@ -77,6 +82,8 @@ public class Event
     /// <param name="description">Описание события</param>
     public void UpdateEvent(string title, DateTime startDate, DateTime endDate, string? description)
     {
+        ValidateDates(startDate, endDate);
+
         Title = title;
         StartAt = startDate;
         EndAt = endDate;
@@ -84,7 +91,7 @@ public class Event
     }
 
     private Event(string title, DateTime startDate, DateTime endDate, int totalSeats,
-        string? description = null) 
+        string? description = null)
     {
         Id = Guid.NewGuid();
         Title = title;
@@ -108,12 +115,28 @@ public class Event
     /// <exception cref="ArgumentException"></exception>
     public static Event Create(string title, DateTime startDate, DateTime endDate, int totalSeats, string? description = null)
     {
-        if (endDate<startDate)
-            throw new ValidationCustomException(nameof(Event), Guid.Empty, "Дата окончания события не может быть раньше даты начала");
+        ValidateDates(startDate, endDate);
 
-        if (totalSeats <=0)
+        if (totalSeats <= 0)
             throw new ValidationCustomException(nameof(Event), Guid.Empty, "Общее количество мест для события должно быть больше нуля.");
 
         return new Event(title, startDate, endDate, totalSeats, description);
+    }
+
+    private static void ValidateDates(DateTime start, DateTime end)
+    {
+        if (end.TimeOfDay == TimeSpan.Zero)
+        {
+            if (end.Date < start.Date)
+                throw new ValidationCustomException(nameof(Event), Guid.Empty, "Дата окончания не может быть раньше даты начала");
+        }
+        else
+        {
+            if (end < start)
+            {
+                throw new ValidationCustomException(nameof(Event), Guid.Empty, "Дата окончания не может быть раньше даты начала");
+            }
+        }
+
     }
 }
