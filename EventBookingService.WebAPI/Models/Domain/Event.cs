@@ -111,7 +111,7 @@ public class Event
         if (endDate<startDate)
             throw new ValidationCustomException(nameof(Event), Guid.Empty, "Дата окончания события не может быть раньше даты начала");
 
-        if (totalSeats <0)
+        if (totalSeats <=0)
             throw new ValidationCustomException(nameof(Event), Guid.Empty, "Общее количество мест для события должно быть больше нуля.");
 
         return new Event(title, startDate, endDate, totalSeats, description);
