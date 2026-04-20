@@ -35,7 +35,8 @@ namespace EventBookingService.Tests
             {
                 Title = "Тестовое событие",
                 StartAt = now,
-                EndAt = now.AddHours(1)
+                EndAt = now.AddHours(1),
+                TotalSeats = 1
             };
             repositoryMock.Setup(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
 
@@ -55,7 +56,7 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "CreateEvent")]
-        public async Task CreateEvent_ShouldThrowValidationException_WhenCreateEventDTOAreInvalid()
+        public async Task CreateEvent_ShouldThrowValidationException_WhenCreateEventDTOAreInvalidByDate()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
@@ -72,6 +73,40 @@ namespace EventBookingService.Tests
                 Title = "Тестовое событие с невалидной моделью данных",
                 StartAt = now.AddHours(2),
                 EndAt = now.AddHours(1)
+            };
+            repositoryMock.Setup(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
+
+            // Act
+            Func<Task> act = async () => await service.CreateEventAsync(dto, ct);
+
+            // Assert
+            await act.Should().ThrowAsync<ValidationCustomException>();
+
+            // Проверяем, что метод добавления в репозиторий не вызывался, так как данные невалидные
+            repositoryMock.Verify(r => r.AddAsync(It.IsAny<Event>(), ct), Times.Never);
+        }
+
+        [Fact]
+        [Trait("Category", "CreateEvent")]
+        public async Task CreateEvent_ShouldThrowValidationException_WhenCreateEventDTOAreInvalidByZeroSeats()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var ct = CancellationToken.None;
+            var dto = new CreateEventDTO
+            {
+                Title = "Тестовое событие с невалидной моделью данных",
+                StartAt = now,
+                EndAt = now.AddHours(1),
+                TotalSeats = 0
+
             };
             repositoryMock.Setup(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
 
