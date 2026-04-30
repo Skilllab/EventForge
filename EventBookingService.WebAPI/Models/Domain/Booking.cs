@@ -40,6 +40,26 @@ public class Booking
         EventId = eventId;
     }
 
+   
+    /// <summary>
+    /// Подтверждаем бронирование
+    /// </summary>
+    /// <param name="processedAt">Время работы с бронированием</param>
+    public void Confirm(DateTime processedAt)
+    {
+        Status = BookingStatus.Confirmed;
+        ProcessedAt = processedAt;
+    }
+
+    /// <summary>
+    /// Отменяем бронирование
+    /// </summary>
+    /// <param name="processedAt">Время работы с бронированием</param>
+    public void Reject(DateTime processedAt)
+    {
+        Status = BookingStatus.Rejected;
+        ProcessedAt = processedAt;
+    }
     /// <summary>
     /// Метод создания события
     /// </summary>

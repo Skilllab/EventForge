@@ -7,6 +7,7 @@ using EventBookingService.WebAPI.Models.DTO.Events;
 using FluentAssertions;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Time.Testing;
 
 using Moq;
 
@@ -23,13 +24,19 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             var ct = CancellationToken.None;
             var dto = new CreateEventDTO
             {
                 Title = "Тестовое событие",
-                StartAt = DateTime.Now,
-                EndAt = DateTime.Now.AddHours(1)
+                StartAt = now,
+                EndAt = now.AddHours(1),
+                TotalSeats = 1
             };
             repositoryMock.Setup(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
 
@@ -49,18 +56,57 @@ namespace EventBookingService.Tests
 
         [Fact]
         [Trait("Category", "CreateEvent")]
-        public async Task CreateEvent_ShouldThrowValidationException_WhenCreateEventDTOAreInvalid()
+        public async Task CreateEvent_ShouldThrowValidationException_WhenCreateEventDTOAreInvalidByDate()
         {
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             var ct = CancellationToken.None;
             var dto = new CreateEventDTO
             {
                 Title = "Тестовое событие с невалидной моделью данных",
-                StartAt = DateTime.Now.AddHours(2),
-                EndAt = DateTime.Now.AddHours(1)
+                StartAt = now.AddHours(2),
+                EndAt = now.AddHours(1)
+            };
+            repositoryMock.Setup(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
+
+            // Act
+            Func<Task> act = async () => await service.CreateEventAsync(dto, ct);
+
+            // Assert
+            await act.Should().ThrowAsync<ValidationCustomException>();
+
+            // Проверяем, что метод добавления в репозиторий не вызывался, так как данные невалидные
+            repositoryMock.Verify(r => r.AddAsync(It.IsAny<Event>(), ct), Times.Never);
+        }
+
+        [Fact]
+        [Trait("Category", "CreateEvent")]
+        public async Task CreateEvent_ShouldThrowValidationException_WhenCreateEventDTOAreInvalidByZeroSeats()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var ct = CancellationToken.None;
+            var dto = new CreateEventDTO
+            {
+                Title = "Тестовое событие с невалидной моделью данных",
+                StartAt = now,
+                EndAt = now.AddHours(1),
+                TotalSeats = 0
+
             };
             repositoryMock.Setup(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
 
@@ -81,14 +127,19 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             var dto = new CreateEventDTO
             {
                 Title = "Тестовое событие",
-                StartAt = DateTime.Now.AddHours(1),
-                EndAt = DateTime.Now.AddHours(2) // Конец позже начала
+                StartAt = now.AddHours(1),
+                EndAt = now.AddHours(2) // Конец позже начала
             };
             repositoryMock.Setup(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()));
 
@@ -113,15 +164,20 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             var filter = new EventsFilter();
-            var now = DateTime.Now;
+            var totalSeats = 1;
             var ct = CancellationToken.None;
             var fakeEvents = new List<Event>
             {
-                Event.Create("тестовое событие 1", now, now.AddHours(1)),
-                Event.Create("тестовое событие 34", now, now.AddHours(2)),
-                Event.Create("тестовое событие 2", now, now.AddHours(3)),
+                Event.Create("тестовое событие 1", now, now.AddHours(1), totalSeats),
+                Event.Create("тестовое событие 34", now, now.AddHours(2), totalSeats),
+                Event.Create("тестовое событие 2", now, now.AddHours(3), totalSeats)
             };
             repositoryMock.Setup(r => r.GetTotalCount(It.IsAny<CancellationToken>())).Returns(fakeEvents.Count);
 
@@ -152,16 +208,21 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             var filteredWord = "встреча";
             var ct = CancellationToken.None;
+            var totalSeats = 1;
             var filter = new EventsFilter() { title = filteredWord };
-            var now = DateTime.Now;
             var fakeEvents = new List<Event>
             {
-                Event.Create("Деловая всТреча", now, now.AddHours(1)),
-                Event.Create("Ужин при свечах", now, now.AddHours(2)),
-                Event.Create("встречА на высшем уровне", now, now.AddHours(3)),
+                Event.Create("Деловая всТреча", now, now.AddHours(1), totalSeats),
+                Event.Create("Ужин при свечах", now, now.AddHours(2), totalSeats),
+                Event.Create("встречА на высшем уровне", now, now.AddHours(3), totalSeats)
             };
 
             repositoryMock
@@ -189,15 +250,20 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var now = DateTime.Now;
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var totalSeats = 1;
             var filter = new EventsFilter() { from = now.AddHours(2) };
             var ct = CancellationToken.None;
             var fakeEvents = new List<Event>
             {
-                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(5)),
-                Event.Create("Встреча 2", now.AddHours(2), now.AddHours(5)),
-                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(5))
+                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(5), totalSeats),
+                Event.Create("Встреча 2", now.AddHours(2), now.AddHours(5), totalSeats),
+                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(5), totalSeats)
             };
 
             repositoryMock
@@ -224,15 +290,61 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var now = DateTime.Now;
-            var filter = new EventsFilter() { to = now.AddHours(2) };
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var totalSeats = 1;
+            var filter = new EventsFilter() { to = now.AddHours(1) };
             var ct = CancellationToken.None;
             var fakeEvents = new List<Event>
             {
-                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(1)),
-                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(12)),
-                Event.Create("Встреча 2", now.AddHours(1), now.AddHours(1)),
+                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(1), totalSeats),
+                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(12), totalSeats),
+                Event.Create("Встреча 2", now.AddHours(1), now.AddHours(1), totalSeats)
+            };
+
+            repositoryMock
+                .Setup(r => r.GetAll(
+                    It.IsAny<Func<Event, bool>>(),
+                    It.IsAny<int>(),
+                    It.IsAny<int>(),
+                    It.IsAny<CancellationToken>()))
+                .Returns((Func<Event, bool> query, int _, int _, CancellationToken _) => fakeEvents.Where(query).ToList());
+
+            // Act
+            var result = await service.GetEventsAsync(filter, ct);
+
+            // Assert
+            result.Should().NotBeNull();
+            result.Events.Should().HaveCount(2); // Проверяем количество в текущей выборке
+            repositoryMock.Verify(r => r.GetAll(It.IsAny<Func<Event, bool>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        [Trait("Category", "GetEvents")]
+        public async Task GetEvents_ShouldReturnPaginatedResultWithEventsFilteredByEndDate_IfEndDateWithoutTime_ReturnEqualOrGreater()
+        {
+            // Arrange
+            var repositoryMock = new Mock<IEventRepository>();
+            var loggerMock = new Mock<ILogger<EventService>>();
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var totalSeats = 1;
+            var filter = new EventsFilter() { to = now.Date };
+            var ct = CancellationToken.None;
+            var fakeEvents = new List<Event>
+            {
+                Event.Create("Встреча 1", now.AddHours(1), now.AddHours(1), totalSeats),
+                Event.Create("Ужин при свечах", now.AddHours(3), now.AddHours(12), totalSeats),
+                Event.Create("Встреча 2", now.AddHours(1), now.AddHours(1), totalSeats),
+                Event.Create("Встреча 22", now.AddHours(1), now.AddHours(22), totalSeats)
             };
 
             repositoryMock
@@ -259,19 +371,24 @@ namespace EventBookingService.Tests
             // Arrange (Подготовка)
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             var filter = new EventsFilter { page = 2, pageSize = 3 };
-            var now = DateTime.Now;
+            var totalSeats = 1;
             var ct = CancellationToken.None;
             // Создаем список тестовых данных, которые "якобы" есть в репозитории
             var fakeEvents = new List<Event>
             {
-                Event.Create("Событие 1", now, now.AddHours(1)),
-                Event.Create("Событие 2", now, now.AddHours(1)),
-                Event.Create("Событие 3", now, now.AddHours(1)),
-                Event.Create("Событие 4", now, now.AddHours(1)),
-                Event.Create("Событие 5", now, now.AddHours(1)),
-                Event.Create("Событие 6", now, now.AddHours(1))
+                Event.Create("Событие 1", now, now.AddHours(1), totalSeats),
+                Event.Create("Событие 2", now, now.AddHours(1), totalSeats),
+                Event.Create("Событие 3", now, now.AddHours(1), totalSeats),
+                Event.Create("Событие 4", now, now.AddHours(1), totalSeats),
+                Event.Create("Событие 5", now, now.AddHours(1), totalSeats),
+                Event.Create("Событие 6", now, now.AddHours(1), totalSeats)
             };
 
             // Настраиваем Mock репозитория возвращать этот список
@@ -313,19 +430,24 @@ namespace EventBookingService.Tests
             // Arrange (Подготовка)
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var targetDate = DateTime.Now.AddHours(3);
-            var now = DateTime.Now;
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var targetDate = now.AddHours(3);
+            var totalSeats = 1;
             var ct = CancellationToken.None;
             // Создаем список тестовых данных, которые "якобы" есть в репозитории
             var fakeEvents = new List<Event>
             {
-                Event.Create("Событие 1", targetDate, now.AddHours(5)),
-                Event.Create("Неважная встреча", now.AddHours(1), now.AddHours(5)),
-                Event.Create("Событие 3", now, now.AddHours(5)),
-                Event.Create("Поразить цель с 10 шагов", targetDate, now.AddHours(5)),
-                Event.Create("Поужинать ", now.AddHours(2), now.AddHours(5)),
-                Event.Create("Событие 6", now.AddHours(1), now.AddHours(5))
+                Event.Create("Событие 1", targetDate, now.AddHours(5), totalSeats),
+                Event.Create("Неважная встреча", now.AddHours(1), now.AddHours(5), totalSeats),
+                Event.Create("Событие 3", now, now.AddHours(5), totalSeats),
+                Event.Create("Поразить цель с 10 шагов", targetDate, now.AddHours(5), totalSeats),
+                Event.Create("Поужинать ", now.AddHours(2), now.AddHours(5), totalSeats),
+                Event.Create("Событие 6", now.AddHours(1), now.AddHours(5), totalSeats)
             };
 
             // Настраиваем Mock репозитория возвращать этот список
@@ -348,13 +470,12 @@ namespace EventBookingService.Tests
                 pageSize = 10
             };
 
-
             // Act (Действие)
             var result = await service.GetEventsAsync(filter, ct);
 
             // Assert (Проверка)
             result.Should().NotBeNull();
-            result.EventsTotalCount.Should().Be(6); // Должно найтись только одно
+            result.EventsTotalCount.Should().Be(6); 
             result.Events.Should().ContainSingle();
             result.Events.First().Title.Should().Contain("цель");
             result.Events.First().StartAt.Should().BeOnOrBefore(targetDate);
@@ -370,30 +491,29 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var now = DateTime.Now;
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var totalSeats = 1;
             var ct = CancellationToken.None;
 
             //События добавлены в отсортированном порядке
             var fakeEvents = new List<Event>
             {
-                Event.Create("Неважная встреча",
-                    now.AddHours(1), now.AddHours(5)),
+                Event.Create("Неважная встреча", now.AddHours(1), now.AddHours(5), totalSeats),
 
-                Event.Create("Поразить цель с 10 шагов",
-                    now.AddHours(3), now.AddHours(5)),
+                Event.Create("Поразить цель с 10 шагов", now.AddHours(3), now.AddHours(5), totalSeats),
 
-                Event.Create("Поужинать ",
-                    now.AddHours(2), now.AddHours(5)),
+                Event.Create("Поужинать ", now.AddHours(2), now.AddHours(5), totalSeats),
 
-                Event.Create("Событие 1",
-                    now.AddHours(3), now.AddHours(5)),
+                Event.Create("Событие 1", now.AddHours(3), now.AddHours(5), totalSeats),
 
-                Event.Create("Событие 3",
-                    now, now.AddHours(5)),
+                Event.Create("Событие 3", now, now.AddHours(5), totalSeats),
 
-                Event.Create("Событие 6",
-                    now.AddHours(1), now.AddHours(5))
+                Event.Create("Событие 6", now.AddHours(1), now.AddHours(5), totalSeats)
 
             };
             repositoryMock
@@ -427,12 +547,18 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var totalSeats = 1;
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             var fakeEvents = new List<Event>
             {
-                Event.Create("Событие 1", DateTime.Now.AddHours(1), DateTime.Now.AddHours(2)),
+                Event.Create("Событие 1", now.AddHours(1), now.AddHours(2), totalSeats)
             };
             var filter = new EventsFilter { page = 2, pageSize = 2 };
             repositoryMock.Setup(r => r.GetAll(It.IsAny<Func<Event, bool>>(), It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>())).Returns(fakeEvents);
@@ -455,8 +581,14 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var domainEvent = Event.Create("Тестовое событие 1", DateTime.Now, DateTime.Now.AddHours(2));
+            var totalSeats = 1;
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var domainEvent = Event.Create("Тестовое событие 1", now, now.AddHours(2), totalSeats);
             var generatedId = domainEvent.Id;
             var ct = CancellationToken.None;
             repositoryMock.Setup(r => r.GetByIdAsync(generatedId, It.IsAny<CancellationToken>())).ReturnsAsync(domainEvent);
@@ -482,7 +614,11 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             var generatedId = Guid.NewGuid();
             var ct = CancellationToken.None;
 
@@ -504,7 +640,11 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             repositoryMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(It.IsAny<Event>());
@@ -529,15 +669,20 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             var nonExistentId = Guid.NewGuid();
             var ct = CancellationToken.None;
 
             var updateDto = new UpdateEventDTO
             {
                 Title = "Тестовое событие 1",
-                StartAt = DateTime.Now,
-                EndAt = DateTime.Now.AddHours(1),
+                StartAt = now,
+                EndAt = now.AddHours(1),
             };
             repositoryMock.Setup(r => r.GetByIdAsync(nonExistentId, It.IsAny<CancellationToken>())).ReturnsAsync((Event?) null);
 
@@ -558,9 +703,14 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var now = DateTime.Now;
-            var existedEvent = Event.Create("Старое событие", now, now.AddHours(1));
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var totalSeats = 1;
+            var existedEvent = Event.Create("Старое событие", now, now.AddHours(1), totalSeats);
             var eventId = existedEvent.Id;
             var ct = CancellationToken.None;
 
@@ -593,11 +743,16 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
-            var now = DateTime.Now;
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+            var totalSeats = 1;
             var ct = CancellationToken.None;
 
-            var existedEvent = Event.Create("Старое название", now, now.AddHours(1), "Старое описание");
+            var existedEvent = Event.Create("Старое название", now, now.AddHours(1), totalSeats, "Старое описание");
             var eventId = existedEvent.Id;
 
             var updateDto = new UpdateEventDTO
@@ -631,7 +786,11 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             repositoryMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>())).ReturnsAsync(It.IsAny<Event>());
@@ -656,7 +815,11 @@ namespace EventBookingService.Tests
             var eventId = Guid.NewGuid();
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             var ct = CancellationToken.None;
 
             repositoryMock.Setup(r => r.DeleteAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
@@ -676,7 +839,12 @@ namespace EventBookingService.Tests
             var eventId = Guid.NewGuid();
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             var ct = CancellationToken.None;
 
             repositoryMock.Setup(r => r.DeleteAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
@@ -696,7 +864,12 @@ namespace EventBookingService.Tests
             // Arrange
             var repositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<EventService>>();
-            var service = new EventService(repositoryMock.Object, loggerMock.Object);
+
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+
+            var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             using var cts = new CancellationTokenSource();
             cts.Cancel();
             var id = Guid.NewGuid();

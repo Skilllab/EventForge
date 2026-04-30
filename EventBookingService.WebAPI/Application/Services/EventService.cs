@@ -5,9 +5,11 @@ using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO.Events;
 
+using static System.Net.WebRequestMethods;
+
 namespace EventBookingService.WebAPI.Application.Services;
 
-public class EventService(IEventRepository _repository, ILogger<EventService>_logger) : IEventService
+public class EventService(IEventRepository _repository, ILogger<EventService>_logger, TimeProvider timeProvider) : IEventService
 {
     /// <inheritdoc/>
     public async Task<ResponseEventDTO> CreateEventAsync(CreateEventDTO newEventDTO, CancellationToken ct)
@@ -19,6 +21,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             newEventDTO.Title,
             newEventDTO.StartAt,
             newEventDTO.EndAt,
+            newEventDTO.TotalSeats,
             newEventDTO.Description
         );
 
@@ -45,12 +48,15 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
     {
         ct.ThrowIfCancellationRequested();
 
-        _logger.LogInformation("Запрос списка событий. Страница: {Page}, Фильтр: {Filter}", filter.page, filter.title);
+        // Получаем текущее время через провайдер (может пригодиться для логов или доп. логики)
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+
+        _logger.LogInformation("Запрос списка событий в {Now}. Фильтр: {Filter}", now, filter.title);
 
         Func<Event, bool> query = e =>
             (string.IsNullOrEmpty(filter.title) || e.Title.Contains(filter.title, StringComparison.OrdinalIgnoreCase)) &&
             (!filter.from.HasValue || e.StartAt >= filter.from) &&
-            (!filter.to.HasValue || e.EndAt <= filter.to);
+            (FilterEndDate(filter, e));
 
         var result = _repository.GetAll(query, filter.page, filter.pageSize, ct).OrderBy(e=>e.Title);
 
@@ -60,6 +66,21 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
 
         return new PaginatedResult(filteredCount, items, filter.page, filter.pageSize);
     }
+
+    private bool FilterEndDate(EventsFilter filter, Event @event)
+    {
+        if (!filter.to.HasValue)
+            return true;
+
+        var dateTo = filter.to.Value;
+
+        // Если время не указано (00:00:00), значит ищем до конца дня включительно
+        if (dateTo.TimeOfDay == TimeSpan.Zero)
+            return @event.EndAt.Date <= dateTo.Date;
+
+        return @event.EndAt <= dateTo;
+    }
+
 
     /// <inheritdoc/>
     public async Task<ResponseEventDTO> GetEventAsync(Guid eventId, CancellationToken ct)
@@ -121,7 +142,9 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             Title = currentEvent.Title,
             Description = currentEvent.Description,
             StartAt = currentEvent.StartAt,
-            EndAt = currentEvent.EndAt
+            EndAt = currentEvent.EndAt,
+            TotalSeats = currentEvent.TotalSeats,
+            AvailableSeats = currentEvent.AvailableSeats
         };
     }
 }

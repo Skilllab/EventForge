@@ -3,6 +3,8 @@ using EventBookingService.WebAPI.Models.Domain;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Time.Testing;
+
 namespace EventBookingService.Tests
 {
     public class InMemoryBookingRepositoryTests
@@ -12,7 +14,12 @@ namespace EventBookingService.Tests
         {
             // Arrange
             var repository = new InMemoryBookingRepository();
-            var booking = Booking.Create(Guid.NewGuid(), DateTime.UtcNow);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var booking = Booking.Create(Guid.NewGuid(), now);
             var ct = CancellationToken.None;
 
             // Act
@@ -29,7 +36,12 @@ namespace EventBookingService.Tests
         {
             // Arrange
             var repository = new InMemoryBookingRepository();
-            var booking = Booking.Create(Guid.NewGuid(), DateTime.UtcNow);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var booking = Booking.Create(Guid.NewGuid(), now);
             await repository.AddAsync(booking, CancellationToken.None);
 
             // Act
@@ -60,8 +72,13 @@ namespace EventBookingService.Tests
         {
             // Arrange
             var repository = new InMemoryBookingRepository();
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
             var eventId = Guid.NewGuid();
-            var booking = Booking.Create(eventId, DateTime.UtcNow);
+            var booking = Booking.Create(eventId, now);
             var date = DateTime.UtcNow;
             await repository.AddAsync(booking, CancellationToken.None);
 
@@ -85,10 +102,14 @@ namespace EventBookingService.Tests
             var repository = new InMemoryBookingRepository();
             var targetEventId = Guid.NewGuid();
             var otherEventId = Guid.NewGuid();
-            var date = DateTime.UtcNow;
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
 
-            var booking1 = Booking.Create(targetEventId, date);
-            var booking2 = Booking.Create(otherEventId, date);
+
+            var booking1 = Booking.Create(targetEventId, now);
+            var booking2 = Booking.Create(otherEventId, now);
 
             await repository.AddAsync(booking1, CancellationToken.None);
             await repository.AddAsync(booking2, CancellationToken.None);
@@ -106,9 +127,14 @@ namespace EventBookingService.Tests
         {
             // Arrange
             var repository = new InMemoryBookingRepository();
-            var booking = Booking.Create(Guid.NewGuid(), DateTime.UtcNow);
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            var booking = Booking.Create(Guid.NewGuid(), now);
             using var cts = new CancellationTokenSource();
-            cts.Cancel();
+            await cts.CancelAsync();
 
             // Act & Assert
             await Assert.ThrowsAsync<OperationCanceledException>(() => repository.AddAsync(booking, cts.Token));

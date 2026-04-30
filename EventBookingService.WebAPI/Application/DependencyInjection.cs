@@ -11,6 +11,7 @@ public static class DependencyInjection
         // Регистрируем как Singleton, чтобы данные не пропадали между запросами
         services.AddSingleton<IEventRepository, InMemoryEventRepository>();
         services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
+        services.AddSingleton(TimeProvider.System);
 
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IBookingService, BookingService>();

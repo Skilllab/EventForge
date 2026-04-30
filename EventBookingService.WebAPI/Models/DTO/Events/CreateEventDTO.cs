@@ -24,7 +24,7 @@ public class CreateEventDTO
     /// Дата начала события
     /// </summary>
     [Required(ErrorMessage = "Дата начала события не может быть пустой")]
-    [NotMinDateTime(ErrorMessage = "Дата начал события должна быть задана")]
+    [NotMinDateTime(ErrorMessage = "Дата начала события должна быть задана")]
     public DateTime StartAt { get; set; }
 
     /// <summary>
@@ -34,4 +34,10 @@ public class CreateEventDTO
     [NotMinDateTime(ErrorMessage = "Дата окончания события должна быть задана")]
     [DateGreater(nameof(StartAt))]
     public DateTime EndAt { get; set; }
+
+    /// <summary>
+    /// Общее количество мест на событии
+    /// </summary>
+    [Range(1, int.MaxValue, ErrorMessage = "Общее количество мест для события должно быть больше нуля")]
+    public int TotalSeats { get; set; }
 }
