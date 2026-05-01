@@ -34,8 +34,9 @@ public class EventConfiguration : IEntityTypeConfiguration<Event>
 
         builder.Property(p => p.AvailableSeats);
 
-        builder.HasMany<Booking>()
-            .WithOne(p=>p.Event)
-            .HasForeignKey(b => b.EventId);
+        builder.HasMany(p=>p.Bookings)
+            .WithOne()
+            .HasForeignKey(b => b.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
