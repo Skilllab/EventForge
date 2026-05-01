@@ -43,6 +43,8 @@ public class Event
     /// </summary>
     public int AvailableSeats { get; private set; }
 
+    public List<Booking> Bookings { get; set; }
+
     /// <summary>
     /// Метод освобождения места от резервирования
     /// </summary>
@@ -89,6 +91,11 @@ public class Event
         EndAt = endDate;
         Description = description;
     }
+
+    /// <summary>
+    /// Конструктор для EF
+    /// </summary>
+    private Event() { }
 
     private Event(string title, DateTime startDate, DateTime endDate, int totalSeats,
         string? description = null)
