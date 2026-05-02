@@ -1,11 +1,11 @@
-using EventBookingService.WebAPI.Application.Interfaces;
-using EventBookingService.WebAPI.Data;
-using EventBookingService.WebAPI.Infrastructure.Persistence.Mappers;
-using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.Data.Context;
+using EventBookingService.Data.Mapping;
+using EventBookingService.Domain.Entities;
+using EventBookingService.Domain.Interfaces;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace EventBookingService.WebAPI.Infrastructure.Repositories
+namespace EventBookingService.Data.Repositories
 {
     public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBookingRepository
     {

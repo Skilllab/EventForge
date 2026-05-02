@@ -1,8 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
 using EventBookingService.WebAPI.Application.Interfaces;
-using EventBookingService.WebAPI.Application.Services;
-using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO.Events;
 
 using Microsoft.AspNetCore.Mvc;

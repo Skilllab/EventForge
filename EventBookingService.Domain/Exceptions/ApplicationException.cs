@@ -1,4 +1,4 @@
-namespace EventBookingService.WebAPI.Application.Exceptions
+namespace EventBookingService.Domain.Exceptions
 {
     /// <summary>
     /// Базовый класс для кастом исключений

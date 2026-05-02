@@ -1,6 +1,6 @@
-using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.Domain.Entities;
 
-namespace EventBookingService.WebAPI.Application.Interfaces
+namespace EventBookingService.Domain.Interfaces
 {
     public interface IEventRepository
     {

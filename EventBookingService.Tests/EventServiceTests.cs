@@ -1,7 +1,7 @@
-using EventBookingService.WebAPI.Application.Exceptions;
-using EventBookingService.WebAPI.Application.Interfaces;
+using EventBookingService.Domain.Entities;
+using EventBookingService.Domain.Exceptions;
+using EventBookingService.Domain.Interfaces;
 using EventBookingService.WebAPI.Application.Services;
-using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO.Events;
 
 using FluentAssertions;

@@ -1,4 +1,4 @@
-namespace EventBookingService.WebAPI.Application.Exceptions
+namespace EventBookingService.Domain.Exceptions
 {
     /// <summary>
     /// Исключение, которое выбрасывается в случае если у события нет мест для бронирования

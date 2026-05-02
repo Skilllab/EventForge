@@ -1,7 +1,6 @@
-using EventBookingService.WebAPI.Application.Exceptions;
+using EventBookingService.Domain.Exceptions;
 
-
-namespace EventBookingService.WebAPI.Models.Domain;
+namespace EventBookingService.Domain.Entities;
 
 /// <summary>
 /// Событие сервиса управления

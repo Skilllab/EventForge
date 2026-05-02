@@ -1,4 +1,4 @@
-namespace EventBookingService.WebAPI.Infrastructure.Persistence.Entities
+namespace EventBookingService.Data.Entities
 {
     public class EventEntity
     {

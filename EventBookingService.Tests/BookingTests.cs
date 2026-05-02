@@ -1,8 +1,3 @@
-using EventBookingService.WebAPI.Models.Domain;
-
-using FluentAssertions;
-
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.Extensions.Time.Testing;
 
 namespace EventBookingService.Tests;

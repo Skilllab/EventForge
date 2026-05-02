@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-namespace EventBookingService.WebAPI.Models.Domain;
+namespace EventBookingService.Domain.Entities;
 
 /// <summary>
 /// Статус бронирования

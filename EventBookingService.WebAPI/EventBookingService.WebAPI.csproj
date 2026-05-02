@@ -13,4 +13,9 @@
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.4" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\EventBookingService.Data\EventBookingService.Data.csproj" />
+	  <ProjectReference Include="..\EventBookingService.Domain\EventBookingService.Domain.csproj" />
+	</ItemGroup>
 </Project>

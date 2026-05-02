@@ -1,6 +1,4 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace EventBookingService.WebAPI.Models.Domain;
+namespace EventBookingService.Domain.Entities;
 
 /// <summary>
 /// Модель бронирования события

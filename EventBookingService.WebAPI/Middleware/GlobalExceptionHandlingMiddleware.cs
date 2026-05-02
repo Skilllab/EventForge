@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.ConstrainedExecution;
 
-using EventBookingService.WebAPI.Application.Exceptions;
+using EventBookingService.Domain.Exceptions;
 
 using Microsoft.AspNetCore.Mvc;
 

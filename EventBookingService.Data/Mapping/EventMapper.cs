@@ -1,7 +1,7 @@
-using EventBookingService.WebAPI.Infrastructure.Persistence.Entities;
-using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.Data.Entities;
+using EventBookingService.Domain.Entities;
 
-namespace EventBookingService.WebAPI.Infrastructure.Persistence.Mappers
+namespace EventBookingService.Data.Mapping
 {
     public static class EventMapper
     {

@@ -1,10 +1,12 @@
-using EventBookingService.WebAPI.Application.Interfaces;
-using EventBookingService.WebAPI.Data;
-using EventBookingService.WebAPI.Infrastructure.Repositories;
+using EventBookingService.Data.Context;
+using EventBookingService.Data.Repositories;
+using EventBookingService.Domain.Interfaces;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace EventBookingService.WebAPI.Infrastructure
+namespace EventBookingService.Data
 {
     public static class DependencyInjection
     {

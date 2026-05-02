@@ -1,10 +1,9 @@
-using EventBookingService.WebAPI.Infrastructure.Persistence.Entities;
-using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.Data.Entities;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EventBookingService.WebAPI.Data.DataAccess.Configurations
+namespace EventBookingService.Data.Context.Configurations
 {
     /// <summary>
     /// Конфигурация EF для <see cref="BookingEntity"/>

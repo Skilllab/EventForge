@@ -1,6 +1,6 @@
+using EventBookingService.Data;
+using EventBookingService.Data.Context;
 using EventBookingService.WebAPI.Application;
-using EventBookingService.WebAPI.Data;
-using EventBookingService.WebAPI.Infrastructure;
 using EventBookingService.WebAPI.Middleware;
 using EventBookingService.WebAPI.Presentation;
 

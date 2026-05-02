@@ -1,8 +1,3 @@
-using EventBookingService.WebAPI.Infrastructure.Persistence;
-using EventBookingService.WebAPI.Models.Domain;
-
-using FluentAssertions;
-
 using Microsoft.Extensions.Time.Testing;
 
 namespace EventBookingService.Tests

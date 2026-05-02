@@ -1,5 +1,4 @@
-using EventBookingService.WebAPI.Application.Exceptions;
-using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.Domain.Exceptions;
 
 using FluentAssertions;
 

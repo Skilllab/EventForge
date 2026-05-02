@@ -1,8 +1,8 @@
-using EventBookingService.WebAPI.Infrastructure.Persistence.Entities;
+using EventBookingService.Data.Entities;
 
 using Microsoft.EntityFrameworkCore;
 
-namespace EventBookingService.WebAPI.Data
+namespace EventBookingService.Data.Context
 {
     public sealed class AppDbContext : DbContext
     {
