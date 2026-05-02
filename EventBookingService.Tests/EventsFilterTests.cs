@@ -82,7 +82,7 @@ namespace EventBookingService.Tests
             var results = ValidateModel(filter);
 
             // Assert
-            results.Should().NotBeEmpty();            
+            results.Should().NotBeEmpty();
             results.Should().Contain(x => x.MemberNames.Contains("to"));
         }
 

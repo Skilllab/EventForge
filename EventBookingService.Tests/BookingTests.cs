@@ -1,3 +1,7 @@
+using EventBookingService.Domain.Entities;
+
+using FluentAssertions;
+
 using Microsoft.Extensions.Time.Testing;
 
 namespace EventBookingService.Tests;
@@ -18,8 +22,8 @@ public class BookingTests
         booking.Id.Should().NotBeEmpty();
         booking.EventId.Should().Be(eventId);
         booking.CreatedAt.Should().Be(createdAt);
-        booking.Status.Should().Be(BookingStatus.Pending); 
-        booking.ProcessedAt.Should().BeNull(); 
+        booking.Status.Should().Be(BookingStatus.Pending);
+        booking.ProcessedAt.Should().BeNull();
     }
 
     [Fact]

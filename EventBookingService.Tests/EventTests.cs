@@ -1,3 +1,4 @@
+using EventBookingService.Domain.Entities;
 using EventBookingService.Domain.Exceptions;
 
 using FluentAssertions;
@@ -123,7 +124,7 @@ public class EventTests
         var now = fixedUtcNow.UtcDateTime;
         var startDate = now;
         var endDate = now.AddDays(1);
-        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription );
+        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription);
 
         // Act
         var result = @event.TryReserveSeats(6);

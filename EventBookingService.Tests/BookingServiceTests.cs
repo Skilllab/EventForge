@@ -274,8 +274,8 @@ namespace EventBookingService.Tests
             // Маяки
             var updateFinished = new TaskCompletionSource<bool>();
 
-            bookingRepositoryMock.Setup(r => r.GetAll(It.IsAny<Func<Booking, bool>>(), It.IsAny<CancellationToken>()))
-                                 .Returns(new List<Booking> { booking });
+            bookingRepositoryMock.Setup(r => r.GetAll(BookingStatus.Pending, It.IsAny<CancellationToken>()))
+                                 .ReturnsAsync(new List<Booking> { booking });
 
             bookingRepositoryMock
                 .Setup(r => r.UpdateAsync(It.Is<Booking>(b => b.Status == BookingStatus.Confirmed), It.IsAny<CancellationToken>()))
@@ -426,8 +426,8 @@ namespace EventBookingService.Tests
             var booking = Booking.Create(existingEvent.Id, now);
 
             bookingRepositoryMock
-                .Setup(r => r.GetAll(It.IsAny<Func<Booking, bool>>(), It.IsAny<CancellationToken>()))
-                .Returns(new List<Booking> { booking });
+                .Setup(r => r.GetAll(BookingStatus.Pending, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Booking> { booking });
 
             eventRepositoryMock
                 .Setup(r => r.GetByIdAsync(existingEvent.Id, It.IsAny<CancellationToken>()))
@@ -485,8 +485,8 @@ namespace EventBookingService.Tests
                 .ReturnsAsync(existingEvent);
 
             var pendingBooking = Booking.Create(existingEvent.Id, now);
-            bookingRepoMock.Setup(r => r.GetAll(It.IsAny<Func<Booking, bool>>(), ct))
-                .Returns(new List<Booking> { pendingBooking });
+            bookingRepoMock.Setup(r => r.GetAll(BookingStatus.Pending, ct))
+                .ReturnsAsync(new List<Booking> { pendingBooking });
 
             using var cts = new CancellationTokenSource();
             await cts.CancelAsync();
