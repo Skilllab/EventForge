@@ -50,33 +50,12 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
 
         _logger.LogInformation("Запрос списка событий в {Now}. Фильтр: {Filter}", now, filter.title);
 
-        Func<Event, bool> query = e =>
-            (string.IsNullOrEmpty(filter.title) || e.Title.Contains(filter.title, StringComparison.OrdinalIgnoreCase)) &&
-            (!filter.from.HasValue || e.StartAt >= filter.from) &&
-            (FilterEndDate(filter, e));
-
         var result = await _repository.GetPagedAsync(filter.title, filter.from, filter.to, filter.page, filter.pageSize, ct);
-
 
         var items = result.Items.Select(MapToDTO).ToList();
 
         return new PaginatedResult(result.TotalCount, items, filter.page, filter.pageSize);
     }
-
-    private bool FilterEndDate(EventsFilter filter, Event @event)
-    {
-        if (!filter.to.HasValue)
-            return true;
-
-        var dateTo = filter.to.Value;
-
-        // Если время не указано (00:00:00), значит ищем до конца дня включительно
-        if (dateTo.TimeOfDay == TimeSpan.Zero)
-            return @event.EndAt.Date <= dateTo.Date;
-
-        return @event.EndAt <= dateTo;
-    }
-
 
     /// <inheritdoc/>
     public async Task<ResponseEventDTO> GetEventAsync(Guid eventId, CancellationToken ct)
