@@ -19,20 +19,33 @@ public class EventConfiguration : IEntityTypeConfiguration<EventEntity>
         builder.HasKey(k => k.Id);
         //Отключаем генерацию в коде
         builder.Property(k => k.Id)
+            .HasColumnName("id")
             .ValueGeneratedNever();
 
         builder.Property(p => p.Title)
+            .HasColumnName("title")
+            .IsRequired()
+            .HasMaxLength(200);
+
+        builder.Property(p => p.Description)
+            .HasColumnName("description")
+            .HasMaxLength(2000);
+
+        builder.Property(p => p.StartAt)
+            .HasColumnName("start_at")
             .IsRequired();
 
-        builder.Property(p => p.Description);
+        builder.Property(p => p.EndAt)
+            .HasColumnName("end_at")
+            .IsRequired();
 
-        builder.Property(p => p.StartAt);
+        builder.Property(p => p.TotalSeats)
+            .HasColumnName("total_seats")
+            .IsRequired();
 
-        builder.Property(p => p.EndAt);
-
-        builder.Property(p => p.TotalSeats);
-
-        builder.Property(p => p.AvailableSeats);
+        builder.Property(p => p.AvailableSeats)
+            .HasColumnName("available_seats")
+            .IsRequired();
 
         builder.HasMany(p=>p.Bookings)
             .WithOne()

@@ -1,3 +1,5 @@
+using EventBookingService.Domain.Entities;
+
 namespace EventBookingService.Data.Entities
 {
     public class BookingEntity
