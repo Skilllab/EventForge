@@ -1,3 +1,4 @@
+using EventBookingService.WebAPI.Infrastructure.Persistence.Entities;
 using EventBookingService.WebAPI.Models.Domain;
 
 using Microsoft.EntityFrameworkCore;
@@ -6,12 +7,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace EventBookingService.WebAPI.Data.DataAccess.Configurations
 {
     /// <summary>
-    /// Конфигурация EF для <see cref="Booking"/>
+    /// Конфигурация EF для <see cref="BookingEntity"/>
     /// </summary>
-    public class BookingConfiguration : IEntityTypeConfiguration<Booking>
+    public class BookingConfiguration : IEntityTypeConfiguration<BookingEntity>
     {
         /// <inheritdoc/>
-        public void Configure(EntityTypeBuilder<Booking> builder)
+        public void Configure(EntityTypeBuilder<BookingEntity> builder)
         {
             builder.ToTable("Bookings");
 
@@ -22,7 +23,7 @@ namespace EventBookingService.WebAPI.Data.DataAccess.Configurations
                 .ValueGeneratedNever();
 
             builder.Property(p => p.Status)
-                .HasConversion<BookingStatus>()
+                .HasConversion<string>()
                 .IsRequired();
 
             builder.Property(p => p.CreatedAt)
@@ -30,7 +31,7 @@ namespace EventBookingService.WebAPI.Data.DataAccess.Configurations
 
             builder.Property(p => p.ProcessedAt);
 
-            builder.HasOne<Event>()
+            builder.HasOne<EventEntity>()
                 .WithMany(p => p.Bookings)
                 .HasForeignKey(b => b.EventId);
         }

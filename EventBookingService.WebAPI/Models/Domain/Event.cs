@@ -1,6 +1,5 @@
 using EventBookingService.WebAPI.Application.Exceptions;
 
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace EventBookingService.WebAPI.Models.Domain;
 
@@ -42,8 +41,6 @@ public class Event
     /// Текущее количество свободных мест
     /// </summary>
     public int AvailableSeats { get; private set; }
-
-    public List<Booking> Bookings { get; set; }
 
     /// <summary>
     /// Метод освобождения места от резервирования
@@ -91,11 +88,6 @@ public class Event
         EndAt = endDate;
         Description = description;
     }
-
-    /// <summary>
-    /// Конструктор для EF
-    /// </summary>
-    private Event() { }
 
     private Event(string title, DateTime startDate, DateTime endDate, int totalSeats,
         string? description = null)

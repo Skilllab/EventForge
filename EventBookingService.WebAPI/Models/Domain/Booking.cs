@@ -32,14 +32,6 @@ public class Booking
     /// </summary>
     public DateTime? ProcessedAt { get; set; }
 
-    public Event Event { get; set; }
-
-
-    /// <summary>
-    /// Конструктор для EF
-    /// </summary>
-    private Booking() { }
-
     private Booking(Guid eventId, DateTime createdAt)
     {
         Id = Guid.NewGuid();
@@ -47,7 +39,6 @@ public class Booking
         CreatedAt = createdAt;
         EventId = eventId;
     }
-
    
     /// <summary>
     /// Подтверждаем бронирование

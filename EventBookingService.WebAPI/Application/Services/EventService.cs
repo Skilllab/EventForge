@@ -58,13 +58,12 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             (!filter.from.HasValue || e.StartAt >= filter.from) &&
             (FilterEndDate(filter, e));
 
-        var result = _repository.GetAll(query, filter.page, filter.pageSize, ct).OrderBy(e=>e.Title);
+        var result = await _repository.GetPagedAsync(filter.title, filter.from, filter.to, filter.page, filter.pageSize, ct);
 
-        var filteredCount = _repository.GetTotalCount(ct);
 
-        var items = result.Select(MapToDTO).ToList();
+        var items = result.Items.Select(MapToDTO).ToList();
 
-        return new PaginatedResult(filteredCount, items, filter.page, filter.pageSize);
+        return new PaginatedResult(result.TotalCount, items, filter.page, filter.pageSize);
     }
 
     private bool FilterEndDate(EventsFilter filter, Event @event)

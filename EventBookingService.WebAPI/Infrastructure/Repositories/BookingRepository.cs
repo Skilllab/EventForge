@@ -1,0 +1,69 @@
+using EventBookingService.WebAPI.Application.Interfaces;
+using EventBookingService.WebAPI.Data;
+using EventBookingService.WebAPI.Infrastructure.Persistence.Mappers;
+using EventBookingService.WebAPI.Models.Domain;
+
+using Microsoft.EntityFrameworkCore;
+
+namespace EventBookingService.WebAPI.Infrastructure.Repositories
+{
+    public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBookingRepository
+    {
+        public async Task AddAsync(Booking booking, CancellationToken ct)
+        {
+            await using var context = await factory.CreateDbContextAsync(ct);
+            var entity = booking.ToEntity();
+            await context.AddAsync(entity, ct);
+            await context.SaveChangesAsync(ct);
+        }
+
+        public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
+        {
+            await using var context = await factory.CreateDbContextAsync(ct);
+
+            var affectedRows = await context
+                .Bookings
+                .Where(b => b.Id == id)
+                .ExecuteDeleteAsync(ct);
+
+            return affectedRows > 0;
+        }
+
+        public async Task<Booking?> GetByIdAsync(Guid id, CancellationToken ct)
+        {
+            await using var context = await factory.CreateDbContextAsync(ct);
+
+            var entity = await context.Bookings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == id, ct);
+
+            return entity?.ToDomain();
+        }
+
+        public async Task<List<Booking>> GetAll(BookingStatus status, CancellationToken ct)
+        {
+            await using var context = await factory.CreateDbContextAsync(ct);
+
+            var entities = await context.Bookings
+                .AsNoTracking()
+                .Where(b => b.Status == status.ToString())
+                .ToListAsync(ct);
+
+            return entities
+                .Select(e => e.ToDomain())
+                .ToList();
+        }
+
+        public async Task UpdateAsync(Booking booking, CancellationToken ct)
+        {
+            await using var context = await factory.CreateDbContextAsync(ct);
+            var entity = await context.Bookings.FirstOrDefaultAsync(b=>b.Id == booking.Id, ct);
+
+            if (entity != null)
+            {
+                booking.UpdateEntity(entity);
+                await context.SaveChangesAsync(ct);
+            }
+        }
+    }
+}

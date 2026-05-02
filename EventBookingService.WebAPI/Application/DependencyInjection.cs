@@ -8,9 +8,6 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // Регистрируем как Singleton, чтобы данные не пропадали между запросами
-        services.AddSingleton<IEventRepository, InMemoryEventRepository>();
-        services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
         services.AddSingleton(TimeProvider.System);
 
         services.AddScoped<IEventService, EventService>();

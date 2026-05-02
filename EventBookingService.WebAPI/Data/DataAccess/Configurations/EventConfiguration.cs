@@ -1,3 +1,4 @@
+using EventBookingService.WebAPI.Infrastructure.Persistence.Entities;
 using EventBookingService.WebAPI.Models.Domain;
 
 using Microsoft.EntityFrameworkCore;
@@ -6,12 +7,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace EventBookingService.WebAPI.Data.DataAccess.Configurations;
 
 /// <summary>
-/// Конфигурация EF для <see cref="Event"/>
+/// Конфигурация EF для <see cref="EventEntity"/>
 /// </summary>
-public class EventConfiguration : IEntityTypeConfiguration<Event>
+public class EventConfiguration : IEntityTypeConfiguration<EventEntity>
 {
     /// <inheritdoc/>
-    public void Configure(EntityTypeBuilder<Event> builder)
+    public void Configure(EntityTypeBuilder<EventEntity> builder)
     {
         builder.ToTable("Events");
 

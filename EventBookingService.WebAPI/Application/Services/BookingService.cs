@@ -87,8 +87,7 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
     {
         ct.ThrowIfCancellationRequested();
 
-        Func<Booking, bool> query = e => e.Status == BookingStatus.Pending;
-        var pendingBookings = bookingRepository.GetAll(query, ct);
+        var pendingBookings = await bookingRepository.GetAll(BookingStatus.Pending, ct);
         var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, ct));
         await Task.WhenAll(tasks);
     }

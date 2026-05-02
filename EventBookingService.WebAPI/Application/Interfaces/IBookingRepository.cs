@@ -34,7 +34,7 @@ namespace EventBookingService.WebAPI.Application.Interfaces
         /// </summary>
         /// <param name="query">Предикат для фильтрации бронирований</param>
         /// <param name="ct">Токен отмены</param>
-        List<Booking> GetAll(Func<Booking, bool> query, CancellationToken ct);
+        Task<List<Booking>> GetAll(BookingStatus status, CancellationToken ct);
 
         /// <summary>
         /// Обновление бронирования

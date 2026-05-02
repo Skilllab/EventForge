@@ -1,15 +1,15 @@
-using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.WebAPI.Infrastructure.Persistence.Entities;
 
 using Microsoft.EntityFrameworkCore;
 
 namespace EventBookingService.WebAPI.Data
 {
-    internal sealed class AppDbContext : DbContext
+    public sealed class AppDbContext : DbContext
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        public DbSet<Event> Events => Set<Event>();
-        public DbSet<Booking> Bookings => Set<Booking>();
+        public DbSet<EventEntity> Events => Set<EventEntity>();
+        public DbSet<BookingEntity> Bookings => Set<BookingEntity>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
