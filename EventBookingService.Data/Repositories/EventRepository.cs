@@ -49,7 +49,7 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
                 : query.Where(e=>e.EndAt <= endAt.Value);
         }
 
-        var totalCount = await query.LongCountAsync(ct);
+        var totalCount = await context.Events.LongCountAsync(ct);
 
         var entities = await query
             .OrderBy(e => e.Title)
