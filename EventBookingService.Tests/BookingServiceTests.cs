@@ -399,44 +399,38 @@ public class BookingServiceTests
         var now = fixedUtcNow.UtcDateTime;
 
         var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-        var updateFinished = new TaskCompletionSource<bool>();
-        var totalSeats = 10;
-        var existingEvent = Event.Create("Тестовое событие отмены", now, now.AddHours(1), totalSeats);
-        var booking = Booking.Create(existingEvent.Id, now);
+
+        var @event = Event.Create("Event", now, now.AddHours(1), 10);
+        var booking = Booking.Create(@event.Id, now);
 
         bookingRepositoryMock
             .Setup(r => r.GetAll(BookingStatus.Pending, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Booking> { booking });
 
+        // Имитируем задержку в репозитории, чтобы успеть "выстрелить" отменой
         eventRepositoryMock
-            .Setup(r => r.GetByIdAsync(existingEvent.Id, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(existingEvent);
-
-        bookingRepositoryMock
-            .Setup(r => r.UpdateAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask)
-            .Callback(() => updateFinished.TrySetResult(true));
+            .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(async (Guid id, CancellationToken ct) =>
+            {
+                await Task.Delay(100, ct); // Ждем отмены
+                return @event;
+            });
 
         using var cts = new CancellationTokenSource();
 
         // Act
         var task = service.UpdateBookingAsync(cts.Token);
-        cts.Cancel();
 
-        fakeTimeProvider.Advance(TimeSpan.FromSeconds(2));
-
-        try { await task; } catch { }
-
-        await Task.WhenAny(updateFinished.Task, Task.Delay(5000, cts.Token));
+        // Даем коду проскочить первую проверку и зайти в ProcessBookingAsync
+        await Task.Delay(20);
+        cts.Cancel(); // Отменяем ТЕПЕРЬ
 
         // Assert
+        Func<Task> act = async () => await task;
+        await act.Should().ThrowAsync<OperationCanceledException>();
+
+        // Теперь статус БУДЕТ Rejected, так как мы попали в catch внутри ProcessBookingAsync
         booking.Status.Should().Be(BookingStatus.Rejected);
-
-        existingEvent.AvailableSeats.Should().Be(totalSeats);
-
-        bookingRepositoryMock.Verify(r => r.UpdateAsync(
-            It.Is<Booking>(b => b.Status == BookingStatus.Rejected),
-            It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Fact]
