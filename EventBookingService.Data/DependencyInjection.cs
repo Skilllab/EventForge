@@ -1,4 +1,5 @@
 using EventBookingService.Data.Context;
+using EventBookingService.Data.Interceptors;
 using EventBookingService.Data.Repositories;
 using EventBookingService.Domain.Interfaces;
 
@@ -21,9 +22,19 @@ public static class DependencyInjection
     /// <returns></returns>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        // База данных
-        services.AddDbContextFactory<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+
+        services.AddSingleton<LoggingInterceptor>();
+        // Регистрируем фабрику с сервис-провайдером
+        services.AddDbContextFactory<AppDbContext>((sp, options) =>
+        {
+            // Получаем интерцептор из контейнера
+            var interceptor = sp.GetRequiredService<LoggingInterceptor>();
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+
+            //Не логируем секретные данные
+            options.EnableSensitiveDataLogging(false);
+            
+        });
 
         // Репозитории
         services.AddScoped<IEventRepository, EventRepository>();

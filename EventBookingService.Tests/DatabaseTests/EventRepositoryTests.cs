@@ -5,7 +5,6 @@ using EventBookingService.Domain.Interfaces;
 using FluentAssertions;
 
 using Microsoft.Extensions.Time.Testing;
-using Microsoft.Testing.Platform.Extensions;
 
 namespace EventBookingService.Tests.DatabaseTests;
 

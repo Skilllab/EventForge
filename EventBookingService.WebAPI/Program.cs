@@ -4,6 +4,8 @@ using EventBookingService.WebAPI.Application;
 using EventBookingService.WebAPI.Middleware;
 using EventBookingService.WebAPI.Presentation;
 
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddConsole();
@@ -17,8 +19,10 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var factory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
+    using var db = factory.CreateDbContext();
     db.Database.EnsureCreated();
+
 }
 
 
