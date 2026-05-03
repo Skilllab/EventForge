@@ -3,6 +3,9 @@ using EventBookingService.Domain.Entities;
 
 namespace EventBookingService.Data.Mapping;
 
+/// <summary>
+/// Маппер между доменной моделью и сущностью базы данных
+/// </summary>
 public static class BookingMapper
 {
     /// <summary>
@@ -10,11 +13,9 @@ public static class BookingMapper
     /// </summary>
     public static Booking ToDomain(this BookingEntity entity)
     {
-        if (entity == null) return null!;
-
         var domain = Booking.Create(entity.EventId, entity.CreatedAt);
 
-        // 2. Восстанавливаем состояние, которое закрыто для изменений извне
+        //Восстанавливаем состояние, которое закрыто для изменений извне
         var type = typeof(Booking);
         type.GetProperty(nameof(Booking.Id))?.SetValue(domain, entity.Id);
 
@@ -29,8 +30,6 @@ public static class BookingMapper
     /// </summary>
     public static BookingEntity ToEntity(this Booking domain)
     {
-        if (domain == null) return null!;
-
         return new BookingEntity
         {
             Id = domain.Id,

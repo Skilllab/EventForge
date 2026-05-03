@@ -7,8 +7,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventBookingService.Data.Repositories;
 
+/// <summary>
+/// Репозиторий бля бронирования
+/// </summary>
+/// <param name="factory"></param>
 public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBookingRepository
 {
+    ///<inheritdoc/>
     public async Task AddAsync(Booking booking, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -17,6 +22,7 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
         await context.SaveChangesAsync(ct);
     }
 
+    ///<inheritdoc/>
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -29,6 +35,7 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
         return affectedRows > 0;
     }
 
+    ///<inheritdoc/>
     public async Task<Booking?> GetByIdAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -40,6 +47,7 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
         return entity?.ToDomain();
     }
 
+    ///<inheritdoc/>
     public async Task<List<Booking>> GetAll(BookingStatus status, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -54,10 +62,11 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
             .ToList();
     }
 
+    ///<inheritdoc/>
     public async Task UpdateAsync(Booking booking, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
-        var entity = await context.Bookings.FirstOrDefaultAsync(b=>b.Id == booking.Id, ct);
+        var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == booking.Id, ct);
 
         if (entity != null)
         {

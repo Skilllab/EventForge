@@ -7,9 +7,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventBookingService.Data.Repositories;
 
+
+/// <summary>
+/// Репозиторий для событий
+/// </summary>
+/// <param name="factory"></param>
 public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRepository
 {
-    
+    ///<inheritdoc/>
     public async Task<Event?> GetByIdAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -20,6 +25,7 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
         return entity?.ToDomain();
     }
 
+    ///<inheritdoc/>
     public async Task<PagedResult<Event>> GetPagedAsync(
         string? title,
         DateTime? startAt,
@@ -64,6 +70,7 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
         return new PagedResult<Event>(domainEvents, totalCount);
     }
 
+    ///<inheritdoc/>
     public async Task AddAsync(Event @event, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -72,6 +79,7 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
         await context.SaveChangesAsync(ct);
     }
 
+    ///<inheritdoc/>
     public async Task UpdateAsync(Event @event, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -80,7 +88,7 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
         await context.SaveChangesAsync(ct);
     }
 
-
+    ///<inheritdoc/>
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);

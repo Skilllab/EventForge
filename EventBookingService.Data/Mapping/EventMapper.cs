@@ -17,7 +17,6 @@ public static class EventMapper
             entity.Description);
 
         // Чтобы синхронизировать Id и остаток мест из БД:
-        // Используем рефлексию для private полей/свойств
         typeof(Event).GetProperty(nameof(Event.Id))?.SetValue(domain, entity.Id);
         typeof(Event).GetProperty(nameof(Event.AvailableSeats))?.SetValue(domain, entity.AvailableSeats);
 
