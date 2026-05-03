@@ -1,6 +1,4 @@
-using System.ComponentModel.DataAnnotations;
-
-namespace EventBookingService.WebAPI.Models.Domain;
+namespace EventBookingService.Domain.Entities;
 
 /// <summary>
 /// Модель бронирования события
@@ -40,7 +38,6 @@ public class Booking
         EventId = eventId;
     }
 
-   
     /// <summary>
     /// Подтверждаем бронирование
     /// </summary>

@@ -1,16 +1,19 @@
 using EventBookingService.WebAPI.Application.Interfaces;
 using EventBookingService.WebAPI.Application.Services;
-using EventBookingService.WebAPI.Infrastructure.Persistence;
 
 namespace EventBookingService.WebAPI.Application;
 
+/// <summary>
+/// Класс для работы по билдеру
+/// </summary>
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Метод добавления сервисы
+    /// </summary>
+    /// <param name="services">Системная коллекция сервисов</param>
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
-        // Регистрируем как Singleton, чтобы данные не пропадали между запросами
-        services.AddSingleton<IEventRepository, InMemoryEventRepository>();
-        services.AddSingleton<IBookingRepository, InMemoryBookingRepository>();
         services.AddSingleton(TimeProvider.System);
 
         services.AddScoped<IEventService, EventService>();

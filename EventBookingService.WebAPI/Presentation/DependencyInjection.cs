@@ -1,9 +1,16 @@
-﻿using System.Reflection;
+using System.Reflection;
 
 namespace EventBookingService.WebAPI.Presentation;
 
+/// <summary>
+/// Класс для работы по билдеру
+/// </summary>
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Метод добавления контроллеров, эндпоинтов и сваггера
+    /// </summary>
+    /// <param name="services">Системная коллекция сервисов</param>
     public static IServiceCollection AddPresentation(this IServiceCollection services)
     {
         services.AddControllers();

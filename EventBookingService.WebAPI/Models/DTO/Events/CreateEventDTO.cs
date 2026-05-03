@@ -13,7 +13,7 @@ public class CreateEventDTO
     /// Название события
     /// </summary>
     [Required(ErrorMessage = "Наименование для события обязательно для заполнения.")]
-    public string Title { get; set; }
+    public required string Title { get; set; }
 
     /// <summary>
     /// Описание события

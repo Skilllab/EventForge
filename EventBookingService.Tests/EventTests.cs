@@ -1,5 +1,5 @@
-using EventBookingService.WebAPI.Application.Exceptions;
-using EventBookingService.WebAPI.Models.Domain;
+using EventBookingService.Domain.Entities;
+using EventBookingService.Domain.Exceptions;
 
 using FluentAssertions;
 
@@ -69,7 +69,6 @@ public class EventTests
     {
         // Arrange
         var defaultTitle = "Межпланетная конференция .NET";
-        var defaultSeats = 100;
         var defaultDescription = "Первая в своём роде конференция таких масштабов";
         var fakeTimeProvider = new FakeTimeProvider();
         var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
@@ -124,7 +123,7 @@ public class EventTests
         var now = fixedUtcNow.UtcDateTime;
         var startDate = now;
         var endDate = now.AddDays(1);
-        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription );
+        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription);
 
         // Act
         var result = @event.TryReserveSeats(6);
@@ -174,7 +173,7 @@ public class EventTests
         var now = fixedUtcNow.UtcDateTime;
         var startDate = now;
         var endDate = now.AddDays(1);
-        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats);
+        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription);
         @event.TryReserveSeats(5);
 
         // Act
@@ -198,7 +197,7 @@ public class EventTests
         var now = fixedUtcNow.UtcDateTime;
         var startDate = now;
         var endDate = now.AddDays(1);
-        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats);
+        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription);
         @event.TryReserveSeats(2);
 
         // Act
@@ -222,7 +221,7 @@ public class EventTests
         var now = fixedUtcNow.UtcDateTime;
         var startDate = now;
         var endDate = now.AddDays(1);
-        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats);
+        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription);
         @event.TryReserveSeats(5);
 
         // Act
@@ -247,7 +246,7 @@ public class EventTests
         var now = fixedUtcNow.UtcDateTime;
         var startDate = now;
         var endDate = now.AddDays(1);
-        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats);
+        var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription);
 
         var newTitle = "Не совсем первая и не совсем межпланетная конференция";
         var description = "Тут должно быть описание";

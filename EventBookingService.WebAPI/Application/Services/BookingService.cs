@@ -1,6 +1,7 @@
-using EventBookingService.WebAPI.Application.Exceptions;
+using EventBookingService.Domain.Entities;
+using EventBookingService.Domain.Exceptions;
+using EventBookingService.Domain.Interfaces;
 using EventBookingService.WebAPI.Application.Interfaces;
-using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO.Booking;
 
 namespace EventBookingService.WebAPI.Application.Services;
@@ -10,10 +11,8 @@ namespace EventBookingService.WebAPI.Application.Services;
 /// </summary>
 public class BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger, TimeProvider timeProvider) : IBookingService
 {
-    private readonly SemaphoreSlim _semaphoreCreate = new SemaphoreSlim(1, 1);
-    private readonly SemaphoreSlim _semaphoreUpdate = new SemaphoreSlim(1, 1);
-
-    private const int delayConnectToBaseInSeconds = 2;
+    private readonly SemaphoreSlim _semaphoreCreate = new(1, 1);
+    private readonly SemaphoreSlim _semaphoreUpdate = new(1, 1);
 
     /// <inheritdoc/>
     public async Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct)
@@ -26,7 +25,7 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
         if (existedEvent == null)
         {
             logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
-            throw new NotFoundException(nameof(Event), eventId);
+            throw new NotFoundException(nameof(Event), eventId.ToString());
         }
 
         await _semaphoreCreate.WaitAsync(ct);
@@ -57,15 +56,13 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
         }
     }
 
-    private BookingInfoDTO MapToDTO(Booking newBooking)
-    {
-        return new BookingInfoDTO()
+    private static BookingInfoDTO MapToDTO(Booking newBooking) =>
+        new()
         {
             ID = newBooking.Id,
             EventID = newBooking.EventId,
             Status = newBooking.Status.ToString(),
         };
-    }
 
     /// <inheritdoc/>
     public async Task<BookingInfoDTO> GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
@@ -75,10 +72,9 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
         logger.LogInformation("Получение бронирования : {bookingId}", bookingId);
 
         var booking = await bookingRepository.GetByIdAsync(bookingId, ct);
-        if (booking == null)
-            throw new NotFoundException(nameof(Booking), bookingId);
-
-        return MapToDTO(booking);
+        return booking == null
+            ? throw new NotFoundException(nameof(Booking), bookingId.ToString())
+            : MapToDTO(booking);
     }
 
 
@@ -87,8 +83,7 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
     {
         ct.ThrowIfCancellationRequested();
 
-        Func<Booking, bool> query = e => e.Status == BookingStatus.Pending;
-        var pendingBookings = bookingRepository.GetAll(query, ct);
+        var pendingBookings = await bookingRepository.GetAll(BookingStatus.Pending, ct);
         var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, ct));
         await Task.WhenAll(tasks);
     }
@@ -99,8 +94,6 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
         var processingTime = timeProvider.GetUtcNow().UtcDateTime;
         try
         {
-            await Task.Delay(TimeSpan.FromSeconds(delayConnectToBaseInSeconds), timeProvider, ct);
-
             existedEvent = await eventRepository.GetByIdAsync(booking.EventId, ct);
 
             if (existedEvent == null)
@@ -134,11 +127,11 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
             if (ex is not OperationCanceledException)
                 logger.LogError(ex, "Ошибка при обработке бронирования {ID}", booking.Id);
 
-            throw; 
+            throw;
         }
         finally
         {
-            // 5. Сохраняем бронь ВСЕГДА (Confirmed или Rejected)
+            // Сохраняем бронь ВСЕГДА (Confirmed или Rejected)
             await bookingRepository.UpdateAsync(booking, ct);
         }
 

@@ -1,15 +1,18 @@
-using System.Collections;
-
-using EventBookingService.WebAPI.Application.Exceptions;
+using EventBookingService.Domain.Entities;
+using EventBookingService.Domain.Exceptions;
+using EventBookingService.Domain.Interfaces;
 using EventBookingService.WebAPI.Application.Interfaces;
-using EventBookingService.WebAPI.Models.Domain;
 using EventBookingService.WebAPI.Models.DTO.Events;
-
-using static System.Net.WebRequestMethods;
 
 namespace EventBookingService.WebAPI.Application.Services;
 
-public class EventService(IEventRepository _repository, ILogger<EventService>_logger, TimeProvider timeProvider) : IEventService
+/// <summary>
+/// Сервис обработки событий
+/// </summary>
+/// <param name="_repository">Репозиторий с событиями</param>
+/// <param name="_logger">Логгер</param>
+/// <param name="timeProvider">Провайдер управления временем и датой</param>
+public class EventService(IEventRepository _repository, ILogger<EventService> _logger, TimeProvider timeProvider) : IEventService
 {
     /// <inheritdoc/>
     public async Task<ResponseEventDTO> CreateEventAsync(CreateEventDTO newEventDTO, CancellationToken ct)
@@ -38,7 +41,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         _logger.LogDebug("Попытка удаления события с ID: {Id}", eventId);
         if (!await _repository.DeleteAsync(eventId, ct))
         {
-            throw new NotFoundException(nameof(Event), eventId);
+            throw new NotFoundException(nameof(Event), eventId.ToString());
         }
         _logger.LogInformation("Событие успешно удалено. ID: {Id} ", eventId);
     }
@@ -53,34 +56,12 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
 
         _logger.LogInformation("Запрос списка событий в {Now}. Фильтр: {Filter}", now, filter.title);
 
-        Func<Event, bool> query = e =>
-            (string.IsNullOrEmpty(filter.title) || e.Title.Contains(filter.title, StringComparison.OrdinalIgnoreCase)) &&
-            (!filter.from.HasValue || e.StartAt >= filter.from) &&
-            (FilterEndDate(filter, e));
+        var result = await _repository.GetPagedAsync(filter.title, filter.from, filter.to, filter.page, filter.pageSize, ct);
 
-        var result = _repository.GetAll(query, filter.page, filter.pageSize, ct).OrderBy(e=>e.Title);
+        var items = result.Items.Select(MapToDTO).ToList();
 
-        var filteredCount = _repository.GetTotalCount(ct);
-
-        var items = result.Select(MapToDTO).ToList();
-
-        return new PaginatedResult(filteredCount, items, filter.page, filter.pageSize);
+        return new PaginatedResult(result.TotalCount, items, filter.page, filter.pageSize);
     }
-
-    private bool FilterEndDate(EventsFilter filter, Event @event)
-    {
-        if (!filter.to.HasValue)
-            return true;
-
-        var dateTo = filter.to.Value;
-
-        // Если время не указано (00:00:00), значит ищем до конца дня включительно
-        if (dateTo.TimeOfDay == TimeSpan.Zero)
-            return @event.EndAt.Date <= dateTo.Date;
-
-        return @event.EndAt <= dateTo;
-    }
-
 
     /// <inheritdoc/>
     public async Task<ResponseEventDTO> GetEventAsync(Guid eventId, CancellationToken ct)
@@ -91,7 +72,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         if (existedEvent == null)
         {
             _logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
-            throw new NotFoundException(nameof(Event), eventId);
+            throw new NotFoundException(nameof(Event), eventId.ToString());
         }
 
         return MapToDTO(existedEvent);
@@ -107,7 +88,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
         if (existedEvent == null)
         {
             _logger.LogError("Ошибка обновления: событие не существует. ID: {Id}", eventId);
-            throw new NotFoundException(nameof(Event), eventId, "Событие с таким ID не найдено");
+            throw new NotFoundException(nameof(Event), eventId.ToString(), "Событие с таким ID не найдено");
         }
 
         // Проверка для Nullable типов внутри сервиса
@@ -115,7 +96,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             currentEvent.EndAt.Value < currentEvent.StartAt.Value)
         {
             _logger.LogWarning("Ошибка валидации дат для события {Id}", eventId);
-            throw new ValidationCustomException(nameof(UpdateEventDTO), eventId, "У события не может быть дата начала меньше даты завершения");
+            throw new ValidationCustomException(nameof(UpdateEventDTO), eventId.ToString(), "У события не может быть дата начала меньше даты завершения");
         }
 
 
@@ -134,9 +115,8 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
     /// </summary>
     /// <param name="currentEvent">Доменное событие</param>
     /// <returns>DTO для отправки</returns>
-    private ResponseEventDTO MapToDTO(Event currentEvent)
-    {
-        return new ResponseEventDTO
+    private ResponseEventDTO MapToDTO(Event currentEvent) =>
+        new()
         {
             Id = currentEvent.Id,
             Title = currentEvent.Title,
@@ -146,5 +126,4 @@ public class EventService(IEventRepository _repository, ILogger<EventService>_lo
             TotalSeats = currentEvent.TotalSeats,
             AvailableSeats = currentEvent.AvailableSeats
         };
-    }
 }

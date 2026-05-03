@@ -1,99 +1,97 @@
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.ConstrainedExecution;
 
-using EventBookingService.WebAPI.Application.Exceptions;
+using EventBookingService.Domain.Exceptions;
 
 using Microsoft.AspNetCore.Mvc;
 
-namespace EventBookingService.WebAPI.Middleware
+namespace EventBookingService.WebAPI.Middleware;
+
+/// <summary>
+/// Класс для отработки перехваченных <see cref="Exception"/>
+/// </summary>
+/// <param name="next">Делегат, обрабатывающий HTTP-запрос </param>
+/// <param name="logger">Логгер</param>
+public class GlobalExceptionHandlingMiddleware(
+    RequestDelegate next,
+    ILogger<GlobalExceptionHandlingMiddleware> logger)
 {
-    public class GlobalExceptionHandlingMiddleware
+
+    /// <summary>
+    /// Метод перехвата исключений
+    /// </summary>
+    /// <param name="httpContext">HTTP контекст</param>
+    /// <returns></returns>
+    public async Task InvokeAsync(HttpContext httpContext)
     {
-        private readonly RequestDelegate _next;
-        private readonly ILogger<GlobalExceptionHandlingMiddleware> _logger;
-
-        public GlobalExceptionHandlingMiddleware(
-            RequestDelegate next,
-            ILogger<GlobalExceptionHandlingMiddleware> logger)
+        try
         {
-            _next = next;
-            _logger = logger;
+            await next(httpContext);
         }
-
-        public async Task InvokeAsync(HttpContext httpContext)
+        catch (Exception ex)
         {
-            try
-            {
-                await _next(httpContext);
-            }
-            catch (Exception ex)
-            {
-                await HandleException(httpContext, ex);
-            }
+            await HandleException(httpContext, ex);
         }
-
-        private async Task HandleException(HttpContext httpContext, Exception exception)
-        {
-
-            _logger.LogError(
-                exception,
-                "Unhandled exception. Method={Method}, Path={Path}, RequestId={RequestId}",
-                httpContext.Request.Method,
-                httpContext.Request.Path,
-                httpContext.Request.Headers["x-request-id"]);
-
-            if (httpContext.Response.HasStarted)
-            {
-                return;
-            }
-
-            var statusCode = MapStatusCode(exception);
-            var error = exception switch
-            {
-                NotFoundException nfe => new ProblemDetails
-                {
-                    Type = nfe.EntityName,
-                    Instance = nfe.EntityId,
-                    Status = statusCode,
-                    Detail = nfe.Message
-                },
-                ValidationCustomException ver => new ProblemDetails
-                {
-                    Type = ver.EntityName,
-                    Instance = ver.EntityId,
-                    Status = statusCode,
-                    Detail = ver.Message
-                },
-                NoAvailableSeatsException nae=> new ProblemDetails
-                {
-                    Type = nae.EntityName,
-                    Instance = nae.EntityId,
-                    Status = statusCode,
-                    Detail = nae.Message
-                },
-                _ => new ProblemDetails()
-                {
-                    Status = statusCode,
-                    Detail = exception.Message
-                }
-            };
-
-            httpContext.Response.StatusCode = statusCode;
-            httpContext.Response.ContentType = "application/json";
-
-         
-
-            await httpContext.Response.WriteAsJsonAsync(error);
-        }
-
-        private static int MapStatusCode(Exception ex)
-            => ex switch
-            {
-                ValidationCustomException or ValidationException => StatusCodes.Status400BadRequest,
-                NotFoundException => StatusCodes.Status404NotFound,
-                UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
-                NoAvailableSeatsException => StatusCodes.Status409Conflict,
-                _ => StatusCodes.Status500InternalServerError
-            };
     }
+
+    private async Task HandleException(HttpContext httpContext, Exception exception)
+    {
+
+        logger.LogError(
+            exception,
+            "Unhandled exception. Method={Method}, Path={Path}, RequestId={RequestId}",
+            httpContext.Request.Method,
+            httpContext.Request.Path,
+            httpContext.Request.Headers["x-request-id"]);
+
+        if (httpContext.Response.HasStarted)
+        {
+            return;
+        }
+
+        var statusCode = MapStatusCode(exception);
+        var error = exception switch
+        {
+            NotFoundException nfe => new ProblemDetails
+            {
+                Type = nfe.EntityName,
+                Instance = nfe.EntityId,
+                Status = statusCode,
+                Detail = nfe.Message
+            },
+            ValidationCustomException ver => new ProblemDetails
+            {
+                Type = ver.EntityName,
+                Instance = ver.EntityId,
+                Status = statusCode,
+                Detail = ver.Message
+            },
+            NoAvailableSeatsException nae => new ProblemDetails
+            {
+                Type = nae.EntityName,
+                Instance = nae.EntityId,
+                Status = statusCode,
+                Detail = nae.Message
+            },
+            _ => new ProblemDetails()
+            {
+                Status = statusCode,
+                Detail = exception.Message
+            }
+        };
+
+        httpContext.Response.StatusCode = statusCode;
+        httpContext.Response.ContentType = "application/json";
+
+        await httpContext.Response.WriteAsJsonAsync(error);
+    }
+
+    private static int MapStatusCode(Exception ex)
+        => ex switch
+        {
+            ValidationCustomException or ValidationException => StatusCodes.Status400BadRequest,
+            NotFoundException => StatusCodes.Status404NotFound,
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+            NoAvailableSeatsException => StatusCodes.Status409Conflict,
+            _ => StatusCodes.Status500InternalServerError
+        };
 }

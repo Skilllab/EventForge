@@ -63,7 +63,7 @@ csharp_using_directive_placement = outside_namespace:suggestion
 
 
 # Стиль скобок
-csharp_prefer_braces = true:suggestion
+csharp_prefer_braces = true:silent
 
 # Выражение-тела для методов, конструкторов, свойств и аксессоров
 csharp_style_expression_bodied_methods = true:suggestion
@@ -104,3 +104,11 @@ dotnet_style_null_propagation = true:suggestion
 
 # Правило IDE0055 (Ошибка форматирования) — считать ошибкой и проваливать сборку
 dotnet_diagnostic.ide0055.severity = warning
+
+# CA2000: Dispose objects before losing scope (объекты в методах)
+dotnet_diagnostic.CA2000.severity = error
+# CA2213: Disposable fields should be disposed (поля класса)
+dotnet_diagnostic.CA2213.severity = error
+
+# Добавление фигурных скобок
+dotnet_diagnostic.IDE0011.severity = none

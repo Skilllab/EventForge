@@ -1,8 +1,6 @@
-using EventBookingService.WebAPI.Application.Exceptions;
+using EventBookingService.Domain.Exceptions;
 
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace EventBookingService.WebAPI.Models.Domain;
+namespace EventBookingService.Domain.Entities;
 
 /// <summary>
 /// Событие сервиса управления
@@ -118,7 +116,7 @@ public class Event
         ValidateDates(startDate, endDate);
 
         if (totalSeats <= 0)
-            throw new ValidationCustomException(nameof(Event), Guid.Empty, "Общее количество мест для события должно быть больше нуля.");
+            throw new ValidationCustomException(nameof(Event), Guid.Empty.ToString(), "Общее количество мест для события должно быть больше нуля.");
 
         return new Event(title, startDate, endDate, totalSeats, description);
     }
@@ -128,13 +126,13 @@ public class Event
         if (end.TimeOfDay == TimeSpan.Zero)
         {
             if (end.Date < start.Date)
-                throw new ValidationCustomException(nameof(Event), Guid.Empty, "Дата окончания не может быть раньше даты начала");
+                throw new ValidationCustomException(nameof(Event), Guid.Empty.ToString(), "Дата окончания не может быть раньше даты начала");
         }
         else
         {
             if (end < start)
             {
-                throw new ValidationCustomException(nameof(Event), Guid.Empty, "Дата окончания не может быть раньше даты начала");
+                throw new ValidationCustomException(nameof(Event), Guid.Empty.ToString(), "Дата окончания не может быть раньше даты начала");
             }
         }
 
