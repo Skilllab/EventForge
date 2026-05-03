@@ -1,3 +1,5 @@
+//using EventBookingService.Domain.Entities;
+
 //using Microsoft.Extensions.Time.Testing;
 
 //namespace EventBookingService.Tests

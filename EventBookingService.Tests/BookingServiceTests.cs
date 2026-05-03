@@ -49,7 +49,6 @@ namespace EventBookingService.Tests
 
             // Assert
             result.Status.Should().Be(nameof(BookingStatus.Pending));
-
             bookingRepositoryMock.Verify(r => r.AddAsync(It.Is<Booking>(b => b.EventId == existingEvent.Id), ct), Times.Once);
             eventRepositoryMock.Verify(r => r.UpdateAsync(It.Is<Event>(e => e.AvailableSeats == 0), ct), Times.Once);
             eventRepositoryMock.Verify(r => r.GetByIdAsync(existingEvent.Id, ct), Times.Once);
@@ -59,6 +58,7 @@ namespace EventBookingService.Tests
         [Trait("Category", "CreateBooking")]
         public async Task CreateBookingAsync_RunManyTimes_ShouldSaveBooking_WhenEventExists1()
         {
+            // Arrange
             var bookingRepositoryMock = new Mock<IBookingRepository>();
             var eventRepositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<BookingService>>();
@@ -68,12 +68,10 @@ namespace EventBookingService.Tests
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
             var now = fixedUtcNow.UtcDateTime;
 
-            // Передаем в сервис корректный мок репозитория
             var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, loggerMock.Object, fakeTimeProvider);
 
             var ct = CancellationToken.None;
             var totalSeats = 10;
-
             var existingEvent = Event.Create("Свежее тестовое событие 2", now, now.AddHours(1), totalSeats);
 
             eventRepositoryMock
@@ -92,7 +90,6 @@ namespace EventBookingService.Tests
             // Assert
             createdIds.Should().HaveCount(totalSeats);
             createdIds.Select(r => r).Distinct().Should().HaveCount(totalSeats);
-
             existingEvent.AvailableSeats.Should().Be(0);
             bookingRepositoryMock.Verify(r => r.AddAsync(It.Is<Booking>(b => b.EventId == existingEvent.Id), ct), Times.Exactly(totalSeats));
             eventRepositoryMock.Verify(r => r.UpdateAsync(existingEvent, ct), Times.Exactly(totalSeats));
@@ -106,14 +103,11 @@ namespace EventBookingService.Tests
             var bookingRepositoryMock = new Mock<IBookingRepository>();
             var eventRepositoryMock = new Mock<IEventRepository>();
             var loggerMock = new Mock<ILogger<BookingService>>();
-
             var fakeTimeProvider = new FakeTimeProvider();
             var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
-
             var eventId = Guid.NewGuid();
             var ct = CancellationToken.None;
-
             var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, loggerMock.Object, fakeTimeProvider);
 
             eventRepositoryMock
@@ -140,7 +134,6 @@ namespace EventBookingService.Tests
             var fakeTimeProvider = new FakeTimeProvider();
             var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
-
             var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             using var cts = new CancellationTokenSource();
             await cts.CancelAsync();
@@ -166,7 +159,6 @@ namespace EventBookingService.Tests
             var fakeTimeProvider = new FakeTimeProvider();
             var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
-
             var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, loggerMock.Object, fakeTimeProvider);
 
             var nonExistentId = Guid.NewGuid();
@@ -180,7 +172,7 @@ namespace EventBookingService.Tests
             Func<Task> act = async () => await service.GetBookingByIdAsync(nonExistentId, ct);
 
             // Assert
-            await act.Should().ThrowAsync<NotFoundException>(); // Проверка наличия ID в сообщении (если есть)
+            await act.Should().ThrowAsync<NotFoundException>();
             bookingRepositoryMock.Verify(r => r.GetByIdAsync(nonExistentId, ct), Times.Once);
         }
 
@@ -197,9 +189,7 @@ namespace EventBookingService.Tests
             var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
             var now = fixedUtcNow.UtcDateTime;
-
             var ct = CancellationToken.None;
-
             var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, loggerMock.Object, fakeTimeProvider);
             var booking = Booking.Create(Guid.NewGuid(), now);
             bookingRepositoryMock.Setup(r => r.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
@@ -224,9 +214,7 @@ namespace EventBookingService.Tests
             var fakeTimeProvider = new FakeTimeProvider();
             var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
-
             var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-
             using var cts = new CancellationTokenSource();
             await cts.CancelAsync();
             bookingRepositoryMock.Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()));
@@ -248,12 +236,9 @@ namespace EventBookingService.Tests
             var eventRepositoryMock = new Mock<IEventRepository>();
             var loggerBgMock = new Mock<ILogger<BookingBackgroundService>>();
             var loggerSvcMock = new Mock<ILogger<BookingService>>();
-
-            // Важно: Мокаем IServiceScope и IServiceProvider
             var scopeMock = new Mock<IServiceScope>();
             var serviceProviderMock = new Mock<IServiceProvider>();
             var scopeFactoryMock = new Mock<IServiceScopeFactory>();
-
             var fakeTimeProvider = new FakeTimeProvider();
             fakeTimeProvider.SetUtcNow(new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero));
             var now = fakeTimeProvider.GetUtcNow().UtcDateTime;
@@ -271,9 +256,7 @@ namespace EventBookingService.Tests
             eventRepositoryMock.Setup(r => r.GetByIdAsync(existingEvent.Id, It.IsAny<CancellationToken>())).ReturnsAsync(existingEvent);
             bookingRepositoryMock.Setup(r => r.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
 
-            // Маяки
             var updateFinished = new TaskCompletionSource<bool>();
-
             bookingRepositoryMock.Setup(r => r.GetAll(BookingStatus.Pending, It.IsAny<CancellationToken>()))
                                  .ReturnsAsync(new List<Booking> { booking });
 
@@ -305,7 +288,7 @@ namespace EventBookingService.Tests
                     It.IsAny<Exception>(),
                     (Func<It.IsAnyType, Exception, string>) It.IsAny<object>()), Times.Never(), "В фоновом сервисе произошла ошибка, проверьте логи!");
 
-                throw new Exception("Таймаут: UpdateAsync не вызван. Проверьте совпадение типов IBookingService в DI.");
+                throw new Exception("Таймаут: UpdateAsync не вызван.");
             }
 
             await cts.CancelAsync();
@@ -343,7 +326,7 @@ namespace EventBookingService.Tests
             // Assert
             result.Should().NotBeNull();
             result.EventID.Should().Be(eventId);
-            myEvent.AvailableSeats.Should().Be(initialSeats - 1); // Проверка: стало 9
+            myEvent.AvailableSeats.Should().Be(initialSeats - 1);
 
             bookingRepositoryMock.Verify(r => r.AddAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()), Times.Once);
             eventRepositoryMock.Verify(r => r.UpdateAsync(myEvent, It.IsAny<CancellationToken>()), Times.Once);
@@ -372,14 +355,13 @@ namespace EventBookingService.Tests
             var totalSeats = 2;
             var eventId = Guid.NewGuid();
 
-            // Создаем событие, где всего 2 места
             var existingEvent = Event.Create("Новое суперсобытие 4", now, now.AddHours(1), totalSeats);
 
             eventRepositoryMock
                 .Setup(r => r.GetByIdAsync(It.IsAny<Guid>(), ct))
                 .ReturnsAsync(existingEvent);
 
-            // 1. Заполняем все доступные места
+            //Заполняем все доступные места
             for (var i = 0; i < totalSeats; i++)
             {
                 await service.CreateBookingAsync(eventId, ct);
@@ -417,12 +399,9 @@ namespace EventBookingService.Tests
             var now = fixedUtcNow.UtcDateTime;
 
             var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-
             var updateFinished = new TaskCompletionSource<bool>();
             var totalSeats = 10;
-
             var existingEvent = Event.Create("Тестовое событие отмены", now, now.AddHours(1), totalSeats);
-
             var booking = Booking.Create(existingEvent.Id, now);
 
             bookingRepositoryMock
@@ -433,13 +412,11 @@ namespace EventBookingService.Tests
                 .Setup(r => r.GetByIdAsync(existingEvent.Id, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(existingEvent);
 
-            // Имитируем сбой сохранения брони, чтобы гарантированно сработал catch
             bookingRepositoryMock
                 .Setup(r => r.UpdateAsync(It.IsAny<Booking>(), It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask)
                 .Callback(() => updateFinished.TrySetResult(true));
 
-            // Используем токен, который мы отменим
             using var cts = new CancellationTokenSource();
 
             // Act
@@ -535,8 +512,6 @@ namespace EventBookingService.Tests
                 .Select(_ => service.CreateBookingAsync(existingEvent.Id, ct))
                 .ToList();
 
-            // Ждем завершения всех задач. 
-            // Используем Task.WhenAll, но оборачиваем в try, так как часть задач выбросит исключение
             var results = new List<BookingInfoDTO>();
             var exceptions = new List<Exception>();
 
