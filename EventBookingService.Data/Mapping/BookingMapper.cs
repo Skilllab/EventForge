@@ -28,9 +28,8 @@ public static class BookingMapper
     /// <summary>
     /// Из домена в сущность БД
     /// </summary>
-    public static BookingEntity ToEntity(this Booking domain)
-    {
-        return new BookingEntity
+    public static BookingEntity ToEntity(this Booking domain) =>
+        new()
         {
             Id = domain.Id,
             EventId = domain.EventId,
@@ -38,7 +37,6 @@ public static class BookingMapper
             CreatedAt = domain.CreatedAt,
             ProcessedAt = domain.ProcessedAt
         };
-    }
 
     public static void UpdateEntity(this Booking domain, BookingEntity entity)
     {

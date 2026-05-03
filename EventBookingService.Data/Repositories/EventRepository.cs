@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventBookingService.Data.Repositories;
 
-
 /// <summary>
 /// Репозиторий для событий
 /// </summary>
@@ -18,7 +17,7 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
     public async Task<Event?> GetByIdAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
-        var entity =  await context.Events
+        var entity = await context.Events
             .Include(e => e.Bookings)
             .FirstOrDefaultAsync(e => e.Id == id, ct);
 
@@ -52,7 +51,7 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
             // Если время не указано (00:00:00), значит ищем до конца дня включительно
             query = endAt.Value.TimeOfDay == TimeSpan.Zero
                 ? query.Where(e => e.EndAt.Date <= endAt.Value.Date)
-                : query.Where(e=>e.EndAt <= endAt.Value);
+                : query.Where(e => e.EndAt <= endAt.Value);
         }
 
         var totalCount = await context.Events.LongCountAsync(ct);

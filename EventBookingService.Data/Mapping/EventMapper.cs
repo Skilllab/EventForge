@@ -3,12 +3,17 @@ using EventBookingService.Domain.Entities;
 
 namespace EventBookingService.Data.Mapping;
 
+/// <summary>
+/// Маппер событий между доменной моделью и сущностью БД
+/// </summary>
 public static class EventMapper
 {
+    /// <summary>
+    /// Маппер в доменную модель из сущности БД
+    /// </summary>
+    /// <param name="entity">Сущность из БД</param>
     public static Event ToDomain(this EventEntity entity)
     {
-        // Используем статический метод создания или рефлексию 
-        // для установки полей, которые нельзя менять напрямую
         var domain = Event.Create(
             entity.Title,
             entity.StartAt,
@@ -23,9 +28,13 @@ public static class EventMapper
         return domain;
     }
 
-    public static EventEntity ToEntity(this Event domain)
-    {
-        return new EventEntity
+    /// <summary>
+    /// Маппер в сущность БД из доменной модели
+    /// </summary>
+    /// <param name="domain">Доменная модель</param>
+    /// <returns></returns>
+    public static EventEntity ToEntity(this Event domain) =>
+        new()
         {
             Id = domain.Id,
             Title = domain.Title,
@@ -34,7 +43,6 @@ public static class EventMapper
             EndAt = domain.EndAt,
             TotalSeats = domain.TotalSeats,
             AvailableSeats = domain.AvailableSeats,
-            Bookings = new List<BookingEntity>()
+            Bookings = []
         };
-    }
 }

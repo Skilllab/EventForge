@@ -113,13 +113,13 @@ public class EventRepositoryTests : BaseRepositoryTest
         var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
         fakeTimeProvider.SetUtcNow(fixedUtcNow);
         var now = fixedUtcNow.UtcDateTime;
-      
+
         var description = "Будут все";
         var totalSeats = 10;
 
         for (var i = 1; i <= 3; i++)
         {
-           
+
             var title = $"Пенная вечеринка у Киркорова {i}";
             var e = Event.Create(title, now, now.AddDays(i), totalSeats, description);
             await repo.AddAsync(e, CancellationToken.None);

@@ -38,7 +38,6 @@ public abstract class BaseRepositoryTest : IAsyncLifetime
     /// <summary>
     /// Метод очистки базы для того, чтобы после тестов не оставался мусор
     /// </summary>
-    /// <returns></returns>
     protected async Task CleanupDatabaseAsync()
     {
         await using var context = await Factory.CreateDbContextAsync();

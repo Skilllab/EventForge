@@ -4,10 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EventBookingService.Data.Context;
 
-public sealed class AppDbContext : DbContext
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
     public DbSet<EventEntity> Events => Set<EventEntity>();
     public DbSet<BookingEntity> Bookings => Set<BookingEntity>();
 

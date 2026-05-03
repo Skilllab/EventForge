@@ -47,7 +47,7 @@ public class EventConfiguration : IEntityTypeConfiguration<EventEntity>
             .HasColumnName("available_seats")
             .IsRequired();
 
-        builder.HasMany(p=>p.Bookings)
+        builder.HasMany(p => p.Bookings)
             .WithOne()
             .HasForeignKey(b => b.EventId)
             .OnDelete(DeleteBehavior.Cascade);

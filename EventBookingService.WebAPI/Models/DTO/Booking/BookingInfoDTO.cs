@@ -18,5 +18,5 @@ public class BookingInfoDTO
     /// <summary>
     /// Статус бронирования
     /// </summary>
-    public string Status { get; init; }
+    public required string Status { get; init; }
 }

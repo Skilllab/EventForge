@@ -37,7 +37,7 @@ public class Booking
         CreatedAt = createdAt;
         EventId = eventId;
     }
-   
+
     /// <summary>
     /// Подтверждаем бронирование
     /// </summary>

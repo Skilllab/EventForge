@@ -16,7 +16,7 @@ public class BookingEntity
     /// <summary>
     /// Текущий статус брони
     /// </summary>
-    public string Status { get; set; }
+    public required string Status { get; set; }
     /// <summary>
     /// Дата и время создания брони
     /// </summary>

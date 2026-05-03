@@ -37,5 +37,5 @@ public class EventEntity
     /// <summary>
     /// Свойство навигации для бронирования
     /// </summary>
-    public List<BookingEntity> Bookings { get; set; } = new();
+    public List<BookingEntity> Bookings { get; set; } = [];
 }

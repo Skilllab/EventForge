@@ -1,36 +1,24 @@
-namespace EventBookingService.Domain.Exceptions
+namespace EventBookingService.Domain.Exceptions;
+
+/// <summary>
+/// Базовый класс для кастом исключений
+/// </summary>
+/// <param name="message">Сообщение об ошибке</param>
+/// <param name="entityName">Имя сущности</param>
+/// <param name="entityId">Идентификатор сущности</param>
+public abstract class ApplicationBaseException(string message, string entityName, string entityId) : Exception(message)
 {
     /// <summary>
-    /// Базовый класс для кастом исключений
+    /// Тип сущности
     /// </summary>
-    public abstract class ApplicationBaseException : Exception
-    {
-        /// <summary>
-        /// Тип сущности
-        /// </summary>
-        public string EntityName { get;  }
+    public string EntityName { get; } = entityName;
 
-        /// <summary>
-        /// Идентификатор сущности
-        /// </summary>
-        public string EntityId { get; }
+    /// <summary>
+    /// Идентификатор сущности
+    /// </summary>
+    public string EntityId { get; } = entityId;
 
-
-        /// <summary>
-        /// Конструктор исключения
-        /// </summary>
-        /// <param name="message">Сообщение об ошибке</param>
-        /// <param name="entityName">Имя сущности</param>
-        /// <param name="entityId">Идентификатор сущности</param>
-        protected ApplicationBaseException(string message, object entityName, string entityId)
-            : base(message)
-        {
-            EntityName = entityName.ToString();
-            EntityId = entityId;
-        }
-
-        /// <inheritdoc />
-        protected ApplicationBaseException(string message, Exception innerException)
-            : base(message, innerException) { }
-    }
+    /// <inheritdoc />
+    protected ApplicationBaseException(string message, Exception innerException)
+        : this(message, string.Empty, string.Empty) { }
 }

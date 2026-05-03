@@ -12,7 +12,7 @@ public class ResponseEventDTO
     /// <summary>
     /// Название события
     /// </summary>
-    public string Title { get; init; }
+    public required string Title { get; init; }
     /// <summary>
     /// Описание события
     /// </summary>
