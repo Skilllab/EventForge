@@ -4,6 +4,8 @@ using EventBookingService.Domain.Interfaces;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Time.Testing;
+
 namespace EventBookingService.IntegrationTests;
 
 public class BookingRepositoryTests : BaseRepositoryTest
@@ -18,7 +20,10 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await ResetDatabaseAsync();
         var eventRepo = CreateEventRepo();
         var bookingRepo = CreateBookingRepo();
-     
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
         var title = "Очередное суперсобытие";
 
@@ -46,7 +51,10 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await ResetDatabaseAsync();
         var eventRepo = CreateEventRepo();
         var bookingRepo = CreateBookingRepo();
-
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
         var title = "Очередное суперсобытие";
 
@@ -75,7 +83,10 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await ResetDatabaseAsync();
         var eventRepo = CreateEventRepo();
         var bookingRepo = CreateBookingRepo();
-
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
         var title = "Очередное суперсобытие";
 
@@ -105,7 +116,10 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await ResetDatabaseAsync();
         var eventRepo = CreateEventRepo();
         var bookingRepo = CreateBookingRepo();
-       
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
         var title = "Очередное суперсобытие";
 

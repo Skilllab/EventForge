@@ -22,15 +22,7 @@ public abstract class BaseRepositoryTest : IAsyncLifetime
         .WithUsername("postgres")
         .WithPassword("postgres")
         .Build();
-
-    protected DateTime fakeNow;
-    public BaseRepositoryTest()
-    {
-        var fakeTimeProvider = new FakeTimeProvider();
-        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
-        fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        fakeNow = fixedUtcNow.UtcDateTime;
-    }
+  
 
     protected IDbContextFactory<AppDbContext> Factory = null!;
 
