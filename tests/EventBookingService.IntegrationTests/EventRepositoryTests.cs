@@ -4,6 +4,8 @@ using EventBookingService.Domain.Interfaces;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Time.Testing;
+
 namespace EventBookingService.IntegrationTests;
 
 public class EventRepositoryTests : BaseRepositoryTest
@@ -16,7 +18,10 @@ public class EventRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repo = CreateRepo();
-       
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var title = "Пенная вечеринка у Киркорова";
         var description = "Будут все";
         var totalSeats = 100;
@@ -43,11 +48,14 @@ public class EventRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repo = CreateRepo();
-        
+
         var title = "Пенная вечеринка у Киркорова";
         var description = "Будут все";
         var totalSeats = 10;
-
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats, description);
         await repo.AddAsync(@event, CancellationToken.None);
 
@@ -74,7 +82,10 @@ public class EventRepositoryTests : BaseRepositoryTest
         var title2 = "Пенная вечеринка у Ждеймса Хетфилда";
         var description = "Будут все";
         var totalSeats = 10;
-
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var e1 = Event.Create(title, fakeNow.AddDays(1), fakeNow.AddDays(1), totalSeats, description);
         var e2 = Event.Create(title2, fakeNow.AddDays(5), fakeNow.AddDays(5), totalSeats, description);
 
@@ -95,7 +106,10 @@ public class EventRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repo = CreateRepo();
-
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var description = "Будут все";
         var totalSeats = 10;
 
@@ -122,7 +136,10 @@ public class EventRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repo = CreateRepo();
-
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var title = "Пенная вечеринка у Киркорова";
         var description = "Будут все";
         var totalSeats = 10;
@@ -144,7 +161,10 @@ public class EventRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repo = CreateRepo();
-       
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var title = "Пенная вечеринка у Киркорова";
         var description = "Будут все";
         var totalSeats = 10;
