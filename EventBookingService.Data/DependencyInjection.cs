@@ -28,8 +28,10 @@ public static class DependencyInjection
         services.AddDbContextFactory<AppDbContext>((sp, options) =>
         {
             // Получаем интерцептор из контейнера
-            var interceptor = sp.GetRequiredService<LoggingInterceptor>();
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+
+            var interceptor = sp.GetRequiredService<LoggingInterceptor>();
+            options.AddInterceptors(interceptor);
 
             //Не логируем секретные данные
             options.EnableSensitiveDataLogging(false);
