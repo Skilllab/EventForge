@@ -4,9 +4,7 @@ using EventBookingService.Domain.Interfaces;
 
 using FluentAssertions;
 
-using Microsoft.Extensions.Time.Testing;
-
-namespace EventBookingService.Tests.DatabaseTests;
+namespace EventBookingService.IntegrationTests;
 
 public class EventRepositoryTests : BaseRepositoryTest
 {
@@ -16,17 +14,14 @@ public class EventRepositoryTests : BaseRepositoryTest
     public async Task AddAsync_ShouldSaveEvent_WithCorrectInitialState()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var repo = CreateRepo();
-        var fakeTimeProvider = new FakeTimeProvider();
-        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
-        fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        var now = fixedUtcNow.UtcDateTime;
+       
         var title = "Пенная вечеринка у Киркорова";
         var description = "Будут все";
         var totalSeats = 100;
 
-        var @event = Event.Create(title, now.AddDays(1), now.AddDays(2), totalSeats, description);
+        var @event = Event.Create(title, fakeNow.AddDays(1), fakeNow.AddDays(2), totalSeats, description);
 
         // Act
         await repo.AddAsync(@event, CancellationToken.None);
@@ -46,17 +41,14 @@ public class EventRepositoryTests : BaseRepositoryTest
     public async Task UpdateAsync_ShouldPersistAvailableSeats_AfterReservation()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var repo = CreateRepo();
-        var fakeTimeProvider = new FakeTimeProvider();
-        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
-        fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        var now = fixedUtcNow.UtcDateTime;
+        
         var title = "Пенная вечеринка у Киркорова";
         var description = "Будут все";
         var totalSeats = 10;
 
-        var @event = Event.Create(title, now, now.AddDays(1), totalSeats, description);
+        var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats, description);
         await repo.AddAsync(@event, CancellationToken.None);
 
         // Act
@@ -75,26 +67,22 @@ public class EventRepositoryTests : BaseRepositoryTest
     public async Task GetPagedAsync_ShouldApplyAllFilters()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var repo = CreateRepo();
 
-        var fakeTimeProvider = new FakeTimeProvider();
-        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
-        fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        var now = fixedUtcNow.UtcDateTime;
         var title = "Пенная вечеринка у Киркорова";
         var title2 = "Пенная вечеринка у Ждеймса Хетфилда";
         var description = "Будут все";
         var totalSeats = 10;
 
-        var e1 = Event.Create(title, now.AddDays(1), now.AddDays(1), totalSeats, description);
-        var e2 = Event.Create(title2, now.AddDays(5), now.AddDays(5), totalSeats, description);
+        var e1 = Event.Create(title, fakeNow.AddDays(1), fakeNow.AddDays(1), totalSeats, description);
+        var e2 = Event.Create(title2, fakeNow.AddDays(5), fakeNow.AddDays(5), totalSeats, description);
 
         await repo.AddAsync(e1, CancellationToken.None);
         await repo.AddAsync(e2, CancellationToken.None);
 
         // Act
-        var result = await repo.GetPagedAsync(title, now, now.AddDays(2), 1, 10, CancellationToken.None);
+        var result = await repo.GetPagedAsync(title, fakeNow, fakeNow.AddDays(2), 1, 10, CancellationToken.None);
 
         // Assert
         result.Items.Should().ContainSingle()
@@ -105,13 +93,8 @@ public class EventRepositoryTests : BaseRepositoryTest
     public async Task GetPagedAsync_Pagination_ShouldReturnCorrectSlice()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var repo = CreateRepo();
-
-        var fakeTimeProvider = new FakeTimeProvider();
-        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
-        fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        var now = fixedUtcNow.UtcDateTime;
 
         var description = "Будут все";
         var totalSeats = 10;
@@ -120,7 +103,7 @@ public class EventRepositoryTests : BaseRepositoryTest
         {
 
             var title = $"Пенная вечеринка у Киркорова {i}";
-            var e = Event.Create(title, now, now.AddDays(i), totalSeats, description);
+            var e = Event.Create(title, fakeNow, fakeNow.AddDays(i), totalSeats, description);
             await repo.AddAsync(e, CancellationToken.None);
         }
 
@@ -137,22 +120,18 @@ public class EventRepositoryTests : BaseRepositoryTest
     public async Task GetPagedAsync_EndAtWithZeroTime_ShouldIncludeWholeDay()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var repo = CreateRepo();
 
-        var fakeTimeProvider = new FakeTimeProvider();
-        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
-        fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        var now = fixedUtcNow.UtcDateTime.Date;
         var title = "Пенная вечеринка у Киркорова";
         var description = "Будут все";
         var totalSeats = 10;
 
-        var @event = Event.Create(title, now, now.AddHours(15), totalSeats, description);
+        var @event = Event.Create(title, fakeNow, fakeNow.AddHours(2).AddMinutes(21), totalSeats, description);
         await repo.AddAsync(@event, CancellationToken.None);
 
         // Act
-        var result = await repo.GetPagedAsync(null, null, now, 1, 10, CancellationToken.None);
+        var result = await repo.GetPagedAsync(null, null, fakeNow.Date, 1, 10, CancellationToken.None);
 
         // Assert
         result.Items.Should().NotBeEmpty()
@@ -163,17 +142,14 @@ public class EventRepositoryTests : BaseRepositoryTest
     public async Task DeleteAsync_ShouldReturnTrue_WhenEventExists()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var repo = CreateRepo();
-        var fakeTimeProvider = new FakeTimeProvider();
-        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
-        fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        var now = fixedUtcNow.UtcDateTime.Date;
+       
         var title = "Пенная вечеринка у Киркорова";
         var description = "Будут все";
         var totalSeats = 10;
 
-        var @event = Event.Create(title, now, now.AddDays(1).AddHours(1), totalSeats, description);
+        var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1).AddHours(1), totalSeats, description);
         await repo.AddAsync(@event, CancellationToken.None);
 
         // Act

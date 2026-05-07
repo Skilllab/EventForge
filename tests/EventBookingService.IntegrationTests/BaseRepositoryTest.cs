@@ -2,19 +2,35 @@ using EventBookingService.Data.Context;
 using EventBookingService.Data.Entities;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
+
+using Npgsql;
 
 using Testcontainers.PostgreSql;
 
-namespace EventBookingService.Tests.DatabaseTests;
+namespace EventBookingService.IntegrationTests;
 
+/// <summary>
+/// Базовый класс репозитория
+/// </summary>
 public abstract class BaseRepositoryTest : IAsyncLifetime
 {
     //Основное подключение. Указываем всё для тестового
-    protected readonly PostgreSqlContainer DbContainer = new PostgreSqlBuilder("postgres:15-alpine")
-        .WithDatabase("test_db")
+    protected readonly PostgreSqlContainer DbContainer = new PostgreSqlBuilder("postgres:16-alpine")
+        .WithDatabase("eventapi")
         .WithUsername("postgres")
         .WithPassword("postgres")
         .Build();
+
+    protected DateTime fakeNow;
+    public BaseRepositoryTest()
+    {
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        fakeNow = fixedUtcNow.UtcDateTime;
+    }
 
     protected IDbContextFactory<AppDbContext> Factory = null!;
 
@@ -22,31 +38,33 @@ public abstract class BaseRepositoryTest : IAsyncLifetime
     {
         await DbContainer.StartAsync();
 
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(DbContainer.GetConnectionString())
-            .Options;
+        var services = new ServiceCollection();
+        services.AddPooledDbContextFactory<AppDbContext>(options =>
+            options.UseNpgsql(DbContainer.GetConnectionString()));
 
-        // Создаем схему один раз
-        await using var context = new AppDbContext(options);
-        await context.Database.EnsureCreatedAsync();
-
-        Factory = new TestContextFactory(options);
+        var serviceProvider = services.BuildServiceProvider();
+        Factory = serviceProvider.GetRequiredService<IDbContextFactory<AppDbContext>>();
     }
 
     public async ValueTask DisposeAsync() => await DbContainer.DisposeAsync();
 
-    /// <summary>
-    /// Метод очистки базы для того, чтобы после тестов не оставался мусор
-    /// </summary>
-    protected async Task CleanupDatabaseAsync()
+    protected async Task<AppDbContext> CreateContext()
     {
-        await using var context = await Factory.CreateDbContextAsync();
+        var context = await Factory.CreateDbContextAsync();
+        await context.Database.EnsureCreatedAsync();
+        return context;
+    }
+
+    public async Task ResetDatabaseAsync()
+    {
+        NpgsqlConnection.ClearAllPools();
+        await using var context = await CreateContext();
 
         // Получаем реальные имена таблиц из конфигурации EF
         var bookingTable = context.Model.FindEntityType(typeof(BookingEntity))?.GetTableName();
         var eventTable = context.Model.FindEntityType(typeof(EventEntity))?.GetTableName();
 
-        // EF Core использует схемы. Забираем их
+        // В проекте используется схема
         var bookingSchema = context.Model.FindEntityType(typeof(BookingEntity))?.GetSchema() ?? "public";
         var eventSchema = context.Model.FindEntityType(typeof(EventEntity))?.GetSchema() ?? "public";
 
@@ -56,8 +74,5 @@ public abstract class BaseRepositoryTest : IAsyncLifetime
 
     }
 
-    private class TestContextFactory(DbContextOptions<AppDbContext> options) : IDbContextFactory<AppDbContext>
-    {
-        public AppDbContext CreateDbContext() => new(options);
-    }
+
 }

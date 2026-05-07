@@ -1,10 +1,13 @@
 <Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/EventBookingService.IntegrationTests/EventBookingService.IntegrationTests.csproj" Id="38f184fb-edf2-42d3-a95c-df3b1875984f" />
+    <Project Path="tests/EventBookingService.UnitTests/EventBookingService.UnitTests.csproj" Id="c64449d8-de18-4a1d-a442-eebe1c3f93d2" />
+  </Folder>
   <Folder Name="/Элементы решения/">
     <File Path=".editorconfig" />
     <File Path="README.md" />
   </Folder>
   <Project Path="EventBookingService.Data/EventBookingService.Data.csproj" />
   <Project Path="EventBookingService.Domain/EventBookingService.Domain.csproj" Id="5b8c461b-2c23-4280-bc8d-0a6dfcef62c1" />
-  <Project Path="EventBookingService.Tests/EventBookingService.Tests.csproj" Id="c64449d8-de18-4a1d-a442-eebe1c3f93d2" />
   <Project Path="EventBookingService.WebAPI/EventBookingService.WebAPI.csproj" />
 </Solution>

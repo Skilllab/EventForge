@@ -10,21 +10,14 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FluentAssertions" Version="8.9.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.7" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" Version="10.5.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-    <PackageReference Include="Moq" Version="4.20.72" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="4.11.0" />
     <PackageReference Include="xunit.v3" Version="3.2.2" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EventBookingService.WebAPI\EventBookingService.WebAPI.csproj" />
+    <ProjectReference Include="..\..\EventBookingService.Data\EventBookingService.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>
