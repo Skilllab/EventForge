@@ -10,7 +10,7 @@ namespace EventBookingService.IntegrationTests;
 
 public class BookingRepositoryTests : BaseRepositoryTest
 {
-    private IBookingRepository CreateBookingRepo() => new BookingRepository( Factory);
+    private IBookingRepository CreateBookingRepo() => new BookingRepository(Factory);
     private IEventRepository CreateEventRepo() => new EventRepository(Factory);
 
     [Fact]
