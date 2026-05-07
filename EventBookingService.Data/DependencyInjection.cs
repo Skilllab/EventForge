@@ -35,7 +35,7 @@ public static class DependencyInjection
 
             //Не логируем секретные данные
             options.EnableSensitiveDataLogging(false);
-            
+
         });
 
         // Репозитории

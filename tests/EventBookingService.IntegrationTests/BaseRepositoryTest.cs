@@ -22,7 +22,7 @@ public abstract class BaseRepositoryTest : IAsyncLifetime
         .WithUsername("postgres")
         .WithPassword("postgres")
         .Build();
-  
+
 
     protected IDbContextFactory<AppDbContext> Factory = null!;
 
@@ -43,7 +43,7 @@ public abstract class BaseRepositoryTest : IAsyncLifetime
     protected async Task<AppDbContext> CreateContext()
     {
         var context = await Factory.CreateDbContextAsync();
-        await context.Database.EnsureCreatedAsync();
+        await context.Database.MigrateAsync();
         return context;
     }
 
