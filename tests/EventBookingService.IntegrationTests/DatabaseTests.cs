@@ -13,11 +13,11 @@ namespace EventBookingService.IntegrationTests
         {
             // Arrange
             await ResetDatabaseAsync();
-            var context = await Factory.CreateDbContextAsync();
-            await context.Database.EnsureDeletedAsync();
+            var context = await Factory.CreateDbContextAsync(CancellationToken.None);
+            await context.Database.EnsureDeletedAsync(CancellationToken.None);
 
             //Act
-            await context.Database.MigrateAsync();
+            await context.Database.MigrateAsync(CancellationToken.None);
 
             // Assert
             //Если ничего не упало, значит тест прошёл
@@ -40,7 +40,7 @@ namespace EventBookingService.IntegrationTests
 
             // Assert
             // Проверяем, что БД выбросила DbUpdateException (из-за FK violation)
-            await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+            await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync(CancellationToken.None));
         }
 
         [Fact]
@@ -61,12 +61,12 @@ namespace EventBookingService.IntegrationTests
             context.Events.Add(@event.ToEntity());
             var booking = Booking.Create(@event.Id, now);
             context.Bookings.Add(booking.ToEntity());
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(CancellationToken.None);
 
             // Act
             var eventFromBase = context.Events.First();
             context.Events.Remove(eventFromBase);
-            await context.SaveChangesAsync();
+            await context.SaveChangesAsync(CancellationToken.None);
 
 
             // Assert
