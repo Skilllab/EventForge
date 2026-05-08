@@ -34,7 +34,7 @@ public interface IBookingRepository
     /// </summary>
     /// <param name="status">Статус бронирования</param>
     /// <param name="ct">Токен отмены</param>
-    Task<List<Booking>> GetAll(BookingStatus status, CancellationToken ct);
+    Task<List<Booking>> GetAllAsync(BookingStatus status, CancellationToken ct);
 
     /// <summary>
     /// Обновление бронирования
