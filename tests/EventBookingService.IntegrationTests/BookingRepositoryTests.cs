@@ -101,7 +101,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await bookingRepo.AddAsync(b2, CancellationToken.None);
 
         // Act
-        var rejectedBookings = await bookingRepo.GetAll(BookingStatus.Rejected, CancellationToken.None);
+        var rejectedBookings = await bookingRepo.GetAllAsync(BookingStatus.Rejected, CancellationToken.None);
 
         // Assert
         rejectedBookings.Should().HaveCount(1);

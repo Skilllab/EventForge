@@ -257,7 +257,7 @@ public class BookingServiceTests
         bookingRepositoryMock.Setup(r => r.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
 
         var updateFinished = new TaskCompletionSource<bool>();
-        bookingRepositoryMock.Setup(r => r.GetAll(BookingStatus.Pending, It.IsAny<CancellationToken>()))
+        bookingRepositoryMock.Setup(r => r.GetAllAsync(BookingStatus.Pending, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Booking> { booking });
 
         bookingRepositoryMock
@@ -404,7 +404,7 @@ public class BookingServiceTests
         var booking = Booking.Create(@event.Id, now);
 
         bookingRepositoryMock
-            .Setup(r => r.GetAll(BookingStatus.Pending, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetAllAsync(BookingStatus.Pending, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Booking> { booking });
 
         // Имитируем задержку в репозитории, чтобы успеть "выстрелить" отменой
@@ -456,7 +456,7 @@ public class BookingServiceTests
             .ReturnsAsync(existingEvent);
 
         var pendingBooking = Booking.Create(existingEvent.Id, now);
-        bookingRepoMock.Setup(r => r.GetAll(BookingStatus.Pending, ct))
+        bookingRepoMock.Setup(r => r.GetAllAsync(BookingStatus.Pending, ct))
             .ReturnsAsync(new List<Booking> { pendingBooking });
 
         using var cts = new CancellationTokenSource();
