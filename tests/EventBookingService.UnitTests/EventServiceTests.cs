@@ -196,7 +196,7 @@ public class EventServiceTests
                 filter.page,
                 filter.pageSize,
                 ct))
-            .ReturnsAsync(pagedResult); // Теперь типы Task<PagedResult<Event>> совпадают идеально
+            .ReturnsAsync(pagedResult);
 
         // Act
         var result = await service.GetEventsAsync(filter, ct);
