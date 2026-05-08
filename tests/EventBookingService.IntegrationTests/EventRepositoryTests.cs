@@ -181,6 +181,22 @@ public class EventRepositoryTests : BaseRepositoryTest
         result.Should().BeNull();
     }
 
+    [Fact]
+    public async Task DeleteAsync_ShouldNotThrow_WhenEventDoesNotExist()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var repo = CreateRepo();
+
+        // Act
+        Func<Task> action = async () => await repo.DeleteAsync(Guid.NewGuid(), CancellationToken.None);
+
+        // Assert
+        await action.Should().NotThrowAsync();
+    }
+
+
+
     [Theory]
     [InlineData(0, 10)]
     [InlineData(1, 0)]

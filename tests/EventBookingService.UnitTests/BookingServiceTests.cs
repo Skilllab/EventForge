@@ -149,7 +149,7 @@ public class BookingServiceTests
     }
 
     [Fact]
-    [Trait("Category", "CreateBooking")]
+    [Trait("Category", "GetBooking")]
     public async Task GetBookingByIdAsync_GetByNotExistedID_ShouldThrow_NotFound1()
     {
         // Arrange
@@ -301,7 +301,7 @@ public class BookingServiceTests
 
     [Fact]
     [Trait("Category", "CreateBooking")]
-    public async Task CreateBooking_ShouldDecrementSeats_AndReturnDto()
+    public async Task CreateBookingAsync_ShouldDecrementSeats_AndReturnDto()
     {
         var bookingRepositoryMock = new Mock<IBookingRepository>();
         var eventRepositoryMock = new Mock<IEventRepository>();
@@ -473,7 +473,7 @@ public class BookingServiceTests
     }
 
     [Fact]
-    [Trait("Category", "ProcessBooking")]
+    [Trait("Category", "CreateBooking")]
     public async Task CreateBookingAsync_OverbookingProtection_ShouldAllowOnlyLimit()
     {
         // Arrange
@@ -536,7 +536,7 @@ public class BookingServiceTests
     }
 
     [Fact]
-    [Trait("Category", "ProcessBooking")]
+    [Trait("Category", "CreateBooking")]
     public async Task CreateBookingAsync_ConcurrentRequests_ShouldGenerateUniqueIds()
     {
         // Arrange

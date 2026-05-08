@@ -1,10 +1,15 @@
 using EventBookingService.Data.Repositories;
 using EventBookingService.Domain.Entities;
+using EventBookingService.Domain.Exceptions;
 using EventBookingService.Domain.Interfaces;
 
 using FluentAssertions;
 
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
+
+using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace EventBookingService.IntegrationTests;
 
@@ -150,5 +155,19 @@ public class BookingRepositoryTests : BaseRepositoryTest
 
         // Assert
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldNotThrow_WhenBookingDoesNotExist()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var repo = CreateBookingRepo();
+
+        // Act
+        Func<Task> action = async () => await repo.DeleteAsync(Guid.NewGuid(), CancellationToken.None);
+
+        // Assert
+        await action.Should().NotThrowAsync();
     }
 }
