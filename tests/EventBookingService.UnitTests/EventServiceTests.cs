@@ -170,17 +170,23 @@ public class EventServiceTests
         var now = fixedUtcNow.UtcDateTime;
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-        var filter = new EventsFilter { page = 1, pageSize = 10 };
+        var filter = new EventsFilter { page = 1, pageSize = 80 };
         var ct = CancellationToken.None;
 
         var fakeEvents = new List<Event>
         {
-            Event.Create("test event 1", now, now.AddHours(1), 10),
-            Event.Create("test event 2", now, now.AddHours(2), 10)
+            Event.Create("test event 1", now, now.AddHours(1), Random.Shared.Next(1, 50)),
+            Event.Create("test event 2", now, now.AddHours(2), Random.Shared.Next(1, 50)),
+            Event.Create("test event 3", now, now.AddHours(3), Random.Shared.Next(1, 50)),
+            Event.Create("test event 4", now, now.AddHours(4), Random.Shared.Next(1, 50)),
+            Event.Create("test event 5", now, now.AddHours(5), Random.Shared.Next(1, 50)),
+            Event.Create("test event 6", now, now.AddHours(1), Random.Shared.Next(1, 50)),
+            Event.Create("test event 7", now, now.AddHours(1), Random.Shared.Next(1, 50)),
+            Event.Create("test event 8", now, now.AddHours(2), Random.Shared.Next(1, 50))
         };
 
         // Создаем record PagedResult: сначала Items, потом TotalCount
-        var pagedResult = new PagedResult<Event>(fakeEvents, 2L);
+        var pagedResult = new PagedResult<Event>(fakeEvents, fakeEvents.Count);
 
         repositoryMock
             .Setup(r => r.GetPagedAsync(
@@ -197,11 +203,11 @@ public class EventServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.EventsTotalCount.Should().Be(2);
+        result.EventsTotalCount.Should().Be(fakeEvents.Count);
         result.CurrentPageNumber.Should().Be(filter.page);
         result.EventsCountOnCurrentPage.Should().Be(filter.pageSize);
 
-        result.Events.Should().HaveCount(2);
+        result.Events.Should().HaveCount(fakeEvents.Count);
         result.Events.Should().BeEquivalentTo(fakeEvents, options => options
             .Including(x => x.Title)
             .Including(x => x.StartAt)

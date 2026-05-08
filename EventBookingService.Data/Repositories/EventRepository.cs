@@ -54,8 +54,6 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
                 : query.Where(e => e.EndAt <= endAt.Value);
         }
 
-        var totalCount = await context.Events.LongCountAsync(ct);
-
         var entities = await query
             .OrderBy(e => e.Title)
             .Skip((page - 1) * pageSize)
@@ -66,7 +64,7 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
             .Select(e => e.ToDomain())
             .ToList();
 
-        return new PagedResult<Event>(domainEvents, totalCount);
+        return new PagedResult<Event>(domainEvents, domainEvents.Count);
     }
 
     ///<inheritdoc/>
