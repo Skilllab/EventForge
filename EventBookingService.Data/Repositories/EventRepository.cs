@@ -1,9 +1,12 @@
 using EventBookingService.Data.Context;
+using EventBookingService.Data.Entities;
 using EventBookingService.Data.Mapping;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Domain.Interfaces;
 
 using Microsoft.EntityFrameworkCore;
+
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace EventBookingService.Data.Repositories;
 
@@ -42,17 +45,10 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
         // 1. Создаем базовый запрос с фильтром
         var query = context.Events.AsNoTracking();
 
-        if (!string.IsNullOrEmpty(title)) query = query.Where(e => e.Title == title);
+        query = CreateQuery(context, query, startAt, endAt, title);
 
-        if (startAt.HasValue) query = query.Where(e => e.StartAt >= startAt);
-
-        if (endAt.HasValue)
-        {
-            // Если время не указано (00:00:00), значит ищем до конца дня включительно
-            query = endAt.Value.TimeOfDay == TimeSpan.Zero
-                ? query.Where(e => e.EndAt.Date <= endAt.Value.Date)
-                : query.Where(e => e.EndAt <= endAt.Value);
-        }
+        // Общее количество записей по фильтру
+        var totalCount = await query.CountAsync(ct);
 
         var entities = await query
             .OrderBy(e => e.Title)
@@ -64,7 +60,39 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
             .Select(e => e.ToDomain())
             .ToList();
 
-        return new PagedResult<Event>(domainEvents, domainEvents.Count);
+        return new PagedResult<Event>(domainEvents, totalCount);
+    }
+
+    private IQueryable<EventEntity> CreateQuery(AppDbContext? context, IQueryable<EventEntity> query, DateTime? startAt, DateTime? endAt, string? title)
+    {
+        if (!string.IsNullOrEmpty(title))
+        {
+            if (context != null && context.Database.IsNpgsql())//PostgreSQL
+            {
+                query = query.Where(e => EF.Functions.ILike(e.Title, $"%{title}%"));
+            }
+            else if (context != null && context.Database.IsSqlServer()) //MS SQL Server
+            {
+                // В SQL Server поиск по умолчанию регистронезависимый
+                query = query.Where(e => e.Title.Contains(title));
+            }
+            else // Для остальных (SQLite и пр.)
+            {
+                query = query.Where(e => e.Title.ToLower().Contains(title.ToLower()));
+            }
+        }
+
+        if (startAt.HasValue) query = query.Where(e => e.StartAt >= startAt);
+
+        if (endAt.HasValue)
+        {
+            // Если время не указано (00:00:00), значит ищем до конца дня включительно
+            query = endAt.Value.TimeOfDay == TimeSpan.Zero
+                ? query.Where(e => e.EndAt.Date <= endAt.Value.Date)
+                : query.Where(e => e.EndAt <= endAt.Value);
+        }
+
+        return query;
     }
 
     ///<inheritdoc/>

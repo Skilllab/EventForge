@@ -17,7 +17,7 @@ public class PaginatedResult(long eventsTotalCount,
 {
 
     /// <summary>
-    /// Общее количество событий
+    /// Общее количество событий, найденных по фильтру
     /// </summary>
     public long EventsTotalCount { get; set; } = eventsTotalCount;
 
