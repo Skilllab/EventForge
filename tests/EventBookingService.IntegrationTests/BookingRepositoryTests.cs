@@ -1,15 +1,10 @@
 using EventBookingService.Data.Repositories;
 using EventBookingService.Domain.Entities;
-using EventBookingService.Domain.Exceptions;
 using EventBookingService.Domain.Interfaces;
 
 using FluentAssertions;
 
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Time.Testing;
-
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
 
 namespace EventBookingService.IntegrationTests;
 
@@ -164,10 +159,11 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await ResetDatabaseAsync();
         var repo = CreateBookingRepo();
 
-        // Act
-        Func<Task> action = async () => await repo.DeleteAsync(Guid.NewGuid(), CancellationToken.None);
+        // Act & Assert
+        Func<Task<bool>> act = async () => await repo.DeleteAsync(Guid.NewGuid(), CancellationToken.None);
+        await act.Should().NotThrowAsync();
 
-        // Assert
-        await action.Should().NotThrowAsync();
+        var secondDeleteResult = await act();
+        secondDeleteResult.Should().BeFalse();
     }
 }
