@@ -13,7 +13,7 @@ using Microsoft.Extensions.Time.Testing;
 
 using Moq;
 
-namespace EventBookingService.Tests;
+namespace EventBookingService.UnitTests;
 
 public class BookingServiceTests
 {

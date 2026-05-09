@@ -3,7 +3,6 @@ using EventBookingService.Data.Entities;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Time.Testing;
 
 using Npgsql;
 

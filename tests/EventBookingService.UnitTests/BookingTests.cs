@@ -4,7 +4,7 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Time.Testing;
 
-namespace EventBookingService.Tests;
+namespace EventBookingService.UnitTests;
 
 public class BookingTests
 {
