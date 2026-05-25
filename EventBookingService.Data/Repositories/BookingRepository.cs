@@ -48,7 +48,7 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
     }
 
     ///<inheritdoc/>
-    public async Task<List<Booking>> GetAll(BookingStatus status, CancellationToken ct)
+    public async Task<List<Booking>> GetAllAsync(BookingStatus status, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
 

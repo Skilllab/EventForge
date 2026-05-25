@@ -83,7 +83,7 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
     {
         ct.ThrowIfCancellationRequested();
 
-        var pendingBookings = await bookingRepository.GetAll(BookingStatus.Pending, ct);
+        var pendingBookings = await bookingRepository.GetAllAsync(BookingStatus.Pending, ct);
         var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, ct));
         await Task.WhenAll(tasks);
     }

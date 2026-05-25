@@ -6,7 +6,7 @@ using FluentAssertions;
 
 using Microsoft.Extensions.Time.Testing;
 
-namespace EventBookingService.Tests.DatabaseTests;
+namespace EventBookingService.IntegrationTests;
 
 public class BookingRepositoryTests : BaseRepositoryTest
 {
@@ -17,21 +17,20 @@ public class BookingRepositoryTests : BaseRepositoryTest
     public async Task AddAsync_ShouldSaveBooking_WhenEventExists()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var eventRepo = CreateEventRepo();
         var bookingRepo = CreateBookingRepo();
-
         var fakeTimeProvider = new FakeTimeProvider();
         var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
         fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        var now = fixedUtcNow.UtcDateTime;
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
         var title = "Очередное суперсобытие";
 
-        var @event = Event.Create(title, now, now.AddDays(1), totalSeats);
+        var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats);
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
-        var booking = Booking.Create(@event.Id, now);
+        var booking = Booking.Create(@event.Id, fakeNow);
 
         // Act
         await bookingRepo.AddAsync(booking, CancellationToken.None);
@@ -40,7 +39,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
         var result = await bookingRepo.GetByIdAsync(booking.Id, CancellationToken.None);
 
         result.Should().NotBeNull();
-        result!.Id.Should().Be(booking.Id);
+        result.Id.Should().Be(booking.Id);
         result.EventId.Should().Be(@event.Id);
         result.Status.Should().Be(BookingStatus.Pending);
     }
@@ -49,62 +48,60 @@ public class BookingRepositoryTests : BaseRepositoryTest
     public async Task UpdateAsync_ShouldChangeStatusAndProcessedDate()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var eventRepo = CreateEventRepo();
         var bookingRepo = CreateBookingRepo();
-
         var fakeTimeProvider = new FakeTimeProvider();
         var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
         fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        var now = fixedUtcNow.UtcDateTime;
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
         var title = "Очередное суперсобытие";
 
-        var @event = Event.Create(title, now, now.AddDays(1), totalSeats);
+        var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats);
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
-        var booking = Booking.Create(@event.Id, now);
+        var booking = Booking.Create(@event.Id, fakeNow);
         await bookingRepo.AddAsync(booking, CancellationToken.None);
 
         // Act
-        booking.Confirm(now.AddHours(1));
+        booking.Confirm(fakeNow.AddHours(1));
         await bookingRepo.UpdateAsync(booking, CancellationToken.None);
 
         // Assert
         var updated = await bookingRepo.GetByIdAsync(booking.Id, CancellationToken.None);
 
         updated.Should().NotBeNull();
-        updated!.Status.Should().Be(BookingStatus.Confirmed);
-        updated.ProcessedAt.Should().BeCloseTo(now.AddHours(1), TimeSpan.FromSeconds(1));
+        updated.Status.Should().Be(BookingStatus.Confirmed);
+        updated.ProcessedAt.Should().BeCloseTo(fakeNow.AddHours(1), TimeSpan.FromSeconds(1));
     }
 
     [Fact]
     public async Task GetAll_ShouldReturnOnlyRequestedStatus()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var eventRepo = CreateEventRepo();
         var bookingRepo = CreateBookingRepo();
-
         var fakeTimeProvider = new FakeTimeProvider();
         var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
         fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        var now = fixedUtcNow.UtcDateTime;
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
         var title = "Очередное суперсобытие";
 
-        var @event = Event.Create(title, now, now.AddDays(1), totalSeats);
+        var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats);
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
-        var b1 = Booking.Create(@event.Id, now);
-        var b2 = Booking.Create(@event.Id, now);
-        b2.Reject(now);
+        var b1 = Booking.Create(@event.Id, fakeNow);
+        var b2 = Booking.Create(@event.Id, fakeNow);
+        b2.Reject(fakeNow);
 
         await bookingRepo.AddAsync(b1, CancellationToken.None);
         await bookingRepo.AddAsync(b2, CancellationToken.None);
 
         // Act
-        var rejectedBookings = await bookingRepo.GetAll(BookingStatus.Rejected, CancellationToken.None);
+        var rejectedBookings = await bookingRepo.GetAllAsync(BookingStatus.Rejected, CancellationToken.None);
 
         // Assert
         rejectedBookings.Should().HaveCount(1);
@@ -116,21 +113,20 @@ public class BookingRepositoryTests : BaseRepositoryTest
     public async Task DeleteAsync_ShouldReturnTrue_WhenBookingExists()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var eventRepo = CreateEventRepo();
         var bookingRepo = CreateBookingRepo();
-
         var fakeTimeProvider = new FakeTimeProvider();
         var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
         fakeTimeProvider.SetUtcNow(fixedUtcNow);
-        var now = fixedUtcNow.UtcDateTime;
+        var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
         var title = "Очередное суперсобытие";
 
-        var @event = Event.Create(title, now, now.AddDays(1), totalSeats);
+        var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats);
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
-        var booking = Booking.Create(@event.Id, now);
+        var booking = Booking.Create(@event.Id, fakeNow);
         await bookingRepo.AddAsync(booking, CancellationToken.None);
 
         // Act
@@ -146,7 +142,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
     public async Task GetByIdAsync_ShouldReturnNull_WhenBookingDoesNotExist()
     {
         // Arrange
-        await CleanupDatabaseAsync();
+        await ResetDatabaseAsync();
         var repo = CreateBookingRepo();
 
         // Act
@@ -154,5 +150,20 @@ public class BookingRepositoryTests : BaseRepositoryTest
 
         // Assert
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_ShouldNotThrow_WhenBookingDoesNotExist()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var repo = CreateBookingRepo();
+
+        // Act & Assert
+        Func<Task<bool>> act = async () => await repo.DeleteAsync(Guid.NewGuid(), CancellationToken.None);
+        await act.Should().NotThrowAsync();
+
+        var secondDeleteResult = await act();
+        secondDeleteResult.Should().BeFalse();
     }
 }

@@ -10,7 +10,6 @@
   </p>
 </div>
 
-<!-- ABOUT THE PROJECT -->
 ## О проекте
 
 Данный проект является по сути PET проектом при прохождении курса "Продвинутая разработка на C# и .NET
@@ -27,11 +26,16 @@
 
 ### Требования
 
-- Docker для выполнения тестов
-- PostgreSQL для хранения данных в БД
+- В системе должен быть установлен Docker Desktop
+- В системе должен быть установлен PostgreSQL (не ниже 16) для хранения данных в БД
+
+### Подключение
+для установки подключения к БД настройте секреты
+```sh
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=ИМЯ_ХОСТА_ИЛИ_localhost;Port=5432;Database=ИМЯ_БД;Username=ЛОГИН;Password=ПАРОЛЬ"
+```
 
 ### Установка
-
 
 1. Клонируйте репозиторий
    ```sh
@@ -41,26 +45,30 @@
    ```sh
    dotnet build EventBookingService.WebAPI
    ```
-3. Запустите сборку проекта с тестами
+3. Запустите сборку проекта с Unit тестами
    ```sh
-   dotnet build EventBookingService.Tests
+   dotnet build tests\EventBookingService.UnitTests
    ```
-4. Запустите выполнение тестов
+4. Запустите выполнение Unit тестов
    ```sh
-   dotnet test --project EventBookingService.Tests
+    dotnet test --project tests\EventBookingService.UnitTests
    ```
-5. Запустите проект
+5. Запустите сборку проекта с Интеграционными тестами
+   ```sh
+   dotnet build tests\EventBookingService.IntegrationTests
+   ```
+6. Запустите Docker Desktop
+
+7. Запустите выполнение Интеграционных тестов
+   ```sh
+    dotnet test --project tests\EventBookingService.IntegrationTests
+   ```
+8. Запустите проект
    ```sh
    dotnet run --project EventBookingService.WebAPI
    ```
+   База данных будет создана исходя из строки подключения и при выполнении миграции при старте программы.
 ---
-
-### Подключение
-для установки подключения к БД настройте секреты
-```sh
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=ИМЯ_ХОСТА_ИЛИ_localhost;Port=5432;Database=ИМЯ_БД;Username=ЛОГИН;Password=ПАРОЛЬ"
-```
-Схема и БД создадутся автоматически, если не были созданы ранее. В случае повторного запуска приложения, БД просто будет использоваться без пересоздания
 
 ## Использование API
 
@@ -576,3 +584,27 @@ curl -X 'GET' \
 </details>
 
 ---
+
+## Миграции БД
+
+### Создание миграции
+Для создания новой миграции выполните команду
+```bash
+dotnet ef migrations add InitialCreate --project EventBookingService.Data --startup-project EventBookingService.WebAPI
+```
+Где:
+
+ - `InitialCreate` - назначенное имя миграции
+ - `EventBookingService.Data` - имя проекта с БД миграцией, контекстом и конфигурациями
+ - `EventBookingService.WebAPI` - проект со строкой подключения
+
+
+ ### Обновление БД
+Для создания/обновления базы данных выполните команду
+```bash
+dotnet ef database update --project EventBookingService.Data --startup-project EventBookingService.WebAPI
+```
+Где:
+
+ - `EventBookingService.Data` - имя проекта с БД миграцией, контекстом и конфигурациями
+ - `EventBookingService.WebAPI` - проект со строкой подключения

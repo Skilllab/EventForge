@@ -11,7 +11,7 @@ using Microsoft.Extensions.Time.Testing;
 
 using Moq;
 
-namespace EventBookingService.Tests;
+namespace EventBookingService.UnitTests;
 
 public class EventServiceTests
 {
@@ -170,17 +170,23 @@ public class EventServiceTests
         var now = fixedUtcNow.UtcDateTime;
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-        var filter = new EventsFilter { page = 1, pageSize = 10 };
+        var filter = new EventsFilter { page = 1, pageSize = 80 };
         var ct = CancellationToken.None;
 
         var fakeEvents = new List<Event>
         {
-            Event.Create("test event 1", now, now.AddHours(1), 10),
-            Event.Create("test event 2", now, now.AddHours(2), 10)
+            Event.Create("test event 1", now, now.AddHours(1), Random.Shared.Next(1, 50)),
+            Event.Create("test event 2", now, now.AddHours(2), Random.Shared.Next(1, 50)),
+            Event.Create("test event 3", now, now.AddHours(3), Random.Shared.Next(1, 50)),
+            Event.Create("test event 4", now, now.AddHours(4), Random.Shared.Next(1, 50)),
+            Event.Create("test event 5", now, now.AddHours(5), Random.Shared.Next(1, 50)),
+            Event.Create("test event 6", now, now.AddHours(1), Random.Shared.Next(1, 50)),
+            Event.Create("test event 7", now, now.AddHours(1), Random.Shared.Next(1, 50)),
+            Event.Create("test event 8", now, now.AddHours(2), Random.Shared.Next(1, 50))
         };
 
         // Создаем record PagedResult: сначала Items, потом TotalCount
-        var pagedResult = new PagedResult<Event>(fakeEvents, 2L);
+        var pagedResult = new PagedResult<Event>(fakeEvents, fakeEvents.Count);
 
         repositoryMock
             .Setup(r => r.GetPagedAsync(
@@ -190,18 +196,18 @@ public class EventServiceTests
                 filter.page,
                 filter.pageSize,
                 ct))
-            .ReturnsAsync(pagedResult); // Теперь типы Task<PagedResult<Event>> совпадают идеально
+            .ReturnsAsync(pagedResult);
 
         // Act
         var result = await service.GetEventsAsync(filter, ct);
 
         // Assert
         result.Should().NotBeNull();
-        result.EventsTotalCount.Should().Be(2);
+        result.EventsTotalCount.Should().Be(fakeEvents.Count);
         result.CurrentPageNumber.Should().Be(filter.page);
         result.EventsCountOnCurrentPage.Should().Be(filter.pageSize);
 
-        result.Events.Should().HaveCount(2);
+        result.Events.Should().HaveCount(fakeEvents.Count);
         result.Events.Should().BeEquivalentTo(fakeEvents, options => options
             .Including(x => x.Title)
             .Including(x => x.StartAt)
@@ -255,7 +261,7 @@ public class EventServiceTests
                     .Where(e => string.IsNullOrEmpty(title) || e.Title.Contains(title, StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
-                return new PagedResult<Event>(filtered, fakeEvents.Count);
+                return new PagedResult<Event>(filtered, filtered.Count);
             });
 
 
@@ -268,7 +274,7 @@ public class EventServiceTests
         result.Events.Should().HaveCount(2);
         result.Events.Should().OnlyContain(e => e.Title.Contains(filteredWord, StringComparison.OrdinalIgnoreCase));
 
-        result.EventsTotalCount.Should().Be(3);
+        result.EventsTotalCount.Should().Be(2);
 
         result.CurrentPageNumber.Should().Be(1);
         result.EventsCountOnCurrentPage.Should().Be(10);
@@ -314,7 +320,7 @@ public class EventServiceTests
                     .Where(e => !from.HasValue || e.StartAt >= from.Value)
                     .ToList();
 
-                return new PagedResult<Event>(filtered, fakeEvents.Count);
+                return new PagedResult<Event>(filtered, filtered.Count);
             });
 
         // Act
@@ -325,7 +331,7 @@ public class EventServiceTests
 
         result.Events.Should().HaveCount(2);
         result.Events.Should().OnlyContain(e => e.StartAt >= filter.from);
-        result.EventsTotalCount.Should().Be(3);
+        result.EventsTotalCount.Should().Be(2);
 
         repositoryMock.Verify(r => r.GetPagedAsync(null, filter.from, null, 1, 10, ct), Times.Once);
     }
@@ -371,7 +377,7 @@ public class EventServiceTests
                         : e.EndAt <= to.Value))
                     .ToList();
 
-                return new PagedResult<Event>(filtered, allEventsInDb.Count);
+                return new PagedResult<Event>(filtered, filtered.Count);
             });
 
         // Act
@@ -381,7 +387,7 @@ public class EventServiceTests
         result.Should().NotBeNull();
         result.Events.Should().HaveCount(2);
         result.Events.Should().AllSatisfy(e => e.EndAt.Should().BeOnOrBefore(filter.to.Value));
-        result.EventsTotalCount.Should().Be(3);
+        result.EventsTotalCount.Should().Be(2);
 
         repositoryMock.Verify(r => r.GetPagedAsync(null, null, filter.to, 1, 10, ct), Times.Once);
     }
@@ -437,7 +443,7 @@ public class EventServiceTests
                 }
 
                 var filteredItems = query.ToList();
-                return new PagedResult<Event>(filteredItems, fakeEvents.Count);
+                return new PagedResult<Event>(filteredItems, filteredItems.Count);
             });
 
         // Act
@@ -449,7 +455,7 @@ public class EventServiceTests
         result.Events.Should().HaveCount(2);
         result.Events.Should().AllSatisfy(e => e.EndAt.Date.Should().Be(filter.to.Value.Date));
 
-        result.EventsTotalCount.Should().Be(4);
+        result.EventsTotalCount.Should().Be(2);
 
         repositoryMock.Verify(r => r.GetPagedAsync(null, null, filter.to, 1, 10, ct), Times.Once);
     }
@@ -567,7 +573,7 @@ public class EventServiceTests
                                 (!from.HasValue || e.StartAt >= from.Value))
                     .ToList();
 
-                return new PagedResult<Event>(filtered, fakeEvents.Count);
+                return new PagedResult<Event>(filtered, filtered.Count);
             });
 
         // Act
@@ -576,7 +582,7 @@ public class EventServiceTests
         // Assert
         result.Should().NotBeNull();
 
-        result.EventsTotalCount.Should().Be(6);
+        result.EventsTotalCount.Should().Be(1);
         result.Events.Should().ContainSingle();
         result.Events.First().Title.Should().Contain("цель");
         result.Events.First().StartAt.Should().BeOnOrAfter(targetDate);
@@ -621,7 +627,7 @@ public class EventServiceTests
                 filter.page,
                 filter.pageSize,
                 ct))
-            .ReturnsAsync((string t, DateTime? start, DateTime? end, int page, int pageSize, CancellationToken token) =>
+            .ReturnsAsync((string _, DateTime? _, DateTime? _, int page, int pageSize, CancellationToken _) =>
             {
                 // Имитируем логику репозитория: Сортировка -> Пропуск -> Взятие
                 var items = fakeEvents

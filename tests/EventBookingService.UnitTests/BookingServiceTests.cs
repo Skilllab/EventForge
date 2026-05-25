@@ -13,7 +13,7 @@ using Microsoft.Extensions.Time.Testing;
 
 using Moq;
 
-namespace EventBookingService.Tests;
+namespace EventBookingService.UnitTests;
 
 public class BookingServiceTests
 {
@@ -149,7 +149,7 @@ public class BookingServiceTests
     }
 
     [Fact]
-    [Trait("Category", "CreateBooking")]
+    [Trait("Category", "GetBooking")]
     public async Task GetBookingByIdAsync_GetByNotExistedID_ShouldThrow_NotFound1()
     {
         // Arrange
@@ -257,7 +257,7 @@ public class BookingServiceTests
         bookingRepositoryMock.Setup(r => r.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
 
         var updateFinished = new TaskCompletionSource<bool>();
-        bookingRepositoryMock.Setup(r => r.GetAll(BookingStatus.Pending, It.IsAny<CancellationToken>()))
+        bookingRepositoryMock.Setup(r => r.GetAllAsync(BookingStatus.Pending, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Booking> { booking });
 
         bookingRepositoryMock
@@ -301,7 +301,7 @@ public class BookingServiceTests
 
     [Fact]
     [Trait("Category", "CreateBooking")]
-    public async Task CreateBooking_ShouldDecrementSeats_AndReturnDto()
+    public async Task CreateBookingAsync_ShouldDecrementSeats_AndReturnDto()
     {
         var bookingRepositoryMock = new Mock<IBookingRepository>();
         var eventRepositoryMock = new Mock<IEventRepository>();
@@ -404,7 +404,7 @@ public class BookingServiceTests
         var booking = Booking.Create(@event.Id, now);
 
         bookingRepositoryMock
-            .Setup(r => r.GetAll(BookingStatus.Pending, It.IsAny<CancellationToken>()))
+            .Setup(r => r.GetAllAsync(BookingStatus.Pending, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<Booking> { booking });
 
         // Имитируем задержку в репозитории, чтобы успеть "выстрелить" отменой
@@ -456,7 +456,7 @@ public class BookingServiceTests
             .ReturnsAsync(existingEvent);
 
         var pendingBooking = Booking.Create(existingEvent.Id, now);
-        bookingRepoMock.Setup(r => r.GetAll(BookingStatus.Pending, ct))
+        bookingRepoMock.Setup(r => r.GetAllAsync(BookingStatus.Pending, ct))
             .ReturnsAsync(new List<Booking> { pendingBooking });
 
         using var cts = new CancellationTokenSource();
@@ -473,7 +473,7 @@ public class BookingServiceTests
     }
 
     [Fact]
-    [Trait("Category", "ProcessBooking")]
+    [Trait("Category", "CreateBooking")]
     public async Task CreateBookingAsync_OverbookingProtection_ShouldAllowOnlyLimit()
     {
         // Arrange
@@ -536,7 +536,7 @@ public class BookingServiceTests
     }
 
     [Fact]
-    [Trait("Category", "ProcessBooking")]
+    [Trait("Category", "CreateBooking")]
     public async Task CreateBookingAsync_ConcurrentRequests_ShouldGenerateUniqueIds()
     {
         // Arrange

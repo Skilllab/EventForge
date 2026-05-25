@@ -4,7 +4,7 @@ using EventBookingService.WebAPI.Models.DTO.Events;
 
 using FluentAssertions;
 
-namespace EventBookingService.Tests;
+namespace EventBookingService.UnitTests;
 
 public class EventsFilterTests
 {

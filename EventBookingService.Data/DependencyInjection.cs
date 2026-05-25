@@ -28,12 +28,15 @@ public static class DependencyInjection
         services.AddDbContextFactory<AppDbContext>((sp, options) =>
         {
             // Получаем интерцептор из контейнера
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"), x =>
+                x.MigrationsHistoryTable("__EFMigrationsHistory", "EventBooking"));
+
             var interceptor = sp.GetRequiredService<LoggingInterceptor>();
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+            options.AddInterceptors(interceptor);
 
             //Не логируем секретные данные
             options.EnableSensitiveDataLogging(false);
-            
+
         });
 
         // Репозитории
