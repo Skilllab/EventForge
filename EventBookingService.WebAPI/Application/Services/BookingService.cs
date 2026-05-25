@@ -11,8 +11,8 @@ namespace EventBookingService.WebAPI.Application.Services;
 /// </summary>
 public class BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger, TimeProvider timeProvider) : IBookingService
 {
-    private readonly SemaphoreSlim _semaphoreCreate = new(1, 1);
-    private readonly SemaphoreSlim _semaphoreUpdate = new(1, 1);
+    private static readonly SemaphoreSlim _semaphoreCreate = new(1, 1);
+    private static readonly SemaphoreSlim _semaphoreUpdate = new(1, 1);
 
     /// <inheritdoc/>
     public async Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct)
@@ -21,17 +21,20 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
 
         logger.LogInformation("Создание нового бронирования для события: {Event}", eventId);
 
-        var existedEvent = await eventRepository.GetByIdAsync(eventId, ct);
-        if (existedEvent == null)
-        {
-            logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
-            throw new NotFoundException(nameof(Event), eventId.ToString());
-        }
+       
 
         await _semaphoreCreate.WaitAsync(ct);
 
+       
         try
         {
+            var existedEvent = await eventRepository.GetByIdAsync(eventId, ct);
+            if (existedEvent == null)
+            {
+                logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
+                throw new NotFoundException(nameof(Event), eventId.ToString());
+            }
+
             if (!existedEvent.TryReserveSeats())
                 throw new NoAvailableSeatsException(nameof(Event), existedEvent.Id.ToString());
 
@@ -40,14 +43,14 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
                 timeProvider.GetUtcNow().UtcDateTime
             );
 
-            await bookingRepository.AddAsync(newBooking, ct);
             await eventRepository.UpdateAsync(existedEvent, ct);
+            await bookingRepository.AddAsync(newBooking, ct);
             logger.LogInformation("Бронирование успешно создано. ID: {Id} ", newBooking.Id);
             return MapToDTO(newBooking);
         }
         catch (OperationCanceledException)
         {
-            logger.LogWarning("Процесс создания брони для события с ID: {Id} прерван", existedEvent.Id);
+            logger.LogWarning("Процесс создания брони для события с ID: {Id} прерван", eventId);
             throw;
         }
         finally
