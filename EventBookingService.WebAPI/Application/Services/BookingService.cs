@@ -9,11 +9,14 @@ namespace EventBookingService.WebAPI.Application.Services;
 /// <summary>
 /// Сервис для работы с бронированием
 /// </summary>
-public class BookingService(IBookingRepository bookingRepository, IEventRepository eventRepository, ILogger<BookingService> logger, TimeProvider timeProvider) : IBookingService
+public class BookingService(
+    IBookingRepository bookingRepository,
+    IEventRepository eventRepository,
+    ITransactionService transactionService,
+    ILogger<BookingService> logger,
+    TimeProvider timeProvider) : IBookingService
 {
-    private static readonly SemaphoreSlim _semaphoreCreate = new(1, 1);
     private static readonly SemaphoreSlim _semaphoreUpdate = new(1, 1);
-
     /// <inheritdoc/>
     public async Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct)
     {
@@ -21,43 +24,35 @@ public class BookingService(IBookingRepository bookingRepository, IEventReposito
 
         logger.LogInformation("Создание нового бронирования для события: {Event}", eventId);
 
-       
-
-        await _semaphoreCreate.WaitAsync(ct);
-
-       
-        try
+        return await transactionService.ExecuteAsync(async (txContext) =>
         {
-            var existedEvent = await eventRepository.GetByIdAsync(eventId, ct);
+            // Получаем событие с блокировкой FOR UPDATE внутри транзакции
+            var existedEvent = await eventRepository.GetByIdWithLockInContextAsync(eventId, txContext.DbContext, ct);
             if (existedEvent == null)
             {
                 logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
                 throw new NotFoundException(nameof(Event), eventId.ToString());
             }
 
+            // Проверяем и резервируем место (все в бизнес-слое)
             if (!existedEvent.TryReserveSeats())
                 throw new NoAvailableSeatsException(nameof(Event), existedEvent.Id.ToString());
 
+            // Создаём новое бронирование
             var newBooking = Booking.Create(
                 eventId,
                 timeProvider.GetUtcNow().UtcDateTime
             );
 
-            await eventRepository.UpdateAsync(existedEvent, ct);
-            await bookingRepository.AddAsync(newBooking, ct);
+            // Все операции сохранения в рамках одной транзакции
+            await eventRepository.UpdateInContextAsync(existedEvent, txContext.DbContext, ct);
+            await bookingRepository.AddInContextAsync(newBooking, txContext.DbContext, ct);
+
             logger.LogInformation("Бронирование успешно создано. ID: {Id} ", newBooking.Id);
             return MapToDTO(newBooking);
-        }
-        catch (OperationCanceledException)
-        {
-            logger.LogWarning("Процесс создания брони для события с ID: {Id} прерван", eventId);
-            throw;
-        }
-        finally
-        {
-            _semaphoreCreate.Release();
-        }
+        }, ct);
     }
+
 
     private static BookingInfoDTO MapToDTO(Booking newBooking) =>
         new()

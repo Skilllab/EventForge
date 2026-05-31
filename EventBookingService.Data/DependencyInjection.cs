@@ -1,6 +1,7 @@
 using EventBookingService.Data.Context;
 using EventBookingService.Data.Interceptors;
 using EventBookingService.Data.Repositories;
+using EventBookingService.Data.Services;
 using EventBookingService.Domain.Interfaces;
 
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +43,9 @@ public static class DependencyInjection
         // Репозитории
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+
+        // Сервисы
+        services.AddScoped<ITransactionService, TransactionService>();
 
         return services;
     }

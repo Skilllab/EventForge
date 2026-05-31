@@ -28,6 +28,18 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
     }
 
     ///<inheritdoc/>
+    public async Task<Event?> GetByIdWithLockAsync(Guid id, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+        var entity = await context.Events
+            .FromSqlInterpolated($"SELECT * FROM \"EventBooking\".\"Events\" WHERE \"id\" = {id} FOR UPDATE")
+            .Include(e => e.Bookings)
+            .FirstOrDefaultAsync(ct);
+
+        return entity?.ToDomain();
+    }
+
+    ///<inheritdoc/>
     public async Task<PagedResult<Event>> GetPagedAsync(
         string? title,
         DateTime? startAt,
@@ -119,5 +131,39 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
         await using var context = await factory.CreateDbContextAsync(ct);
         var affected = await context.Events.Where(e => e.Id == id).ExecuteDeleteAsync(ct);
         return affected > 0;
+    }
+
+    ///<inheritdoc/>
+    public async Task<Event?> GetByIdWithLockInContextAsync(Guid id, object context, CancellationToken ct)
+    {
+        var appDbContext = context as AppDbContext 
+            ?? throw new ArgumentException($"Context must be of type {nameof(AppDbContext)}", nameof(context));
+
+        var entity = await appDbContext.Events
+            .FromSqlInterpolated<EventEntity>($"SELECT * FROM \"EventBooking\".\"Events\" WHERE \"id\" = {id} FOR UPDATE")
+            .Include(e => e.Bookings)
+            .FirstOrDefaultAsync(ct);
+
+        return entity?.ToDomain();
+    }
+
+    ///<inheritdoc/>
+    public async Task UpdateInContextAsync(Event @event, object context, CancellationToken ct)
+    {
+        var appDbContext = context as AppDbContext 
+            ?? throw new ArgumentException($"Context must be of type {nameof(AppDbContext)}", nameof(context));
+
+        // Ищем уже загруженную сущность в контексте
+        var trackedEntity = appDbContext.ChangeTracker
+            .Entries<EventEntity>()
+            .FirstOrDefault(e => e.Entity.Id == @event.Id)
+            ?.Entity;
+
+        if (trackedEntity != null)
+        {
+            // Обновляем только те свойства, которые могли измениться в доменной модели
+            trackedEntity.AvailableSeats = @event.AvailableSeats;
+            trackedEntity.TotalSeats = @event.TotalSeats;
+        }
     }
 }

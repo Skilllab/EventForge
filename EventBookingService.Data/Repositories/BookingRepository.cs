@@ -74,4 +74,14 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
             await context.SaveChangesAsync(ct);
         }
     }
+
+    ///<inheritdoc/>
+    public async Task AddInContextAsync(Booking booking, object context, CancellationToken ct)
+    {
+        var appDbContext = context as AppDbContext 
+            ?? throw new ArgumentException($"Context must be of type {nameof(AppDbContext)}", nameof(context));
+
+        var entity = booking.ToEntity();
+        await appDbContext.AddAsync(entity, ct);
+    }
 }
