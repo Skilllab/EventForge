@@ -1,26 +1,49 @@
-# PostgreSQL для EventApi — совпадает с ConnectionStrings:DefaultConnection в appsettings.json
-# Запуск из корня репозитория: docker compose up -d
-# Остановка: docker compose down
-# Данные сохраняются в именованном томе eventapi_pgdata
-
 services:
-  postgres:
+  # 1. База данных PostgreSQL
+  postgres_db:
     image: postgres:16-alpine
-    container_name: eventapi-postgres
-    restart: unless-stopped
+    container_name: my_postgres
+    restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: eventapi
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
-      - eventapi_pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d eventapi"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      - pg_data:/var/lib/postgresql/data
+
+  # # 2. Ваше ASP.NET Core приложение
+  # web_api:
+    # image: my_asp_app_image:latest  # Имя вашего Docker-образа приложения
+    # build:
+      # context: .
+      # dockerfile: Dockerfile        # Путь к вашему Dockerfile
+    # restart: always
+    # ports:
+      # - "8080:8080"                  # Стандартный порт для .NET 8 / .NET 9
+    # environment:
+      # - ASPNETCORE_ENVIRONMENT=Production
+      # # Магия .NET: двойное подчеркивание заменит двоеточие из appsettings.json
+      # - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
+    # depends_on:
+      # - postgres_db
+
+  # 3. Панель pgAdmin
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: my_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "8020:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres_db
 
 volumes:
-  eventapi_pgdata:
+  pg_data:
+  pgadmin_data:
