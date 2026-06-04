@@ -1,5 +1,5 @@
-using EventBookingService.Data.Mapping;
 using EventBookingService.Domain.Entities;
+using EventBookingService.Infrastructure.Mapping;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;

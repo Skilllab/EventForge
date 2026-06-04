@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-using EventBookingService.WebAPI.Models.DTO.Events;
+using EventBookingService.Application.DTO;
 
 using FluentAssertions;
 

@@ -1,6 +1,6 @@
-using EventBookingService.Data.Repositories;
+using EventBookingService.Application.Interfaces;
 using EventBookingService.Domain.Entities;
-using EventBookingService.Domain.Interfaces;
+using EventBookingService.Infrastructure.Repositories;
 
 using FluentAssertions;
 

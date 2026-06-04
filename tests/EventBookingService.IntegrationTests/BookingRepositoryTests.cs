@@ -1,8 +1,8 @@
-using EventBookingService.Data.Repositories;
-using EventBookingService.Data.Services;
+using EventBookingService.Application.Interfaces;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Domain.Exceptions;
-using EventBookingService.Domain.Interfaces;
+using EventBookingService.Infrastructure.Repositories;
+using EventBookingService.Infrastructure.Services;
 
 using FluentAssertions;
 

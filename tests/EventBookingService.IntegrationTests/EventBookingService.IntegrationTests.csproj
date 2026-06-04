@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\EventBookingService.Data\EventBookingService.Data.csproj" />
+    <ProjectReference Include="..\..\EventBookingService.Infrastructure\EventBookingService.Infrastructure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
