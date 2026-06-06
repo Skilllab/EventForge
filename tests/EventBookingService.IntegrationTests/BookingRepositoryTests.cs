@@ -35,7 +35,14 @@ public class BookingRepositoryTests : BaseRepositoryTest
         var booking = Booking.Create(@event.Id, fakeNow);
 
         // Act
-        await bookingRepo.AddAsync(booking, CancellationToken.None);
+
+        var transactionService = new TransactionService(Factory);
+        var ct = CancellationToken.None;
+
+        await transactionService.ExecuteAsync(async (txContext) =>
+        {
+            await bookingRepo.AddInContextAsync(booking, txContext.DbContext, ct);
+        }, ct);
 
         // Assert
         var result = await bookingRepo.GetByIdAsync(booking.Id, CancellationToken.None);
@@ -65,7 +72,15 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
         var booking = Booking.Create(@event.Id, fakeNow);
-        await bookingRepo.AddAsync(booking, CancellationToken.None);
+
+        var transactionService = new TransactionService(Factory);
+        var ct = CancellationToken.None;
+
+        await transactionService.ExecuteAsync(async (txContext) =>
+        {
+            await bookingRepo.AddInContextAsync(booking, txContext.DbContext, ct);
+        }, ct);
+
 
         // Act
         booking.Confirm(fakeNow.AddHours(1));
@@ -100,8 +115,35 @@ public class BookingRepositoryTests : BaseRepositoryTest
         var b2 = Booking.Create(@event.Id, fakeNow);
         b2.Reject(fakeNow);
 
-        await bookingRepo.AddAsync(b1, CancellationToken.None);
-        await bookingRepo.AddAsync(b2, CancellationToken.None);
+        var transactionService = new TransactionService(Factory);
+        var ct = CancellationToken.None;
+
+        await transactionService.ExecuteAsync(async (txContext) =>
+        {
+            await bookingRepo.AddInContextAsync(b1, txContext.DbContext, ct);
+
+            return true;
+        }, ct);
+
+
+        await transactionService.ExecuteAsync(async (txContext) =>
+        {
+            // Получаем событие с блокировкой FOR UPDATE внутри транзакции
+            var eventInTx = await eventRepo.GetByIdWithLockInContextAsync(@event.Id, txContext.DbContext, ct);
+            eventInTx.Should().NotBeNull();
+
+            // Проверяем и резервируем место (все в бизнес-слое)
+            if (!eventInTx.TryReserveSeats())
+            {
+                throw new NoAvailableSeatsException(nameof(Event), eventInTx.Id.ToString());
+            }
+
+            // Все операции сохранения в рамках одной транзакции
+            await eventRepo.UpdateInContextAsync(eventInTx, txContext.DbContext, ct);
+            await bookingRepo.AddInContextAsync(b2, txContext.DbContext, ct);
+
+            return true;
+        }, ct);
 
         // Act
         var rejectedBookings = await bookingRepo.GetAllAsync(BookingStatus.Rejected, CancellationToken.None);
@@ -130,7 +172,16 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
         var booking = Booking.Create(@event.Id, fakeNow);
-        await bookingRepo.AddAsync(booking, CancellationToken.None);
+
+        var transactionService = new TransactionService(Factory);
+        var ct = CancellationToken.None;
+
+
+        await transactionService.ExecuteAsync(async (txContext) =>
+        {
+            await bookingRepo.AddInContextAsync(booking, txContext.DbContext, ct);
+        }, ct);
+
 
         // Act
         var result = await bookingRepo.DeleteAsync(booking.Id, CancellationToken.None);
