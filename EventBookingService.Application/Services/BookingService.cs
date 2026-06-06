@@ -19,7 +19,7 @@ public class BookingService(
 {
     private static readonly SemaphoreSlim _semaphoreUpdate = new(1, 1);
     /// <inheritdoc/>
-    public async Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct)
+    public async Task<BookingInfoDto> CreateBookingAsync(Guid eventId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -55,16 +55,16 @@ public class BookingService(
     }
 
 
-    private static BookingInfoDTO MapToDTO(Booking newBooking) =>
-        new()
-        {
-            ID = newBooking.Id,
-            EventID = newBooking.EventId,
-            Status = newBooking.Status.ToString(),
-        };
+    private static BookingInfoDto MapToDTO(Booking newBooking) =>
+        new
+        (
+            ID: newBooking.Id,
+            EventID: newBooking.EventId,
+            Status: newBooking.Status.ToString()
+        );
 
     /// <inheritdoc/>
-    public async Task<BookingInfoDTO> GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
+    public async Task<BookingInfoDto> GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 

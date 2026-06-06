@@ -1,9 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 
-using EventBookingService.Application.DTO;
 using EventBookingService.Application.Interfaces;
+using EventBookingService.Presentation.DTO;
+using EventBookingService.Presentation.Mapping;
 
 using Microsoft.AspNetCore.Mvc;
+
 
 namespace EventBookingService.Presentation.Controllers;
 
@@ -23,12 +25,12 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// </summary>
     [HttpGet]
     [Tags("API для событий")]
-    public async Task<IActionResult> GetAllEvents([FromQuery] EventsFilter filter, CancellationToken ct)
+    public async Task<IActionResult> GetAllEvents([FromQuery] EventsFilterRequest filterRequest, CancellationToken ct)
     {
         logger.LogDebug("Обработка запроса GET {methodName}", nameof(GetAllEvents));
 
-        var result = await eventService.GetEventsAsync(filter, ct);
-        return Ok(result);
+        var result = await eventService.GetEventsAsync(filterRequest.ToAppDto(), ct);
+        return Ok(result.ToWebDto());
     }
 
     /// <summary>
@@ -41,7 +43,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
         logger.LogDebug("Обработка запроса GET {methodName} по id: {id} ", nameof(GetEvent), eventId);
 
         var responseEvent = await eventService.GetEventAsync(eventId, ct);
-        return Ok(responseEvent);
+        return Ok(responseEvent.ToWebDto());
     }
 
     /// <summary>
@@ -49,12 +51,12 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// </summary>
     [HttpPost]
     [Tags("API для событий")]
-    public async Task<IActionResult> CreateEvent([FromBody][Required] CreateEventDTO request, CancellationToken ct)
+    public async Task<IActionResult> CreateEvent([FromBody][Required] CreateEventRequest request, CancellationToken ct)
     {
         logger.LogDebug("Обработка запроса POST {methodName}", nameof(CreateEvent));
 
-        var response = await eventService.CreateEventAsync(request, ct);
-        return CreatedAtAction(nameof(CreateEvent), new { id = response.Id }, response);
+        var response = await eventService.CreateEventAsync(request.ToAppDto(), ct);
+        return CreatedAtAction(nameof(CreateEvent), new { id = response.Id }, response.ToWebDto());
     }
 
     /// <summary>
@@ -62,12 +64,12 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// </summary>
     [HttpPut("{eventId:guid}")]
     [Tags("API для событий")]
-    public async Task<IActionResult> ChangeEvent([Required] Guid eventId, [FromBody] UpdateEventDTO request, CancellationToken ct)
+    public async Task<IActionResult> ChangeEvent([Required] Guid eventId, [FromBody] UpdateEventRequest request, CancellationToken ct)
     {
 
         logger.LogDebug("Обработка запроса PUT {methodName} c id: {id}", nameof(ChangeEvent), eventId);
 
-        await eventService.ChangeEventAsync(eventId, request, ct);
+        await eventService.ChangeEventAsync(eventId, request.ToAppDto(), ct);
         return NoContent();
     }
 

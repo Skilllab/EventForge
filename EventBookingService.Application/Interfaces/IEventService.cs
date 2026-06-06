@@ -1,3 +1,4 @@
+
 using EventBookingService.Application.DTO;
 
 namespace EventBookingService.Application.Interfaces;
@@ -12,7 +13,7 @@ public interface IEventService
     /// </summary>
     /// <param name="currentEvent">Входящая DTO</param>
     /// <param name="ct">Токен отмены</param>
-    Task<ResponseEventDTO> CreateEventAsync(CreateEventDTO currentEvent, CancellationToken ct);
+    Task<EventDto> CreateEventAsync(CreateEventDto currentEvent, CancellationToken ct);
 
     /// <summary>
     /// Отмена события
@@ -26,14 +27,14 @@ public interface IEventService
     /// </summary>
     /// <param name="filter">Фильтр для применения пагинации</param>
     /// <param name="ct">Токен отмены</param>
-    Task<PaginatedResult> GetEventsAsync(EventsFilter filter, CancellationToken ct);
+    Task<PaginatedResultDto> GetEventsAsync(EventsFilterDto filter, CancellationToken ct);
 
     /// <summary>
     /// Поиск события
     /// </summary>
     /// <param name="eventId">ID события</param>
     /// <param name="ct">Токен отмены</param>
-    Task<ResponseEventDTO> GetEventAsync(Guid eventId, CancellationToken ct);
+    Task<EventDto> GetEventAsync(Guid eventId, CancellationToken ct);
 
     /// <summary>
     /// Изменение события
@@ -41,5 +42,5 @@ public interface IEventService
     /// <param name="eventId">ID события</param>
     /// <param name="currentEvent">Свойства из DTO для обновления события</param>
     /// <param name="ct">Токен отмены</param>
-    Task ChangeEventAsync(Guid eventId, UpdateEventDTO currentEvent, CancellationToken ct);
+    Task ChangeEventAsync(Guid eventId, UpdateEventDto currentEvent, CancellationToken ct);
 }

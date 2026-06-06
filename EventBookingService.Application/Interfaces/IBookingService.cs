@@ -12,7 +12,7 @@ public interface IBookingService
     /// </summary>
     /// <param name="eventId">ID события</param>
     /// <param name="ct">Токен отмены</param>
-    Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, CancellationToken ct);
+    Task<BookingInfoDto> CreateBookingAsync(Guid eventId, CancellationToken ct);
 
     /// <summary>
     /// Обновить все бронирования со статусом Pending в репозитории
@@ -26,5 +26,5 @@ public interface IBookingService
     /// <param name="bookingId">ID бронирования</param>
     /// <param name="ct">Токен отмены</param>
     /// <returns></returns>
-    Task<BookingInfoDTO> GetBookingByIdAsync(Guid bookingId, CancellationToken ct);
+    Task<BookingInfoDto> GetBookingByIdAsync(Guid bookingId, CancellationToken ct);
 }

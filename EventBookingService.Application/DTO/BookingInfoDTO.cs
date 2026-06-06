@@ -1,22 +1,14 @@
-namespace EventBookingService.Application.DTO;
-
-/// <summary>
-/// DTO класс для ответа по созданию бронирования
-/// </summary>
-public class BookingInfoDTO
+namespace EventBookingService.Application.DTO
 {
     /// <summary>
-    /// Идентификатор бронирования
+    /// DTO для ответа по созданию бронирования (слой Application)
     /// </summary>
-    public Guid ID { get; init; }
-
-    /// <summary>
-    /// Идентификатор события по которому создано бронирование
-    /// </summary>
-    public Guid EventID { get; init; }
-
-    /// <summary>
-    /// Статус бронирования
-    /// </summary>
-    public required string Status { get; init; }
+    /// <param name="ID">Идентификатор бронирования</param>
+    /// <param name="EventID">Идентификатор события, по которому создано бронирование</param>
+    /// <param name="Status">Статус бронирования</param>
+    public record BookingInfoDto(
+        Guid ID,
+        Guid EventID,
+        string Status
+    );
 }

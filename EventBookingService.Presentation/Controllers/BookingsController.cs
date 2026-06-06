@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 
 using EventBookingService.Application.Interfaces;
+using EventBookingService.Presentation.Mapping;
 
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,6 +28,6 @@ public class BookingsController(IBookingService bookingService, ILogger<Bookings
 
         var bookingInfo = await bookingService.GetBookingByIdAsync(bookingId, ct);
 
-        return Ok(bookingInfo);
+        return Ok(bookingInfo.ToWebDto());
     }
 }

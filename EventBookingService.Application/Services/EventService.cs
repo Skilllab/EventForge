@@ -1,5 +1,6 @@
 using EventBookingService.Application.DTO;
 using EventBookingService.Application.Interfaces;
+using EventBookingService.Application.Mapping;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Domain.Exceptions;
 
@@ -16,7 +17,7 @@ namespace EventBookingService.Application.Services;
 public class EventService(IEventRepository _repository, ILogger<EventService> _logger, TimeProvider timeProvider) : IEventService
 {
     /// <inheritdoc/>
-    public async Task<ResponseEventDTO> CreateEventAsync(CreateEventDTO newEventDTO, CancellationToken ct)
+    public async Task<EventDto> CreateEventAsync(CreateEventDto newEventDTO, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -31,7 +32,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
 
         await _repository.AddAsync(newEvent, ct);
         _logger.LogInformation("Событие успешно создано. ID: {Id}", newEvent.Id);
-        return MapToDTO(newEvent);
+        return newEvent.ToDto();
     }
 
     /// <inheritdoc/>
@@ -48,24 +49,24 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
     }
 
     /// <inheritdoc/>
-    public async Task<PaginatedResult> GetEventsAsync(EventsFilter filter, CancellationToken ct)
+    public async Task<PaginatedResultDto> GetEventsAsync(EventsFilterDto filter, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
         // Получаем текущее время через провайдер (может пригодиться для логов или доп. логики)
         var now = timeProvider.GetUtcNow().UtcDateTime;
 
-        _logger.LogInformation("Запрос списка событий в {Now}. Фильтр: {Filter}", now, filter.title);
+        _logger.LogInformation("Запрос списка событий в {Now}. Фильтр: {Filter}", now, filter.Title);
 
-        var result = await _repository.GetPagedAsync(filter.title, filter.from, filter.to, filter.page, filter.pageSize, ct);
+        var result = await _repository.GetPagedAsync(filter.Title, filter.From, filter.To, filter.Page, filter.PageSize, ct);
 
-        var items = result.Items.Select(MapToDTO).ToList();
+        var items = result.Items.Select(r=>r.ToDto()).ToList();
 
-        return new PaginatedResult(result.TotalCount, items, filter.page, filter.pageSize);
+        return new PaginatedResultDto(result.TotalCount, items, filter.Page, filter.PageSize);
     }
 
     /// <inheritdoc/>
-    public async Task<ResponseEventDTO> GetEventAsync(Guid eventId, CancellationToken ct)
+    public async Task<EventDto> GetEventAsync(Guid eventId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -76,11 +77,11 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
             throw new NotFoundException(nameof(Event), eventId.ToString());
         }
 
-        return MapToDTO(existedEvent);
+        return existedEvent.ToDto();
     }
 
     /// <inheritdoc/>
-    public async Task ChangeEventAsync(Guid eventId, UpdateEventDTO currentEvent, CancellationToken ct)
+    public async Task ChangeEventAsync(Guid eventId, UpdateEventDto currentEvent, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -92,15 +93,6 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
             throw new NotFoundException(nameof(Event), eventId.ToString(), "Событие с таким ID не найдено");
         }
 
-        // Проверка для Nullable типов внутри сервиса
-        if (currentEvent.StartAt.HasValue && currentEvent.EndAt.HasValue &&
-            currentEvent.EndAt.Value < currentEvent.StartAt.Value)
-        {
-            _logger.LogWarning("Ошибка валидации дат для события {Id}", eventId);
-            throw new ValidationCustomException(nameof(UpdateEventDTO), eventId.ToString(), "У события не может быть дата начала меньше даты завершения");
-        }
-
-
         existedEvent.UpdateEvent(
             currentEvent.Title ?? existedEvent.Title,
             currentEvent.StartAt ?? existedEvent.StartAt,
@@ -110,21 +102,4 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
         await _repository.UpdateAsync(existedEvent, ct);
         _logger.LogInformation("Событие успешно обновлено. ID: {Id}", eventId);
     }
-
-    /// <summary>
-    /// Метод для мапирования из события в DTO 
-    /// </summary>
-    /// <param name="currentEvent">Доменное событие</param>
-    /// <returns>DTO для отправки</returns>
-    private ResponseEventDTO MapToDTO(Event currentEvent) =>
-        new()
-        {
-            Id = currentEvent.Id,
-            Title = currentEvent.Title,
-            Description = currentEvent.Description,
-            StartAt = currentEvent.StartAt,
-            EndAt = currentEvent.EndAt,
-            TotalSeats = currentEvent.TotalSeats,
-            AvailableSeats = currentEvent.AvailableSeats
-        };
 }

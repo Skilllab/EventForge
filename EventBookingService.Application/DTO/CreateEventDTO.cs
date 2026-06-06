@@ -1,43 +1,99 @@
-using System.ComponentModel.DataAnnotations;
-
-using EventBookingService.Application.ValidationAttributes;
-
 namespace EventBookingService.Application.DTO;
 
 /// <summary>
-/// DTO класс для создания события
+/// DTO для создания события
 /// </summary>
-public class CreateEventDTO
+public class CreateEventDto
 {
     /// <summary>
     /// Название события
     /// </summary>
-    [Required(ErrorMessage = "Наименование для события обязательно для заполнения.")]
-    public required string Title { get; set; }
-
-    /// <summary>
-    /// Описание события
-    /// </summary>
-    public string? Description { get; set; } = string.Empty;
+    /// <remarks>
+    /// Обязательное поле. Не может быть null, пустым или состоять из пробелов.
+    /// </remarks>
+    public string Title { get; }
 
     /// <summary>
     /// Дата начала события
     /// </summary>
-    [Required(ErrorMessage = "Дата начала события не может быть пустой")]
-    [NotMinDateTime(ErrorMessage = "Дата начала события должна быть задана")]
-    public DateTime StartAt { get; set; }
+    /// <remarks>
+    /// Обязательное поле. Не может быть значением по умолчанию (default(DateTime)).
+    /// Должна быть меньше даты окончания события.
+    /// </remarks>
+    public DateTime StartAt { get; }
 
     /// <summary>
     /// Дата завершения события
     /// </summary>
-    [Required(ErrorMessage = "Дата окончания события не может быть пустой")]
-    [NotMinDateTime(ErrorMessage = "Дата окончания события должна быть задана")]
-    [DateGreater(nameof(StartAt))]
-    public DateTime EndAt { get; set; }
+    /// <remarks>
+    /// Обязательное поле. Не может быть значением по умолчанию (default(DateTime)).
+    /// Должна быть больше даты начала события.
+    /// </remarks>
+    public DateTime EndAt { get; }
 
     /// <summary>
     /// Общее количество мест на событии
     /// </summary>
-    [Range(1, int.MaxValue, ErrorMessage = "Общее количество мест для события должно быть больше нуля")]
-    public int TotalSeats { get; set; }
+    /// <remarks>
+    /// Обязательное поле. Должно быть больше нуля.
+    /// </remarks>
+    public int TotalSeats { get; }
+
+    /// <summary>
+    /// Описание события
+    /// </summary>
+    /// <remarks>
+    /// Необязательное поле. Может быть null или пустой строкой.
+    /// По умолчанию - пустая строка.
+    /// </remarks>
+    public string? Description { get; }
+
+    /// <summary>
+    /// Конструктор DTO для создания события
+    /// </summary>
+    /// <param name="title">Название события (обязательное, не может быть null или пустым)</param>
+    /// <param name="startAt">Дата начала события (обязательная, не может быть default)</param>
+    /// <param name="endAt">Дата завершения события (обязательная, должна быть больше startAt)</param>
+    /// <param name="totalSeats">Общее количество мест (должно быть больше 0)</param>
+    /// <param name="description">Описание события (необязательное, по умолчанию пустая строка)</param>
+    /// <exception cref="ArgumentException">
+    /// Выбрасывается, если:
+    /// - title пустой, null или состоит из пробелов
+    /// - startAt или endAt равны default(DateTime)
+    /// - endAt меньше startAt
+    /// - totalSeats меньше 1
+    /// </exception>
+    public CreateEventDto(
+        string title,
+        DateTime startAt,
+        DateTime endAt,
+        int totalSeats,
+        string? description = "")
+    {
+        // Проверка Title
+        if (string.IsNullOrWhiteSpace(title))
+            throw new ArgumentException("Наименование для события обязательно для заполнения.", nameof(title));
+
+        // Проверка StartAt
+        if (startAt == default)
+            throw new ArgumentException("Дата начала события должна быть задана.", nameof(startAt));
+
+        // Проверка EndAt
+        if (endAt == default)
+            throw new ArgumentException("Дата окончания события должна быть задана.", nameof(endAt));
+
+        // Проверка: EndAt должна быть больше StartAt
+        if (endAt < startAt)
+            throw new ArgumentException("Дата окончания события должна быть больше даты начала.", nameof(endAt));
+
+        // Проверка TotalSeats
+        if (totalSeats < 1)
+            throw new ArgumentException("Общее количество мест для события должно быть больше нуля.", nameof(totalSeats));
+
+        Title = title;
+        StartAt = startAt;
+        EndAt = endAt;
+        TotalSeats = totalSeats;
+        Description = description;
+    }
 }
