@@ -12,9 +12,57 @@
 
 ## О проекте
 
-Данный проект является по сути PET проектом при прохождении курса "Продвинутая разработка на C# и .NET
-"
+Данный проект является по сути PET проектом при прохождении курса "Продвинутая разработка на C# и .NET"
 
+## Архитектура проекта
+
+Проект построен по принципам **Clean Architecture** и разделён на четыре слоя, каждый из которых отвечает за свою зону ответственности.
+    
+### Domain (`EventBookingService.Domain`)
+    
+Слой, описывающий предметную область. **Не зависит от технологий и внешних фреймворков.**
+    
+**Содержит:**
+- **Доменные сущности** — `Event` (событие), `Booking` (бронь), `BookingStatus` (перечисление статусов брони), `PagedResult<T>` (обобщённый результат с пагинацией). Сущности используют статические фабричные методы (`Event.Create(...)`, `Booking.Create(...)`) и инкапсулируют бизнес-правила (например, `Event.TryReserveSeats()`, `Booking.Confirm()`).
+- **Доменные исключения** — `NotFoundException` (ресурс не найден → 404), `NoAvailableSeatsException` (нет доступных мест → 409 Conflict), `ValidationCustomException` (нарушение бизнес-правил → 400). Все исключения наследуются от базового `ApplicationBaseException`, хранящего `EntityName` и `EntityId` для формирования `ProblemDetails`.
+    
+### Application (`EventBookingService.Application`)
+   
+Слой, описывающий **бизнес-логику и абстракции**. Зависит только от Domain.
+   
+**Содержит:**
+- **Интерфейсы сервисов (Use Cases)** — `IEventService` (создание/изменение/отмена/получение событий), `IBookingService` (создание/обработка/получение броней). Реализации: `EventService`, `BookingService`.
+- **Интерфейсы портов (абстракции для доступа к данным)** — `IEventRepository`, `IBookingRepository` (репозитории), `ITransactionService`, `ITransactionContext` (управление транзакциями). Application определяет, что ему нужно от Infrastructure, через эти интерфейсы.
+- **DTO (объекты передачи данных)** — `EventDto`, `CreateEventDto`, `UpdateEventDto`, `BookingInfoDto`, `EventsFilterDto`, `PaginatedResultDto`. Используются для обмена данными между слоями Presentation и Application, а также для маппинга в доменные модели.
+- **Фоновые сервисы** — логика фоновой обработки броней описана в `BookingService.UpdateBookingAsync` (вызывается из Infrastructure-хоста `BookingBackgroundService`).
+- **Extension-метод для DI** — `AddApplication()` в `DependencyInjection.cs` регистрирует сервисы (`IEventService`, `IBookingService`) и `TimeProvider.System`.
+    
+### Infrastructure (`EventBookingService.Infrastructure`)
+    
+Слой, содержащий **реализации, зависящие от внешних технологий**. Зависит от Application (реализует его интерфейсы).
+    
+**Содержит:**
+- **Реализации репозиториев** — `EventRepository`, `BookingRepository`. Используют `IDbContextFactory<AppDbContext>` для создания короткоживущих контекстов БД. Включают методы для работы внутри транзакции (`GetByIdWithLockInContextAsync` с SQL `FOR UPDATE`, `AddInContextAsync`, `UpdateInContextAsync`).
+- **DbContext и маппинг сущностей** — `AppDbContext` (Npgsql, схема `EventBooking`). Конфигурации сущностей: `EventConfiguration`, `BookingConfiguration` (имена таблиц, столбцов в snake_case, индексы, каскадное удаление).
+- **Миграции** — авто-применение при старте приложения (`db.Database.Migrate()`), ручное создание через `dotnet ef migrations add`.
+- **Адаптеры к внешним системам** — `BookingBackgroundService` (`BackgroundService`, опрашивает pending-брони каждые 5 секунд), `LoggingInterceptor` (перехватчик команд EF Core, логирует медленные запросы >500 мс).
+- **Extension-метод для DI** — `AddInfrastructure(IConfiguration)` в `DependencyInjection.cs` регистрирует `AppDbContext`, репозитории, `TransactionService`, `BookingBackgroundService` и `LoggingInterceptor`.
+    
+### Presentation (`EventBookingService.Presentation`)
+    
+Слой, отвечающий за **взаимодействие с внешним миром через HTTP API**.
+   
+**Содержит:**
+- **Контроллеры/эндпоинты** — `EventsController` (CRUD событий + создание брони), `BookingsController` (получение информации о брони). Получают HTTP-запрос, вызывают нужный сервис из Application, возвращают ответ. Используют DTO запросов/ответов (`CreateEventRequest`, `EventResponse` и др.) с атрибутами валидации (`[DateGreater]`, `[NotMinDateTime]`, `[Required]`).
+- **Глобальный обработчик исключений** — `GlobalExceptionHandlingMiddleware`. Перехватывает все необработанные исключения и маппит доменные исключения в HTTP-статусы: `NotFoundException` → 404, `ValidationCustomException` → 400, `NoAvailableSeatsException` → 409, `UnauthorizedAccessException` → 401, всё остальное → 500. Ответ формируется в формате `ProblemDetails (RFC 7807)`.
+- **Composition Root** — `Program.cs`. Компактная регистрация всех зависимостей через три extension-метода: `AddInfrastructure()`, `AddApplication()`, `AddPresentation()`. Здесь же выполняется автоматическая миграция БД при старте и подключается Swagger.
+    
+```
+Presentation ──→ Application ──→ Domain
+                      ↑
+               Infrastructure
+```
+    
 <!-- GETTING STARTED -->
 ## Getting Started
 
@@ -594,24 +642,64 @@ curl -X 'GET' \
 
 ## Миграции БД
 
-### Создание миграции
-Для создания новой миграции выполните команду
-```bash
-dotnet ef migrations add InitialCreate --project EventBookingService.Data --startup-project EventBookingService.Presentation
-```
-Где:
-
- - `InitialCreate` - назначенное имя миграции
- - `EventBookingService.Data` - имя проекта с БД миграцией, контекстом и конфигурациями
- - `EventBookingService.Presentation` - проект со строкой подключения
-
-
- ### Обновление БД
-Для создания/обновления базы данных выполните команду
-```bash
-dotnet ef database update --project EventBookingService.Data --startup-project EventBookingService.Presentation
-```
-Где:
-
- - `EventBookingService.Data` - имя проекта с БД миграцией, контекстом и конфигурациями
- - `EventBookingService.Presentation` - проект со строкой подключения
+-
+-
+-
+-
+   Миграции находятся в проекте **Infrastructure** (`EventBookingService.Infrastructure`), так как именно этот слой отвечает за доступ к данным и содержит `AppDbContext`, конфигурации маппинга сущностей (`EventConfiguration`, `BookingConfiguration`) и всё, что связано с технологией хранения (Entity Framework Core + Npgsql).
++
+   При запуске приложения миграции применяются автоматически — в `Program.cs` (Presentation) вызывается `db.Database.Migrate()`, поэтому ручное обновление БД требуется только при отладке или ручном развёртывании.
++
+   ### Структура миграций в проекте
++
+   ```
+   EventBookingService.Infrastructure/
+   └── Migrations/
+       ├── {timestamp}_InitialCreate.cs
+       ├── {timestamp}_InitialCreate.Designer.cs
+       ├── {timestamp}_NextMigration.cs
+       └── AppDbContextModelSnapshot.cs
+   ```
++
+   ### Создание новой миграции
++
+   Для создания новой миграции выполните команду из **корня решения**:
++
+   ```bash
+   dotnet ef migrations add <ИмяМиграции> --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
+   ```
++
+   Где:
++
+   | Параметр | Значение | Пояснение |
+   |----------|----------|------------|
+   | `<ИмяМиграции>` | Например `AddEventCapacity`, `AddBookingIndex` | Осмысленное имя на PascalCase, отражающее суть изменений |
+   | `--project` | `EventBookingService.Infrastructure` | Проект, где находится `AppDbContext` и папка `Migrations/` |
+   | `--startup-project` | `EventBookingService.Presentation` | Проект с `Program.cs`, где сконфигурирована строка подключения и DI |
++
+   **Важно:** Поскольку `AppDbContext` использует `IDbContextFactory<AppDbContext>`, миграции должны создаваться с флагом `--startup-project`, указывающим на Presentation — именно там зарегистрирована фабрика контекстов и строка подключения.
++
+   ### Ручное обновление базы данных
++
+   Для явного применения миграций к базе данных (без запуска приложения) выполните:
++
+   ```bash
+   dotnet ef database update --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
+   ```
++
+   ### Удаление последней миграции
++
+   Если миграция была создана ошибочно и ещё не применена к БД:
++
+   ```bash
+   dotnet ef migrations remove --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
+   ```
++
+   ### Принцип работы в рамках Clean Architecture
++
+   1. **Domain** определяет сущности (`Event`, `Booking`) без привязки к БД
+   2. **Application** описывает интерфейсы репозиториев (`IEventRepository`, `IBookingRepository`)
+   3. **Infrastructure** реализует репозитории, содержит `AppDbContext`, конфигурации маппинга и миграции — это единственный слой, который «знает» о том, как сущности хранятся в PostgreSQL
+   4. **Presentation** при старте вызывает `Migrate()` и передаёт строку подключения через `appsettings.json` / user-secrets
++
+   Такое разделение позволяет заменить БД или ORM, не затрагивая Domain и Application — достаточно изменить только Infrastructure.
