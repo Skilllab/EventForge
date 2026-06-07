@@ -17,7 +17,6 @@ public class BookingService(
     ILogger<BookingService> logger,
     TimeProvider timeProvider) : IBookingService
 {
-    private static readonly SemaphoreSlim _semaphoreUpdate = new(1, 1);
     /// <inheritdoc/>
     public async Task<BookingInfoDto> CreateBookingAsync(Guid eventId, CancellationToken ct)
     {
@@ -91,48 +90,44 @@ public class BookingService(
     {
         Event? existedEvent = null;
         var processingTime = timeProvider.GetUtcNow().UtcDateTime;
-        try
+
+
+        await transactionService.ExecuteAsync(async (txContext) =>
         {
-            existedEvent = await eventRepository.GetByIdAsync(booking.EventId, ct);
-
-            if (existedEvent == null)
-            {
-                logger.LogWarning("Событие не найдено. ID: {Id}", booking.EventId);
-                booking.Reject(processingTime);
-                return;
-            }
-
-            await _semaphoreUpdate.WaitAsync(ct);
             try
             {
+                var existedEvent = await eventRepository.GetByIdWithLockInContextAsync(booking.EventId, txContext.DbContext, ct);
+                if (existedEvent == null)
+                {
+                    logger.LogWarning("Событие не найдено. ID: {Id}", booking.EventId);
+                    booking.Reject(processingTime);
+                    return;
+                }
+
                 booking.Confirm(processingTime);
                 logger.LogInformation("Бронь {Id} подтверждена", booking.Id);
             }
+            catch (Exception ex)
+            {
+                booking.Reject(timeProvider.GetUtcNow().UtcDateTime);
+                if (existedEvent != null)
+                {
+                    existedEvent.ReleaseSeats();
+                    await eventRepository.UpdateAsync(existedEvent, ct);
+                    logger.LogInformation("Места для события {Id} восстановлены после ошибки", existedEvent.Id);
+                }
+
+                if (ex is not OperationCanceledException)
+                    logger.LogError(ex, "Ошибка при обработке бронирования {ID}", booking.Id);
+
+                throw;
+            }
             finally
             {
-                _semaphoreUpdate.Release();
-            }
-        }
-        catch (Exception ex)
-        {
-            booking.Reject(timeProvider.GetUtcNow().UtcDateTime);
-            if (existedEvent != null)
-            {
-                existedEvent.ReleaseSeats();
-                await eventRepository.UpdateAsync(existedEvent, ct);
-                logger.LogInformation("Места для события {Id} восстановлены после ошибки", existedEvent.Id);
+                // Сохраняем бронь ВСЕГДА (Confirmed или Rejected)
+                await bookingRepository.UpdateAsync(booking, ct);
             }
 
-            if (ex is not OperationCanceledException)
-                logger.LogError(ex, "Ошибка при обработке бронирования {ID}", booking.Id);
-
-            throw;
-        }
-        finally
-        {
-            // Сохраняем бронь ВСЕГДА (Confirmed или Rejected)
-            await bookingRepository.UpdateAsync(booking, ct);
-        }
-
+        }, ct);
     }
 }
