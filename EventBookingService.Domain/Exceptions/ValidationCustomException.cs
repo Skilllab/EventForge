@@ -3,7 +3,7 @@ namespace EventBookingService.Domain.Exceptions;
 /// <summary>
 /// Исключение, которое выбрасывается в случае если у сущности есть ошибки валидации 
 /// </summary>
-public class ValidationCustomException : ApplicationBaseException
+public class ValidationCustomException : DomainException
 {
     /// <inheritdoc />
     public ValidationCustomException(string entityName, string entityId)

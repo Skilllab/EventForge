@@ -3,7 +3,7 @@ namespace EventBookingService.Domain.Exceptions;
 /// <summary>
 /// Исключение, которое выбрасывается в случае если у события нет мест для бронирования
 /// </summary>
-public class NoAvailableSeatsException : ApplicationBaseException
+public class NoAvailableSeatsException : DomainException
 {
     /// <inheritdoc />
     public NoAvailableSeatsException(string entityName, string entityId)

@@ -3,7 +3,7 @@ namespace EventBookingService.Domain.Exceptions;
 /// <summary>
 /// Исключение, которое выбрасывается в случае если сущность не была найдена 
 /// </summary>
-public class NotFoundException : ApplicationBaseException
+public class NotFoundException : DomainException
 {
     /// <inheritdoc />
     public NotFoundException(string entityName, string entityId)
