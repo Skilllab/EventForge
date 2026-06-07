@@ -51,7 +51,7 @@ public class UpdateEventDto
         {
             if (endAt.Value < startAt.Value)
             {
-                throw new ValidationCustomException(nameof(UpdateEventDto), "При изменении дат у события, не может быть дата начала меньше даты завершения");
+                throw new ArgumentException("При изменении дат у события, не может быть дата начала меньше даты завершения", nameof(endAt));
             }
         }
 

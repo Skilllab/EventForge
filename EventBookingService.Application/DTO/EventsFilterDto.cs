@@ -64,7 +64,7 @@ public class EventsFilterDto
     /// <param name="to">Верхняя граница фильтрации по дате завершения (необязательный)</param>
     /// <param name="page">Номер страницы (по умолчанию: 1, должен быть больше 0)</param>
     /// <param name="pageSize">Размер страницы (по умолчанию: 10, допустимый диапазон: 1-100)</param>
-    /// <exception cref="ValidationException">
+    /// <exception cref="ArgumentException">
     /// Выбрасывается в следующих случаях:
     /// - Длина Title превышает 100 символов
     /// - Page меньше 1
@@ -81,25 +81,25 @@ public class EventsFilterDto
         // 1. Проверка длины строки Title
         if (title is not null && title.Length > 100)
         {
-            throw new ValidationException("Название для поиска слишком длинное");
+            throw new ArgumentException("Название для поиска слишком длинное", nameof(title));
         }
 
         // 2. Проверка номера страницы Page
         if (page < 1)
         {
-            throw new ValidationException("Номер страницы должен быть больше 0");
+            throw new ArgumentException("Номер страницы должен быть больше 0", nameof(page));
         }
 
         // 3. Проверка размера страницы PageSize
         if (pageSize is < 1 or > 100)
         {
-            throw new ValidationException("Размер страницы должен быть от 1 до 100 элементов");
+            throw new ArgumentException("Размер страницы должен быть от 1 до 100 элементов", nameof(pageSize));
         }
 
         // 4. Проверка корректности дат From и To
         if (from.HasValue && to.HasValue && to < from)
         {
-            throw new ValidationException("Дата завершения не может быть раньше даты начала");
+            throw new ArgumentException("Дата завершения не может быть раньше даты начала", nameof(to));
         }
 
         Title = title;

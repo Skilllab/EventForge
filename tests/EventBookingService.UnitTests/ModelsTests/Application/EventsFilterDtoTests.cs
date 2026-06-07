@@ -80,7 +80,7 @@ public class EventsFilterDtoTests
         Action act = () => new EventsFilterDto(title: invalidTitle);
 
         // Assert
-        act.Should().Throw<ValidationException>();
+        act.Should().Throw<ArgumentException>().WithParameterName("title");
     }
 
     [Theory]
@@ -93,7 +93,7 @@ public class EventsFilterDtoTests
         Action act = () => new EventsFilterDto(page: invalidPage);
 
         // Assert
-        act.Should().Throw<ValidationException>();
+        act.Should().Throw<ArgumentException>().WithParameterName("page");
     }
 
     [Theory]
@@ -106,7 +106,7 @@ public class EventsFilterDtoTests
         Action act = () => new EventsFilterDto(pageSize: invalidPageSize);
 
         // Assert
-        act.Should().Throw<ValidationException>();
+        act.Should().Throw<ArgumentException>().WithParameterName("pageSize");
     }
 
     [Theory]
@@ -132,7 +132,7 @@ public class EventsFilterDtoTests
         Action act = () => new EventsFilterDto(from: fromDate, to: invalidToDate);
 
         // Assert
-        act.Should().Throw<ValidationException>();
+        act.Should().Throw<ArgumentException>().WithParameterName("to");
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using EventBookingService.Application.DTO;
+using EventBookingService.Domain.Exceptions;
 
 using FluentAssertions;
 
@@ -59,7 +60,7 @@ namespace EventBookingService.UnitTests.ModelsTests.Application
         {
             // Arrange
             var startAt = _now.AddDays(1);
-            var invalidEndAt = _now.AddHours(-2); // Конец раньше начала на 2 часа
+            var invalidEndAt = startAt.AddHours(-2); // Конец раньше начала на 2 часа
 
             // Act
             Action act = () => UpdateEventDto.Create(startAt: startAt, endAt: invalidEndAt);
