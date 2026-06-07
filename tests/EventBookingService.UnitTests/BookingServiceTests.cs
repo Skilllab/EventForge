@@ -1,9 +1,9 @@
+using EventBookingService.Application.DTO;
+using EventBookingService.Application.Interfaces;
+using EventBookingService.Application.Services;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Domain.Exceptions;
-using EventBookingService.Domain.Interfaces;
-using EventBookingService.WebAPI.Application.Interfaces;
-using EventBookingService.WebAPI.Application.Services;
-using EventBookingService.WebAPI.Models.DTO.Booking;
+using EventBookingService.Infrastructure.Services;
 
 using FluentAssertions;
 
@@ -46,8 +46,8 @@ public class BookingServiceTests
 
         // Mock для ExecuteAsync - вызываем операцию внутри мока
         transactionServiceMock
-            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
-            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDto>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDto>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
 
         var service = new BookingService(
             bookingRepositoryMock.Object,
@@ -93,8 +93,8 @@ public class BookingServiceTests
             .ReturnsAsync(existingEvent);
 
         transactionServiceMock
-            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
-            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDto>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDto>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
 
         var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, transactionServiceMock.Object, loggerMock.Object, fakeTimeProvider);
 
@@ -138,8 +138,8 @@ public class BookingServiceTests
             .ReturnsAsync((Event) null!);
 
         transactionServiceMock
-            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
-            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDto>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDto>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
 
         var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, transactionServiceMock.Object, loggerMock.Object, fakeTimeProvider);
 
@@ -357,8 +357,8 @@ public class BookingServiceTests
         eventRepositoryMock.Setup(r => r.GetByIdWithLockInContextAsync(eventId, It.IsAny<object>(), ct)).ReturnsAsync(myEvent);
 
         transactionServiceMock
-            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
-            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDto>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDto>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
 
         var service = new BookingService(bookingRepositoryMock.Object, eventRepositoryMock.Object, transactionServiceMock.Object, loggerSvcMock.Object, fakeTimeProvider);
 
@@ -402,8 +402,8 @@ public class BookingServiceTests
             .ReturnsAsync(existingEvent);
 
         transactionServiceMock
-            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
-            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDto>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDto>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
 
         var service = new BookingService(
             bookingRepositoryMock.Object,
@@ -516,8 +516,8 @@ public class BookingServiceTests
             .ReturnsAsync(existingEvent);
 
         transactionServiceMock
-            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
-            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDto>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDto>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
 
         var pendingBooking = Booking.Create(existingEvent.Id, now);
         bookingRepoMock.Setup(r => r.GetAllAsync(BookingStatus.Pending, ct))
@@ -564,8 +564,8 @@ public class BookingServiceTests
             .ReturnsAsync(existingEvent);
 
         transactionServiceMock
-            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
-            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDto>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDto>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
 
         var service = new BookingService(
             bookingRepositoryMock.Object,
@@ -579,7 +579,7 @@ public class BookingServiceTests
             .Select(_ => service.CreateBookingAsync(existingEvent.Id, ct))
             .ToList();
 
-        var results = new List<BookingInfoDTO>();
+        var results = new List<BookingInfoDto>();
         var exceptions = new List<Exception>();
 
         foreach (var task in tasks)
@@ -636,8 +636,8 @@ public class BookingServiceTests
             .ReturnsAsync(existingEvent);
 
         transactionServiceMock
-            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
-            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDto>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDto>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
 
         var service = new BookingService(
             bookingRepositoryMock.Object,

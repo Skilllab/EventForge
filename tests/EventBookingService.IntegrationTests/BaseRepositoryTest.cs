@@ -1,5 +1,5 @@
-using EventBookingService.Data.Context;
-using EventBookingService.Data.Entities;
+using EventBookingService.Infrastructure.Context;
+using EventBookingService.Infrastructure.Entities;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
