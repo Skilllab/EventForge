@@ -24,4 +24,10 @@ public enum BookingStatus
     /// </summary>
     [Description("Бронь отклонена")]
     Rejected = 2,
+
+    /// <summary>
+    /// Бронь отменена пользователем
+    /// </summary>
+    [Description("Бронь отменена")]
+    Cancelled = 3,
 }
