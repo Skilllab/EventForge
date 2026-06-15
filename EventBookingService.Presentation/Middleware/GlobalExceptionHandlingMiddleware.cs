@@ -72,6 +72,27 @@ public class GlobalExceptionHandlingMiddleware(
                 Status = statusCode,
                 Detail = nae.Message
             },
+            BookingPastEventException bpe => new ProblemDetails
+            {
+                Type = bpe.EntityName,
+                Instance = bpe.EntityId,
+                Status = statusCode,
+                Detail = bpe.Message
+            },
+            BookingLimitExceededException ble => new ProblemDetails
+            {
+                Type = ble.EntityName,
+                Instance = ble.EntityId,
+                Status = statusCode,
+                Detail = ble.Message
+            },
+            InsufficientPermissionsException ipe => new ProblemDetails
+            {
+                Type = ipe.EntityName,
+                Instance = ipe.EntityId,
+                Status = statusCode,
+                Detail = ipe.Message
+            },
             _ => new ProblemDetails()
             {
                 Status = statusCode,
@@ -91,7 +112,9 @@ public class GlobalExceptionHandlingMiddleware(
             ValidationCustomException or ValidationException => StatusCodes.Status400BadRequest,
             NotFoundException => StatusCodes.Status404NotFound,
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
-            NoAvailableSeatsException => StatusCodes.Status409Conflict,
+            InsufficientPermissionsException => StatusCodes.Status403Forbidden,
+            BookingPastEventException => StatusCodes.Status422UnprocessableEntity,
+            NoAvailableSeatsException or BookingLimitExceededException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
         };
 }
