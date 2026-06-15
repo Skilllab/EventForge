@@ -1,4 +1,4 @@
-using EventBookingService.Application.DTO;
+﻿using EventBookingService.Application.DTO;
 using EventBookingService.Application.Interfaces;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Domain.Exceptions;
@@ -41,6 +41,7 @@ public class BookingService(
             // Создаём новое бронирование
             var newBooking = Booking.Create(
                 eventId,
+                Guid.Empty,
                 timeProvider.GetUtcNow().UtcDateTime
             );
 

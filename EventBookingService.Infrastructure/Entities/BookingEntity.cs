@@ -13,6 +13,8 @@ public class BookingEntity
     /// Идентификатор события, к которому относится бронь
     /// </summary>
     public Guid EventId { get; set; }
+
+    public Guid UserId{ get; set; }
     /// <summary>
     /// Текущий статус брони
     /// </summary>

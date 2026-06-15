@@ -16,6 +16,11 @@ public class Booking
     public Guid EventId { get; init; }
 
     /// <summary>
+    /// Идентификатор пользователя, который создал бронь
+    /// </summary>
+    public Guid UserId { get; init; }
+
+    /// <summary>
     /// Текущий статус брони
     /// </summary>
     public BookingStatus Status { get; set; }
@@ -30,12 +35,13 @@ public class Booking
     /// </summary>
     public DateTime? ProcessedAt { get; set; }
 
-    private Booking(Guid eventId, DateTime createdAt)
+    private Booking(Guid eventId, Guid userId, DateTime createdAt)
     {
         Id = Guid.NewGuid();
         Status = BookingStatus.Pending;
         CreatedAt = createdAt;
         EventId = eventId;
+        UserId = userId;
     }
 
     /// <summary>
@@ -57,11 +63,18 @@ public class Booking
         Status = BookingStatus.Rejected;
         ProcessedAt = processedAt;
     }
+
+    public void Cancel(DateTime processedAt)
+    {
+        Status = BookingStatus.Cancelled;
+        ProcessedAt = processedAt;
+    }
+
     /// <summary>
     /// Метод создания события
     /// </summary>
     /// <param name="eventId">Идентификатор привязанного события</param>
     /// <param name="createdAt">Время создания брони. Может быть разное в зависимости от региона</param>
     /// <returns></returns>
-    public static Booking Create(Guid eventId, DateTime createdAt) => new(eventId, createdAt);
+    public static Booking Create(Guid eventId, Guid userId, DateTime createdAt) => new(eventId, userId, createdAt);
 }
