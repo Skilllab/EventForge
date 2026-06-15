@@ -49,6 +49,8 @@ public static class DependencyInjection
 
         // Сервисы
         services.AddScoped<ITransactionService, TransactionService>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+
 
         return services;
     }
