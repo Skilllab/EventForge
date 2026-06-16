@@ -17,7 +17,7 @@ namespace EventBookingService.Application.Services;
 public class EventService(IEventRepository _repository, ILogger<EventService> _logger, TimeProvider timeProvider) : IEventService
 {
     /// <inheritdoc/>
-    public async Task<EventDto> CreateEventAsync(CreateEventDto newEventDTO, CancellationToken ct)
+    public async Task<EventDTO> CreateEventAsync(CreateEventDto newEventDTO, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -49,7 +49,7 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
     }
 
     /// <inheritdoc/>
-    public async Task<PaginatedResultDto> GetEventsAsync(EventsFilterDto filter, CancellationToken ct)
+    public async Task<PaginatedResultDTO> GetEventsAsync(EventsFilterDTO filter, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -62,11 +62,11 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
 
         var items = result.Items.Select(r=>r.ToDto()).ToList();
 
-        return new PaginatedResultDto(result.TotalCount, items, filter.Page, filter.PageSize);
+        return new PaginatedResultDTO(result.TotalCount, items, filter.Page, filter.PageSize);
     }
 
     /// <inheritdoc/>
-    public async Task<EventDto> GetEventAsync(Guid eventId, CancellationToken ct)
+    public async Task<EventDTO> GetEventAsync(Guid eventId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 

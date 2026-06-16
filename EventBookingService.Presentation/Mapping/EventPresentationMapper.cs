@@ -25,7 +25,7 @@ public static class EventPresentationMapper
     /// Преобразует выходной DTO бизнес-логики (Application) в ответ клиенту (Presentation).
     /// </summary>
     /// <param name="dto">DTO события из слоя Application.</param>
-    public static EventResponse ToWebDto(this EventDto dto) =>
+    public static EventResponse ToWebDto(this EventDTO dto) =>
         new(
             Id: dto.Id,
             Title: dto.Title,
@@ -54,7 +54,7 @@ public static class EventPresentationMapper
     /// Преобразует входной запрос фильтрации (Presentation) в DTO бизнес-логики (Application).
     /// </summary>
     /// <param name="request">Запрос фильтрации</param>
-    public static EventsFilterDto ToAppDto(this EventsFilterRequest request) =>
+    public static EventsFilterDTO ToAppDto(this EventsFilterRequest request) =>
         new(
             title: request.Title,
             from: request.From,
@@ -69,7 +69,7 @@ public static class EventPresentationMapper
     /// Преобразует выходной DTO бизнес-логики (Application) в ответ клиенту (Presentation).
     /// </summary>
     /// <param name="dto">DTO поиска с пагинацией</param>
-    public static PaginatedResultResponse ToWebDto(this PaginatedResultDto dto) =>
+    public static PaginatedResultResponse ToWebDto(this PaginatedResultDTO dto) =>
         new(
             EventsTotalCount: dto.EventsTotalCount,
             Events: dto.Events.Select(e => e.ToWebDto()).ToList(),
@@ -81,7 +81,7 @@ public static class EventPresentationMapper
     /// Преобразует выходной DTO бизнес-логики (Application) в ответ клиенту (Presentation).
     /// </summary>
     /// <param name="dto">DTO информации о бронировании</param>
-    public static BookingInfoResponse ToWebDto(this BookingInfoDto dto) =>
+    public static BookingInfoResponse ToWebDto(this BookingInfoDTO dto) =>
         new(
             ID: dto.ID,
             EventID: dto.EventID,

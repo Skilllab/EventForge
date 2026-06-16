@@ -25,7 +25,7 @@ public class BookingService(
     private readonly BookingOptions _bookingOptions = bookingOptions.Value;
 
     /// <inheritdoc/>
-    public async Task<BookingInfoDto> CreateBookingAsync(Guid eventId, Guid userId, CancellationToken ct)
+    public async Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, Guid userId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -72,7 +72,7 @@ public class BookingService(
     }
 
 
-    private static BookingInfoDto MapToDTO(Booking newBooking) =>
+    private static BookingInfoDTO MapToDTO(Booking newBooking) =>
         new
         (
             ID: newBooking.Id,
@@ -81,7 +81,7 @@ public class BookingService(
         );
 
     /// <inheritdoc/>
-    public async Task<BookingInfoDto> GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
+    public async Task<BookingInfoDTO> GetBookingByIdAsync(Guid bookingId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 

@@ -13,7 +13,7 @@ public interface IEventService
     /// </summary>
     /// <param name="currentEvent">Входящая DTO</param>
     /// <param name="ct">Токен отмены</param>
-    Task<EventDto> CreateEventAsync(CreateEventDto currentEvent, CancellationToken ct);
+    Task<EventDTO> CreateEventAsync(CreateEventDto currentEvent, CancellationToken ct);
 
     /// <summary>
     /// Отмена события
@@ -27,14 +27,14 @@ public interface IEventService
     /// </summary>
     /// <param name="filter">Фильтр для применения пагинации</param>
     /// <param name="ct">Токен отмены</param>
-    Task<PaginatedResultDto> GetEventsAsync(EventsFilterDto filter, CancellationToken ct);
+    Task<PaginatedResultDTO> GetEventsAsync(EventsFilterDTO filter, CancellationToken ct);
 
     /// <summary>
     /// Поиск события
     /// </summary>
     /// <param name="eventId">ID события</param>
     /// <param name="ct">Токен отмены</param>
-    Task<EventDto> GetEventAsync(Guid eventId, CancellationToken ct);
+    Task<EventDTO> GetEventAsync(Guid eventId, CancellationToken ct);
 
     /// <summary>
     /// Изменение события

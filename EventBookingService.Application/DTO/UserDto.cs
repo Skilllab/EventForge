@@ -5,7 +5,7 @@ namespace EventBookingService.Application.DTO;
 /// <summary>
 /// DTO пользователя
 /// </summary>
-public class UserDto
+public class UserDTO
 {
     /// <summary>
     /// Имя входа пользователя

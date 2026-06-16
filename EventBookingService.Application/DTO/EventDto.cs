@@ -10,7 +10,7 @@ namespace EventBookingService.Application.DTO;
 /// <param name="EndAt">Дата завершения события</param>
 /// <param name="TotalSeats">Общее количество мест на событии</param>
 /// <param name="AvailableSeats">Текущее количество свободных мест</param>
-public record EventDto(
+public record EventDTO(
     Guid Id,
     string Title,
     string? Description,

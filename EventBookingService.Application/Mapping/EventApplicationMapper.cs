@@ -23,7 +23,7 @@ public static class EventApplicationMapper
     /// <summary>
     /// Доменная модель -> Выходной DTO
     /// </summary>
-    public static EventDto ToDto(this Event domain) =>
+    public static EventDTO ToDto(this Event domain) =>
         new(
             Id: domain.Id,
             Title: domain.Title,
