@@ -1,4 +1,4 @@
-﻿using EventBookingService.Application.DTO;
+using EventBookingService.Application.DTO;
 using EventBookingService.Application.Interfaces;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Domain.Exceptions;
@@ -13,12 +13,13 @@ namespace EventBookingService.Application.Services;
 public class BookingService(
     IBookingRepository bookingRepository,
     IEventRepository eventRepository,
+    IUserRepository userRepository,
     ITransactionService transactionService,
     ILogger<BookingService> logger,
     TimeProvider timeProvider) : IBookingService
 {
     /// <inheritdoc/>
-    public async Task<BookingInfoDto> CreateBookingAsync(Guid eventId, CancellationToken ct)
+    public async Task<BookingInfoDto> CreateBookingAsync(Guid eventId, Guid userId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -41,7 +42,7 @@ public class BookingService(
             // Создаём новое бронирование
             var newBooking = Booking.Create(
                 eventId,
-                Guid.Empty,
+                userId,
                 timeProvider.GetUtcNow().UtcDateTime
             );
 
