@@ -1,4 +1,6 @@
+using EventBookingService.Application.Common;
 using EventBookingService.Application.Interfaces;
+using EventBookingService.Infrastructure.Common;
 using EventBookingService.Infrastructure.Context;
 using EventBookingService.Infrastructure.Interceptors;
 using EventBookingService.Infrastructure.Repositories;
@@ -42,6 +44,8 @@ public static class DependencyInjection
             options.EnableSensitiveDataLogging(false);
 
         });
+
+        services.Configure<JwtOptions>(configuration.GetSection("JwtSettings"));
 
         // Репозитории
         services.AddScoped<IEventRepository, EventRepository>();

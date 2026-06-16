@@ -1,4 +1,4 @@
-namespace EventBookingService.Application.Common
+namespace EventBookingService.Infrastructure.Common
 {
     /// <summary>
     /// Класс для настроек генерации токена

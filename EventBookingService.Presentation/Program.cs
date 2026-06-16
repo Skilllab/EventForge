@@ -4,6 +4,7 @@ using EventBookingService.Infrastructure.Context;
 using EventBookingService.Presentation;
 using EventBookingService.Presentation.Middleware;
 
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -11,8 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddConsole();
 
+
 builder.Services.AddInfrastructure(builder.Configuration);
-builder.Services.AddApplication();
+builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddPresentation();
 
 var app = builder.Build();
