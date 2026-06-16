@@ -95,7 +95,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
     {
         logger.LogDebug("Обработка запроса POST {methodName}", nameof(CreateBook));
 
-        var bookingDto = await bookingService.CreateBookingAsync(eventId, ct);
+        var bookingDto = await bookingService.CreateBookingAsync(eventId, Guid.NewGuid(), ct);
 
         return AcceptedAtAction(
             actionName: "GetBooking",

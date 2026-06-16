@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 using EventBookingService.Application.Interfaces;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Context;
-using EventBookingService.Infrastructure.Mapping;
 
 using Microsoft.EntityFrameworkCore;
 

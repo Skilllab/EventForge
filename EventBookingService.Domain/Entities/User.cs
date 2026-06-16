@@ -35,10 +35,10 @@ namespace EventBookingService.Domain.Entities
         public static User Create(string login, string passwordHash, RoleType role)
         {
             if (string.IsNullOrEmpty(login))
-                throw new ValidationCustomException(nameof(Event), Guid.Empty.ToString(), "Логин пользователя не может быть пустым.");
+                throw new ValidationCustomException(nameof(User), Guid.Empty.ToString(), "Логин пользователя не может быть пустым.");
 
             if (string.IsNullOrEmpty(passwordHash))
-                throw new ValidationCustomException(nameof(Event), Guid.Empty.ToString(), "Пароль пользователя не может быть пустым.");
+                throw new ValidationCustomException(nameof(User), Guid.Empty.ToString(), "Пароль пользователя не может быть пустым.");
 
             return new User(login, passwordHash, role);
         }

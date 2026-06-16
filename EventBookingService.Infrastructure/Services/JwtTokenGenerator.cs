@@ -2,9 +2,9 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-using EventBookingService.Application.Common;
 using EventBookingService.Application.DTO;
 using EventBookingService.Application.Interfaces;
+using EventBookingService.Infrastructure.Common;
 
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -15,7 +15,7 @@ public class JwtTokenGenerator(IOptions<JwtOptions> options, TimeProvider timePr
 {
     private readonly JwtOptions _options = options.Value;
 
-    public string GenerateToken(UserDto user)
+    public string GenerateToken(string login, string role)
     {
         var now = timeProvider.GetUtcNow();
         var lifeTime = now.AddHours(_options.Lifetime);
@@ -23,14 +23,11 @@ public class JwtTokenGenerator(IOptions<JwtOptions> options, TimeProvider timePr
         // Здесь оставляем только данные пользователя и уникальный ID токена
         var claims = new[]
         {
-            // Идентификатор пользователя
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-
             // Логин
-            new Claim(JwtRegisteredClaimNames.Name, user.Login),
+            new Claim(JwtRegisteredClaimNames.Name, login),
 
             // Роль (стандартный тип для работы [Authorize(Roles = ...)])
-            new Claim(ClaimTypes.Role, user.Role.ToString()),
+            new Claim(ClaimTypes.Role, role),
 
             // Уникальный ID токена
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
@@ -40,7 +37,6 @@ public class JwtTokenGenerator(IOptions<JwtOptions> options, TimeProvider timePr
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         // Системные клеймы (iss, aud, iat, exp) настраиваем через свойства дескриптора.
-        // Библиотека сама переведет их в формат Unix timestamp и добавит в токен.
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),

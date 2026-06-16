@@ -4,6 +4,6 @@ namespace EventBookingService.Application.Interfaces
 {
     public interface IJwtTokenGenerator
     {
-        string GenerateToken(UserDto user);
+        string GenerateToken(string login, string role);
     }
 }
