@@ -35,6 +35,12 @@ public class BookingService(
                 throw new NotFoundException(nameof(Event), eventId.ToString());
             }
 
+            if (existedEvent.StartAt > timeProvider.GetUtcNow())
+            {
+                logger.LogError("Событие уже началось и недоступно для бронирования. ID: {Id}", eventId);
+                throw new BookingPastEventException(nameof(Event), eventId.ToString());
+            }
+
             // Проверяем и резервируем место (все в бизнес-слое)
             if (!existedEvent.TryReserveSeats())
                 throw new NoAvailableSeatsException(nameof(Event), existedEvent.Id.ToString());
