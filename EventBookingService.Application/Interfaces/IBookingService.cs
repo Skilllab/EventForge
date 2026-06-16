@@ -28,4 +28,6 @@ public interface IBookingService
     /// <param name="ct">Токен отмены</param>
     /// <returns></returns>
     Task<BookingInfoDto> GetBookingByIdAsync(Guid bookingId, CancellationToken ct);
+
+    Task<bool> CancelBooking(Guid bookingId, Guid userId, CancellationToken ct);
 }

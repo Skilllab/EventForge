@@ -1,9 +1,11 @@
+using EventBookingService.Application.Common;
 using EventBookingService.Application.DTO;
 using EventBookingService.Application.Interfaces;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Domain.Exceptions;
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace EventBookingService.Application.Services;
 
@@ -14,10 +16,14 @@ public class BookingService(
     IBookingRepository bookingRepository,
     IEventRepository eventRepository,
     IUserRepository userRepository,
+    IOptions<BookingOptions> bookingOptions,
     ITransactionService transactionService,
     ILogger<BookingService> logger,
     TimeProvider timeProvider) : IBookingService
 {
+
+    private readonly BookingOptions _bookingOptions = bookingOptions.Value;
+
     /// <inheritdoc/>
     public async Task<BookingInfoDto> CreateBookingAsync(Guid eventId, Guid userId, CancellationToken ct)
     {
@@ -40,6 +46,10 @@ public class BookingService(
                 logger.LogError("Событие уже началось и недоступно для бронирования. ID: {Id}", eventId);
                 throw new BookingPastEventException(nameof(Event), eventId.ToString());
             }
+
+            var userBooking = await bookingRepository.GetUserBooking(userId, ct);
+            if (userBooking.Count > _bookingOptions.MaxBookingCount)
+                throw new BookingLimitExceededException(nameof(Booking), userId.ToString(), "Превышено количество допустимых бронирований");
 
             // Проверяем и резервируем место (все в бизнес-слое)
             if (!existedEvent.TryReserveSeats())
@@ -82,6 +92,45 @@ public class BookingService(
             ? throw new NotFoundException(nameof(Booking), bookingId.ToString())
             : MapToDTO(booking);
     }
+
+    public async Task<bool> CancelBooking(Guid bookingId, Guid userId, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        var user = await userRepository.GetByIdAsync(userId);
+        if (user == null)
+            throw new NotFoundException(nameof(User), userId.ToString());
+
+        var userBooking = await bookingRepository.GetByIdAsync(bookingId, ct);
+        if (userBooking == null)
+            throw new NotFoundException(nameof(Booking), bookingId.ToString());
+
+        if (userBooking.UserId != userId && user.Role != RoleType.Admin)
+            throw new InsufficientPermissionsException(nameof(Booking), bookingId.ToString(), "У пользователя недостаточно прав для отмены бронирования");
+
+        return await transactionService.ExecuteAsync(async (txContext) =>
+        {
+            var existedEvent = await eventRepository.GetByIdWithLockInContextAsync(userBooking.EventId, txContext.DbContext, ct);
+            if (existedEvent == null)
+            {
+                logger.LogError("Событие не найдено при запросе. ID: {Id}", userBooking.EventId);
+                throw new NotFoundException(nameof(Event), userBooking.EventId.ToString());
+            }
+
+            existedEvent.ReleaseSeats();
+
+            // Все операции сохранения в рамках одной транзакции
+            await eventRepository.UpdateInContextAsync(existedEvent, txContext.DbContext, ct);
+            await bookingRepository.DeleteAsync(bookingId, ct);
+
+            logger.LogInformation("Бронирование успешно отменено. ID: {Id} ", bookingId);
+            return true;
+        }, ct);
+    }
+    
+
+    
+    
 
 
     /// <inheritdoc />
@@ -138,4 +187,5 @@ public class BookingService(
 
         }, ct);
     }
+
 }

@@ -51,4 +51,11 @@ public interface IBookingRepository
     /// <param name="context">Контекст БД</param>
     /// <param name="ct">Токен отмены</param>
     Task AddInContextAsync(Booking booking, object context, CancellationToken ct);
+
+    /// <summary>
+    /// Получить все бронирования указанного пользователя
+    /// </summary>
+    /// <param name="userId">ID пользователя</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<List<Booking>> GetUserBooking(Guid userId, CancellationToken ct);
 }

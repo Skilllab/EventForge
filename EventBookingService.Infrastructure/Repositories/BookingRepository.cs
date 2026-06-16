@@ -84,4 +84,10 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
         var entity = booking.ToEntity();
         await appDbContext.AddAsync(entity, ct);
     }
+
+    public async Task<List<Booking>> GetUserBooking(Guid userId, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+        return context.Bookings.AsNoTracking().Where(b=>b.UserId == userId).Select(e => e.ToDomain()).ToList();
+    }
 }
