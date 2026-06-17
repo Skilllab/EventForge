@@ -45,7 +45,7 @@ public static class DependencyInjection
 
         });
 
-        services.Configure<JwtOptions>(configuration.GetSection("JwtSettings"));
+        services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
 
         // Репозитории
         services.AddScoped<IEventRepository, EventRepository>();
@@ -56,6 +56,12 @@ public static class DependencyInjection
         services.AddScoped<ITransactionService, TransactionService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
 
+        services.AddScoped<IJwtTokenGenerator>(sp =>
+        {
+            var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtSettings>>();
+            var timeProvider = sp.GetRequiredService<TimeProvider>();
+            return new JwtTokenGenerator(options, timeProvider);
+        });
 
         return services;
     }

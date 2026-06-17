@@ -11,14 +11,14 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace EventBookingService.Infrastructure.Services;
 
-public class JwtTokenGenerator(IOptions<JwtOptions> options, TimeProvider timeProvider) : IJwtTokenGenerator
+public class JwtTokenGenerator(IOptions<JwtSettings> options, TimeProvider timeProvider) : IJwtTokenGenerator
 {
-    private readonly JwtOptions _options = options.Value;
+    private readonly JwtSettings _settings = options.Value;
 
     public string GenerateToken(string login, string role)
     {
         var now = timeProvider.GetUtcNow();
-        var lifeTime = now.AddHours(_options.Lifetime);
+        var lifeTime = now.AddHours(_settings.Lifetime);
 
         // Здесь оставляем только данные пользователя и уникальный ID токена
         var claims = new[]
@@ -33,15 +33,15 @@ public class JwtTokenGenerator(IOptions<JwtOptions> options, TimeProvider timePr
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.Secret));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         // Системные клеймы (iss, aud, iat, exp) настраиваем через свойства дескриптора.
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Issuer = _options.Issuer,
-            Audience = _options.Audience,
+            Issuer = _settings.Issuer,
+            Audience = _settings.Audience,
             NotBefore = now.UtcDateTime,
             Expires = lifeTime.UtcDateTime,
             IssuedAt = now.UtcDateTime,

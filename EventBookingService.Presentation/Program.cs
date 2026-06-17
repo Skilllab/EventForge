@@ -1,10 +1,9 @@
-using EventBookingService.Application;
+﻿using EventBookingService.Application;
 using EventBookingService.Infrastructure;
 using EventBookingService.Infrastructure.Context;
 using EventBookingService.Presentation;
 using EventBookingService.Presentation.Middleware;
 
-using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.EntityFrameworkCore;
 
 
@@ -15,7 +14,16 @@ builder.Logging.AddConsole();
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
-builder.Services.AddPresentation();
+builder.Services.AddPresentation(builder.Configuration);
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Host.UseDefaultServiceProvider(options =>
+    {
+        options.ValidateScopes = true;
+        options.ValidateOnBuild = true;
+    });
+}
 
 var app = builder.Build();
 
@@ -33,12 +41,6 @@ app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    //app.UseDeveloperExceptionPage();
-    builder.Host.UseDefaultServiceProvider(options =>
-    {
-        options.ValidateScopes = true;
-        options.ValidateOnBuild = true;
-    });
 
 
     app.UseSwagger();
@@ -49,6 +51,9 @@ else
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseHttpsRedirection();
 

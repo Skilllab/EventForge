@@ -3,7 +3,7 @@ namespace EventBookingService.Infrastructure.Common
     /// <summary>
     /// Класс для настроек генерации токена
     /// </summary>
-    public class JwtOptions
+    public class JwtSettings
     {
         /// <summary>
         /// Секрет

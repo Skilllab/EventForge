@@ -20,10 +20,11 @@ public static class DependencyInjection
     {
         services.AddSingleton(TimeProvider.System);
 
-        services.Configure<BookingOptions>(configuration.GetSection("AuthSettings"));
+        services.Configure<BookingOptions>(configuration.GetSection(nameof(BookingOptions)));
 
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IAuthService, AuthService>();
 
 
         return services;
