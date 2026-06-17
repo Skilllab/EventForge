@@ -21,6 +21,11 @@ public class Booking
     public Guid UserId { get; init; }
 
     /// <summary>
+    /// Навигационное свойство: пользователь, создавший бронь
+    /// </summary>
+    public User? User { get; init; }
+
+    /// <summary>
     /// Текущий статус брони
     /// </summary>
     public BookingStatus Status { get; set; }

@@ -23,6 +23,10 @@ namespace EventBookingService.Domain.Entities
         /// Роль пользователя
         /// </summary>
         public RoleType Role { get; private set; }
+        /// <summary>
+        /// Коллекция бронирований пользователя
+        /// </summary>
+        public ICollection<Booking> Bookings { get; private set; } = [];
 
         private User(string login, string passwordHash, RoleType role)
         {
