@@ -37,8 +37,7 @@ public class BookingConfiguration : IEntityTypeConfiguration<BookingEntity>
             .IsRequired();
 
         builder.Property(p => p.UserId)
-            .HasColumnName("user_id")
-            .IsRequired();
+            .HasColumnName("user_id");
 
         builder.HasOne<UserEntity>()
             .WithMany(u => u.Bookings)

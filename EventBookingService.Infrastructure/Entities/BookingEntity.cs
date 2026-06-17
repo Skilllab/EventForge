@@ -1,4 +1,4 @@
-﻿namespace EventBookingService.Infrastructure.Entities;
+namespace EventBookingService.Infrastructure.Entities;
 
 /// <summary>
 /// Сущность бронирования для БД
@@ -13,7 +13,7 @@ public class BookingEntity
     /// <summary>
     /// Идентификатор пользователя, создавшего бронирование
     /// </summary>
-    public Guid UserId { get; set; }
+    public Guid? UserId { get; set; }
 
     /// <summary>
     /// Навигационное свойство к пользователю
