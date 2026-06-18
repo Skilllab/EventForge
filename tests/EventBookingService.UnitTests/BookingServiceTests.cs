@@ -685,4 +685,205 @@ public class BookingServiceTests
             Times.Exactly(totalSeats));
     }
 
+    [Fact]
+    [Trait("Category", "BusinessRules")]
+    public async Task CreateBookingAsync_ShouldThrowBookingPastEventException_WhenEventHasAlreadyStarted()
+    {
+        // Arrange
+        var bookingRepositoryMock = new Mock<IBookingRepository>();
+        var eventRepositoryMock = new Mock<IEventRepository>();
+        var userRepositoryMock = new Mock<IUserRepository>();
+        var transactionServiceMock = new Mock<ITransactionService>();
+        var loggerMock = new Mock<ILogger<BookingService>>();
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var now = fixedUtcNow.UtcDateTime;
+        var bookingOptions = Options.Create(new BookingOptions { MaxBookingCount = 5 });
+        var ct = CancellationToken.None;
+
+        var userId = Guid.NewGuid();
+        // Примечание: если StartAt > now, то выбросится BookingPastEventException
+        // Это странная логика, но так написано в коде: if (StartAt > now) throw "event started"
+        // Поэтому для теста используем событие, которое начнется в БУДУЩЕМ
+        var futureEvent = Event.Create("Будущее событие", now.AddHours(1), now.AddHours(2), 10);
+
+        var transactionContextMock = new Mock<ITransactionContext>();
+        transactionContextMock.Setup(tc => tc.DbContext).Returns(new object());
+
+        bookingRepositoryMock
+            .Setup(r => r.GetUserBooking(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Booking>());
+
+        eventRepositoryMock
+            .Setup(r => r.GetByIdWithLockInContextAsync(futureEvent.Id, It.IsAny<object>(), ct))
+            .ReturnsAsync(futureEvent);
+
+        transactionServiceMock
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+
+        var service = new BookingService(
+            bookingRepositoryMock.Object,
+            eventRepositoryMock.Object,
+            userRepositoryMock.Object,
+            bookingOptions,
+            transactionServiceMock.Object,
+            loggerMock.Object,
+            fakeTimeProvider);
+
+        // Act
+        Func<Task> act = async () => await service.CreateBookingAsync(futureEvent.Id, userId, ct);
+
+        // Assert
+        await act.Should().ThrowAsync<BookingPastEventException>();
+        bookingRepositoryMock.Verify(
+            r => r.AddInContextAsync(It.IsAny<Booking>(), It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    [Trait("Category", "BusinessRules")]
+    public async Task CreateBookingAsync_ShouldThrowBookingLimitExceededException_WhenUserExceedsMaxBookingCount()
+    {
+        // Arrange
+        var bookingRepositoryMock = new Mock<IBookingRepository>();
+        var eventRepositoryMock = new Mock<IEventRepository>();
+        var userRepositoryMock = new Mock<IUserRepository>();
+        var transactionServiceMock = new Mock<ITransactionService>();
+        var loggerMock = new Mock<ILogger<BookingService>>();
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var now = fixedUtcNow.UtcDateTime;
+        var maxBookingCount = 3;
+        var bookingOptions = Options.Create(new BookingOptions { MaxBookingCount = maxBookingCount });
+        var ct = CancellationToken.None;
+
+        var userId = Guid.NewGuid();
+        var @event = Event.Create("Событие", now, now.AddHours(1), 10);
+
+        // Создаем список уже существующих броней пользователя (больше максимума)
+        // Проверка: Count > MaxBookingCount, поэтому если Count=3 и MaxBookingCount=3, то 3 > 3 = false
+        // Если Count=4 и MaxBookingCount=3, то 4 > 3 = true, ошибка
+        var existingBookings = Enumerable.Range(0, maxBookingCount + 1)
+            .Select(_ => Booking.Create(Guid.NewGuid(), userId, now))
+            .ToList();
+
+        var transactionContextMock = new Mock<ITransactionContext>();
+        transactionContextMock.Setup(tc => tc.DbContext).Returns(new object());
+
+        bookingRepositoryMock
+            .Setup(r => r.GetUserBooking(userId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingBookings);
+
+        eventRepositoryMock
+            .Setup(r => r.GetByIdWithLockInContextAsync(@event.Id, It.IsAny<object>(), ct))
+            .ReturnsAsync(@event);
+
+        transactionServiceMock
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+
+        var service = new BookingService(
+            bookingRepositoryMock.Object,
+            eventRepositoryMock.Object,
+            userRepositoryMock.Object,
+            bookingOptions,
+            transactionServiceMock.Object,
+            loggerMock.Object,
+            fakeTimeProvider);
+
+        // Act
+        Func<Task> act = async () => await service.CreateBookingAsync(@event.Id, userId, ct);
+
+        // Assert
+        await act.Should().ThrowAsync<BookingLimitExceededException>();
+        bookingRepositoryMock.Verify(
+            r => r.AddInContextAsync(It.IsAny<Booking>(), It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    [Trait("Category", "BusinessRules")]
+    public async Task CreateBookingAsync_UserLimits_ShouldNotAffectEachOther()
+    {
+        // Arrange
+        var bookingRepositoryMock = new Mock<IBookingRepository>();
+        var eventRepositoryMock = new Mock<IEventRepository>();
+        var userRepositoryMock = new Mock<IUserRepository>();
+        var transactionServiceMock = new Mock<ITransactionService>();
+        var loggerMock = new Mock<ILogger<BookingService>>();
+        var fakeTimeProvider = new FakeTimeProvider();
+        var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+        fakeTimeProvider.SetUtcNow(fixedUtcNow);
+        var now = fixedUtcNow.UtcDateTime;
+        var maxBookingCount = 2;
+        var bookingOptions = Options.Create(new BookingOptions { MaxBookingCount = maxBookingCount });
+        var ct = CancellationToken.None;
+
+        var userId1 = Guid.NewGuid();
+        var userId2 = Guid.NewGuid();
+       
+        var @event1 = Event.Create("Популярное событие 1", now, now.AddHours(1), 100);
+        var @event2 = Event.Create("Популярное событие 2", now, now.AddHours(2), 100);
+
+        var transactionContextMock = new Mock<ITransactionContext>();
+        transactionContextMock.Setup(tc => tc.DbContext).Returns(new object());
+
+        // User1 уже имеет больше максимума броней
+        var user1Bookings = Enumerable.Range(0, maxBookingCount + 1)
+            .Select(_ => Booking.Create(Guid.NewGuid(), userId1, now))
+            .ToList();
+
+        // User2 не имеет броней
+        var user2Bookings = new List<Booking>();
+
+        bookingRepositoryMock
+            .Setup(r => r.GetUserBooking(userId1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user1Bookings);
+
+        bookingRepositoryMock
+            .Setup(r => r.GetUserBooking(userId2, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user2Bookings);
+
+        eventRepositoryMock
+            .Setup(r => r.GetByIdWithLockInContextAsync(It.IsAny<Guid>(), It.IsAny<object>(), ct))
+            .ReturnsAsync((Guid id, object ctx, CancellationToken token) => 
+                id == @event1.Id ? @event1 : @event2);
+
+        transactionServiceMock
+            .Setup(ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<BookingInfoDTO>>>(), ct))
+            .Returns(async (Func<ITransactionContext, Task<BookingInfoDTO>> operation, CancellationToken cancellationToken) => await operation(transactionContextMock.Object));
+
+        var service = new BookingService(
+            bookingRepositoryMock.Object,
+            eventRepositoryMock.Object,
+            userRepositoryMock.Object,
+            bookingOptions,
+            transactionServiceMock.Object,
+            loggerMock.Object,
+            fakeTimeProvider);                                                                                                                                                                                                                                                                                  
+
+        // Act
+        // User1 пытается забронировать - должна быть ошибка
+        Func<Task> act1 = async () => await service.CreateBookingAsync(@event1.Id, userId1, ct);
+
+        // User2 пытается забронировать - должно пройти успешно
+        var resultUser2 = await service.CreateBookingAsync(@event2.Id, userId2, ct);
+
+        // Assert
+        await act1.Should().ThrowAsync<BookingLimitExceededException>();
+        resultUser2.Should().NotBeNull();
+        resultUser2.Status.Should().Be(nameof(BookingStatus.Pending));
+
+        bookingRepositoryMock.Verify(
+            r => r.AddInContextAsync(It.Is<Booking>(b => b.UserId == userId1), It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+
+        bookingRepositoryMock.Verify(
+            r => r.AddInContextAsync(It.Is<Booking>(b => b.UserId == userId2), It.IsAny<object>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
 }
