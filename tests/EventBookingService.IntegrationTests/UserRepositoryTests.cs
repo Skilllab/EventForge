@@ -16,7 +16,7 @@ namespace EventBookingService.IntegrationTests
         {
             // Arrange
             await using var context = await CreateContext();
-            var user = User.Create("testuser", "hashed_password", RoleType.User);
+            var user = User.Create("Тестировщик", "hashed_password", RoleType.User);
             var userEntity = user.ToEntity();
             context.Users.Add(userEntity);
             await context.SaveChangesAsync();
@@ -29,7 +29,7 @@ namespace EventBookingService.IntegrationTests
             // Assert
             result.Should().NotBeNull();
             result!.Id.Should().Be(user.Id);
-            result.Login.Should().Be("testuser");
+            result.Login.Should().Be("Тестировщик");
             result.Role.Should().Be(RoleType.User);
         }
 
@@ -54,7 +54,7 @@ namespace EventBookingService.IntegrationTests
         {
             // Arrange
             await using var context = await CreateContext();
-            var user = User.Create("uniquelogin", "hashed_password", RoleType.Admin);
+            var user = User.Create("Тестировщик", "hashed_password", RoleType.Admin);
             var userEntity = user.ToEntity();
             context.Users.Add(userEntity);
             await context.SaveChangesAsync();
@@ -62,11 +62,11 @@ namespace EventBookingService.IntegrationTests
             var repository = new UserRepository(Factory);
 
             // Act
-            var result = await repository.GetByLoginAsync("uniquelogin");
+            var result = await repository.GetByLoginAsync("Тестировщик");
 
             // Assert
             result.Should().NotBeNull();
-            result!.Login.Should().Be("uniquelogin");
+            result!.Login.Should().Be("Тестировщик");
             result.Role.Should().Be(RoleType.Admin);
         }
 
@@ -79,7 +79,7 @@ namespace EventBookingService.IntegrationTests
             var repository = new UserRepository(Factory);
 
             // Act
-            var result = await repository.GetByLoginAsync("nonexistentlogin");
+            var result = await repository.GetByLoginAsync("неТестировщик");
 
             // Assert
             result.Should().BeNull();
@@ -92,15 +92,15 @@ namespace EventBookingService.IntegrationTests
             await ResetDatabaseAsync();
             await using var context = await CreateContext();
             var repository = new UserRepository(Factory);
-            var user = User.Create("newuser", "hashed_password", RoleType.User);
+            var user = User.Create("Тестировщик", "hashed_password", RoleType.User);
 
             // Act
             await repository.AddAsync(user);
 
             // Assert
-            var savedUser = await context.Users.FirstOrDefaultAsync(u => u.Login == "newuser");
+            var savedUser = await context.Users.FirstOrDefaultAsync(u => u.Login == "Тестировщик");
             savedUser.Should().NotBeNull();
-            savedUser!.Login.Should().Be("newuser");
+            savedUser!.Login.Should().Be("Тестировщик");
             savedUser.Role.Should().Be("User");
         }
 
@@ -111,8 +111,8 @@ namespace EventBookingService.IntegrationTests
             await ResetDatabaseAsync();
             await using var context = await CreateContext();
             var repository = new UserRepository(Factory);
-            var user1 = User.Create("duplicatelogin", "hashed_password1", RoleType.User);
-            var user2 = User.Create("duplicatelogin", "hashed_password2", RoleType.User);
+            var user1 = User.Create("Тестировщик", "hashed_password1", RoleType.User);
+            var user2 = User.Create("Тестировщик", "hashed_password2", RoleType.User);
 
             // Act & Assert
             await repository.AddAsync(user1);
@@ -126,7 +126,7 @@ namespace EventBookingService.IntegrationTests
         {
             // Arrange
             await using var context = await CreateContext();
-            var user = User.Create("existinguser", "hashed_password", RoleType.User);
+            var user = User.Create("Тестировщик", "hashed_password", RoleType.User);
             var userEntity = user.ToEntity();
             context.Users.Add(userEntity);
             await context.SaveChangesAsync();
@@ -134,7 +134,7 @@ namespace EventBookingService.IntegrationTests
             var repository = new UserRepository(Factory);
 
             // Act
-            var result = await repository.ExistsAsync("existinguser");
+            var result = await repository.ExistsAsync("Тестировщик");
 
             // Assert
             result.Should().BeTrue();
@@ -149,7 +149,7 @@ namespace EventBookingService.IntegrationTests
             var repository = new UserRepository(Factory);
 
             // Act
-            var result = await repository.ExistsAsync("nonexistentuser");
+            var result = await repository.ExistsAsync("Тестировщик");
 
             // Assert
             result.Should().BeFalse();
@@ -160,7 +160,7 @@ namespace EventBookingService.IntegrationTests
         {
             // Arrange
             await using var context = await CreateContext();
-            var user = User.Create("CaseSensitiveLogin", "hashed_password", RoleType.User);
+            var user = User.Create("Тестировщик", "hashed_password", RoleType.User);
             var userEntity = user.ToEntity();
             context.Users.Add(userEntity);
             await context.SaveChangesAsync();
@@ -168,8 +168,8 @@ namespace EventBookingService.IntegrationTests
             var repository = new UserRepository(Factory);
 
             // Act
-            var resultExact = await repository.ExistsAsync("CaseSensitiveLogin");
-            var resultDifferentCase = await repository.ExistsAsync("casesensitivelogin");
+            var resultExact = await repository.ExistsAsync("Тестировщик");
+            var resultDifferentCase = await repository.ExistsAsync("тестировщик");
 
             // Assert
             resultExact.Should().BeTrue();
@@ -183,16 +183,16 @@ namespace EventBookingService.IntegrationTests
             await ResetDatabaseAsync();
             await using var context = await CreateContext();
             var repository = new UserRepository(Factory);
-            var user1 = User.Create("user1", "password1", RoleType.User);
-            var user2 = User.Create("user2", "password2", RoleType.Admin);
+            var user1 = User.Create("Тестировщик1", "password1", RoleType.User);
+            var user2 = User.Create("Тестировщик2", "password2", RoleType.Admin);
 
             // Act
             await repository.AddAsync(user1);
             await repository.AddAsync(user2);
 
             // Assert
-            var retrievedUser1 = await repository.GetByLoginAsync("user1");
-            var retrievedUser2 = await repository.GetByLoginAsync("user2");
+            var retrievedUser1 = await repository.GetByLoginAsync("Тестировщик1");
+            var retrievedUser2 = await repository.GetByLoginAsync("Тестировщик2");
 
             retrievedUser1.Should().NotBeNull();
             retrievedUser1!.Role.Should().Be(RoleType.User);
