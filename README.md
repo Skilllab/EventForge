@@ -336,7 +336,7 @@ var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
 if (string.IsNullOrEmpty(jwtSettings?.Secret) || jwtSettings.Secret.Length < 32)
     throw new InvalidOperationException("JwtSettings:Secret must be at least 32 characters long!");
 ```
-
+    
 ---
 ## Getting Started
 
@@ -411,52 +411,52 @@ dotnet user-secrets set "JwtSettings:Secret" "YourSecureProductionSecretWith64+C
 7. **Откройте Swagger UI**
 
    Перейдите по адресу: [https://localhost:5001/swagger/index.html](https://localhost:5001/swagger/index.html)
+ 
+ ### Запуск через Docker Compose
 
-### Запуск через Docker Compose
+ Для быстрого запуска всего окружения (PostgreSQL + приложение) выполните:
 
-Для быстрого запуска всего окружения (PostgreSQL + приложение) выполните:
+ 1. **Создайте файл `.env`** в корне проекта:
 
-1. **Создайте файл `.env`** в корне проекта:
+    ```env
+    # Базовые настройки БД
+    DB_USER=postgres
+    DB_PASSWORD=postgres
+    DB_NAME=eventapi
+    DB_HOST=postgres_db
+    DB_PORT=5438
 
-   ```env
-   # Базовые настройки БД
-   DB_USER=postgres
-   DB_PASSWORD=postgres
-   DB_NAME=eventapi
-   DB_HOST=postgres_db
-   DB_PORT=5438
+    # Строка подключения (использует переменные выше)
+    CONNECTION_STRING=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
 
-   # Строка подключения (использует переменные выше)
-   CONNECTION_STRING=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
-
-   # Настройки pgAdmin
-   PGADMIN_EMAIL=admin@admin.com
-   PGADMIN_PASSWORD=admin_password_987
-   ```
+    # Настройки pgAdmin
+    PGADMIN_EMAIL=admin@admin.com
+    PGADMIN_PASSWORD=admin_password_987
+    ```
 
     **Важно:** Не коммитьте `.env` файл в Git! Он уже добавлен в `.gitignore`.
 
-2. **Запустите контейнеры:**
+ 2. **Запустите контейнеры:**
 
-   ```bash
-   docker-compose up
-   ```
+    ```bash
+    docker-compose up
+    ```
 
-   Эта команда:
-   - Поднимет PostgreSQL на порту `5438`
-   - Автоматически применит миграции БД
-   - Запустит приложение на порту `5001`
-   - Поднимет pgAdmin на порту `5050` (доступ через `http://localhost:5050`)
+    Эта команда:
+    - Поднимет PostgreSQL на порту `5438`
+    - Автоматически применит миграции БД
+    - Запустит приложение на порту `5001`
+    - Поднимет pgAdmin на порту `5050` (доступ через `http://localhost:5050`)
 
-3. **Откройте Swagger UI:**
+ 3. **Откройте Swagger UI:**
 
-   [https://localhost:5001/swagger/index.html](https://localhost:5001/swagger/index.html)
+    [https://localhost:5001/swagger/index.html](https://localhost:5001/swagger/index.html)
 
-4. **Остановка контейнеров:**
+ 4. **Остановка контейнеров:**
 
-   ```bash
-   docker-compose down
-   ```
+    ```bash
+    docker-compose down
+    ```
 
 ---
 
@@ -997,46 +997,46 @@ curl -X 'GET' \
 
 ### Создание новой миграции
 
-Для создания новой миграции выполните команду из **корня решения**:
+   Для создания новой миграции выполните команду из **корня решения**:
 
-```bash
-dotnet ef migrations add <ИмяМиграции> --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
-```
+   ```bash
+   dotnet ef migrations add <ИмяМиграции> --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
+   ```
 
-Где:
+   Где:
 
-| Параметр | Значение | Пояснение |
-|----------|----------|------------|
-| `<ИмяМиграции>` | Например `AddEventCapacity`, `AddBookingIndex` | Осмысленное имя на PascalCase, отражающее суть изменений |
-| `--project` | `EventBookingService.Infrastructure` | Проект, где находится `AppDbContext` и папка `Migrations/` |
-| `--startup-project` | `EventBookingService.Presentation` | Проект с `Program.cs`, где сконфигурирована строка подключения и DI |
+   | Параметр | Значение | Пояснение |
+   |----------|----------|------------|
+   | `<ИмяМиграции>` | Например `AddEventCapacity`, `AddBookingIndex` | Осмысленное имя на PascalCase, отражающее суть изменений |
+   | `--project` | `EventBookingService.Infrastructure` | Проект, где находится `AppDbContext` и папка `Migrations/` |
+   | `--startup-project` | `EventBookingService.Presentation` | Проект с `Program.cs`, где сконфигурирована строка подключения и DI |
 
-**Важно:** Поскольку `AppDbContext` использует `IDbContextFactory<AppDbContext>`, миграции должны создаваться с флагом `--startup-project`, указывающим на Presentation — именно там зарегистрирована фабрика контекстов и строка подключения.
+   **Важно:** Поскольку `AppDbContext` использует `IDbContextFactory<AppDbContext>`, миграции должны создаваться с флагом `--startup-project`, указывающим на Presentation — именно там зарегистрирована фабрика контекстов и строка подключения.
 
-### Ручное обновление базы данных
+   ### Ручное обновление базы данных
 
-Для явного применения миграций к базе данных (без запуска приложения) выполните:
+   Для явного применения миграций к базе данных (без запуска приложения) выполните:
 
-```bash
-dotnet ef database update --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
-```
+   ```bash
+   dotnet ef database update --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
+   ```
 
-### Удаление последней миграции
+   ### Удаление последней миграции
 
-Если миграция была создана ошибочно и ещё не применена к БД:
+   Если миграция была создана ошибочно и ещё не применена к БД:
 
-```bash
-dotnet ef migrations remove --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
-```
+   ```bash
+   dotnet ef migrations remove --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
+   ```
 
-### Принцип работы в рамках Clean Architecture
+   ### Принцип работы в рамках Clean Architecture
 
-1. **Domain** определяет сущности (`Event`, `Booking`) без привязки к БД
-2. **Application** описывает интерфейсы репозиториев (`IEventRepository`, `IBookingRepository`)
-3. **Infrastructure** реализует репозитории, содержит `AppDbContext`, конфигурации маппинга и миграции — это единственный слой, который «знает» о том, как сущности хранятся в PostgreSQL
-4. **Presentation** при старте вызывает `Migrate()` и передаёт строку подключения через `appsettings.json` / user-secrets
+   1. **Domain** определяет сущности (`Event`, `Booking`) без привязки к БД
+   2. **Application** описывает интерфейсы репозиториев (`IEventRepository`, `IBookingRepository`)
+   3. **Infrastructure** реализует репозитории, содержит `AppDbContext`, конфигурации маппинга и миграции — это единственный слой, который «знает» о том, как сущности хранятся в PostgreSQL
+   4. **Presentation** при старте вызывает `Migrate()` и передаёт строку подключения через `appsettings.json` / user-secrets
 
-Такое разделение позволяет заменить БД или ORM, не затрагивая Domain и Application — достаточно изменить только Infrastructure.
+   Такое разделение позволяет заменить БД или ORM, не затрагивая Domain и Application — достаточно изменить только Infrastructure.
 
 ---
 
