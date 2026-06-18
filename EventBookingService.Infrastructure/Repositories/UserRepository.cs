@@ -24,6 +24,7 @@ namespace EventBookingService.Infrastructure.Repositories
             await using var context = await factory.CreateDbContextAsync();
 
             var user = await context.Users
+                .Include(u => u.Bookings)
                 .FirstOrDefaultAsync(u => u.Login == login);
 
             return user?.ToDomain();
@@ -31,9 +32,7 @@ namespace EventBookingService.Infrastructure.Repositories
 
         public async Task AddAsync(User user)
         {
-
             await using var context = await factory.CreateDbContextAsync();
-
             var entityUser = user.ToEntity();
             await context.Users.AddAsync(entityUser);
             await context.SaveChangesAsync();

@@ -1024,7 +1024,7 @@ public class BookingServiceTests
         var transactionContextMock = new Mock<ITransactionContext>();
         transactionContextMock.Setup(tc => tc.DbContext).Returns(new object());
 
-        userRepositoryMock.Setup(r => r.GetByLoginAsync(userLogin)).ReturnsAsync(user);
+        userRepositoryMock.Setup(r => r.GetByIdAsync(userId)).ReturnsAsync(user);
         bookingRepositoryMock.Setup(r => r.GetByIdAsync(booking.Id, ct)).ReturnsAsync(booking);
         eventRepositoryMock.Setup(r => r.GetByIdWithLockInContextAsync(@event.Id, It.IsAny<object>(), ct)).ReturnsAsync(@event);
 
@@ -1043,7 +1043,7 @@ public class BookingServiceTests
             fakeTimeProvider);
 
         // Act
-        var result = await service.CancelBooking(booking.Id, userLogin, ct);
+        var result = await service.CancelBooking(booking.Id, userId, ct);
 
         // Assert
         result.Should().BeTrue();
@@ -1074,16 +1074,14 @@ public class BookingServiceTests
         var bookingOptions = Options.Create(new BookingOptions { MaxBookingCount = 5 });
         var ct = CancellationToken.None;
 
-        var userId = Guid.NewGuid();
         var userLogin = "Тестировщик";
         var user = User.Create(userLogin, "password_hash", RoleType.User);
-        typeof(User).GetProperty("Id")!.SetValue(user, userId);
 
         var @event = Event.Create("Открытие другой новой фабрики", now, now.AddHours(1), 10);
-        var booking = Booking.Create(@event.Id, userId, now);
+        var booking = Booking.Create(@event.Id, user.Id, now);
         booking.Cancel(now); // Уже отменено
 
-        userRepositoryMock.Setup(r => r.GetByLoginAsync(userLogin)).ReturnsAsync(user);
+        userRepositoryMock.Setup(r => r.GetByIdAsync(user.Id)).ReturnsAsync(user);
         bookingRepositoryMock.Setup(r => r.GetByIdAsync(booking.Id, ct)).ReturnsAsync(booking);
 
         var service = new BookingService(
@@ -1096,7 +1094,7 @@ public class BookingServiceTests
             fakeTimeProvider);
 
         // Act
-        Func<Task> act = async () => await service.CancelBooking(booking.Id, userLogin, ct);
+        Func<Task> act = async () => await service.CancelBooking(booking.Id, user.Id, ct);
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>();
@@ -1123,16 +1121,14 @@ public class BookingServiceTests
         var bookingOptions = Options.Create(new BookingOptions { MaxBookingCount = 5 });
         var ct = CancellationToken.None;
 
-        var userId = Guid.NewGuid();
         var userLogin = "Тестировщик";
         var user = User.Create(userLogin, "password_hash", RoleType.User);
-        typeof(User).GetProperty("Id")!.SetValue(user, userId);
 
         var @event = Event.Create("Закрытие новой фабрики", now, now.AddHours(1), 10);
-        var booking = Booking.Create(@event.Id, userId, now);
+        var booking = Booking.Create(@event.Id, user.Id, now);
         booking.Reject(now);
 
-        userRepositoryMock.Setup(r => r.GetByLoginAsync(userLogin)).ReturnsAsync(user);
+        userRepositoryMock.Setup(r => r.GetByIdAsync(user.Id)).ReturnsAsync(user);
         bookingRepositoryMock.Setup(r => r.GetByIdAsync(booking.Id, ct)).ReturnsAsync(booking);
 
         var service = new BookingService(
@@ -1145,14 +1141,13 @@ public class BookingServiceTests
             fakeTimeProvider);
 
         // Act
-        Func<Task> act = async () => await service.CancelBooking(booking.Id, userLogin, ct);
+        Func<Task> act = async () => await service.CancelBooking(booking.Id, user.Id, ct);
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>();
 
         transactionServiceMock.Verify(
-            ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<bool>>>(), It.IsAny<CancellationToken>()),
-            Times.Never);
+            ts => ts.ExecuteAsync(It.IsAny<Func<ITransactionContext, Task<bool>>>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -1172,19 +1167,17 @@ public class BookingServiceTests
         var bookingOptions = Options.Create(new BookingOptions { MaxBookingCount = 5 });
         var ct = CancellationToken.None;
 
-        var userId = Guid.NewGuid();
         var userLogin = "Тестировщик";
         var user = User.Create(userLogin, "password_hash", RoleType.User);
-        typeof(User).GetProperty("Id")!.SetValue(user, userId);
 
         var @event = Event.Create("Опять что-то с фабрикой", now, now.AddHours(1), 10);
-        var booking = Booking.Create(@event.Id, userId, now);
+        var booking = Booking.Create(@event.Id, user.Id, now);
         booking.Confirm(now); // Подтверждено
 
         var transactionContextMock = new Mock<ITransactionContext>();
         transactionContextMock.Setup(tc => tc.DbContext).Returns(new object());
 
-        userRepositoryMock.Setup(r => r.GetByLoginAsync(userLogin)).ReturnsAsync(user);
+        userRepositoryMock.Setup(r => r.GetByIdAsync(user.Id)).ReturnsAsync(user);
         bookingRepositoryMock.Setup(r => r.GetByIdAsync(booking.Id, ct)).ReturnsAsync(booking);
         eventRepositoryMock.Setup(r => r.GetByIdWithLockInContextAsync(@event.Id, It.IsAny<object>(), ct)).ReturnsAsync(@event);
 
@@ -1203,7 +1196,7 @@ public class BookingServiceTests
             fakeTimeProvider);
 
         // Act
-        var result = await service.CancelBooking(booking.Id, userLogin, ct);
+        var result = await service.CancelBooking(booking.Id, user.Id, ct);
 
         // Assert
         result.Should().BeTrue();
@@ -1242,7 +1235,7 @@ public class BookingServiceTests
             fakeTimeProvider);
 
         // Act
-        Func<Task> act = async () => await service.CancelBooking(Guid.NewGuid(), userLogin, ct);
+        Func<Task> act = async () => await service.CancelBooking(Guid.NewGuid(), Guid.NewGuid(), ct);
 
         // Assert
         await act.Should().ThrowAsync<NotFoundException>();
@@ -1285,7 +1278,7 @@ public class BookingServiceTests
             fakeTimeProvider);
 
         // Act
-        Func<Task> act = async () => await service.CancelBooking(bookingId, userLogin, ct);
+        Func<Task> act = async () => await service.CancelBooking(bookingId, userId, ct);
 
         // Assert
         await act.Should().ThrowAsync<NotFoundException>();
@@ -1311,20 +1304,14 @@ public class BookingServiceTests
         var bookingOptions = Options.Create(new BookingOptions { MaxBookingCount = 5 });
         var ct = CancellationToken.None;
 
-        var ownerUserId = Guid.NewGuid();
-        var otherUserId = Guid.NewGuid();
-        var otherUserLogin = "Тестировщик";
+   
 
         var owner = User.Create("owner", "hash", RoleType.User);
-        typeof(User).GetProperty("Id")!.SetValue(owner, ownerUserId);
-
-        var otherUser = User.Create(otherUserLogin, "hash", RoleType.User);
-        typeof(User).GetProperty("Id")!.SetValue(otherUser, otherUserId);
-
+        var otherUser = User.Create("Тестировщик", "hash", RoleType.User);
         var @event = Event.Create("И снова фабрика", now, now.AddHours(1), 10);
-        var booking = Booking.Create(@event.Id, ownerUserId, now);
+        var booking = Booking.Create(@event.Id, owner.Id, now);
 
-        userRepositoryMock.Setup(r => r.GetByLoginAsync(otherUserLogin)).ReturnsAsync(otherUser);
+        userRepositoryMock.Setup(r => r.GetByIdAsync(otherUser.Id)).ReturnsAsync(otherUser);
         bookingRepositoryMock.Setup(r => r.GetByIdAsync(booking.Id, ct)).ReturnsAsync(booking);
 
         var service = new BookingService(
@@ -1337,7 +1324,7 @@ public class BookingServiceTests
             fakeTimeProvider);
 
         // Act
-        Func<Task> act = async () => await service.CancelBooking(booking.Id, otherUserLogin, ct);
+        Func<Task> act = async () => await service.CancelBooking(booking.Id, otherUser.Id, ct);
 
         // Assert
         await act.Should().ThrowAsync<InsufficientPermissionsException>();
@@ -1363,20 +1350,16 @@ public class BookingServiceTests
         var bookingOptions = Options.Create(new BookingOptions { MaxBookingCount = 5 });
         var ct = CancellationToken.None;
 
-        var ownerUserId = Guid.NewGuid();
-        var adminUserId = Guid.NewGuid();
         var adminLogin = "Тестировщик";
-
         var admin = User.Create(adminLogin, "hash", RoleType.Admin);
-        typeof(User).GetProperty("Id")!.SetValue(admin, adminUserId);
 
         var @event = Event.Create("Заводы будут запущены", now, now.AddHours(1), 10);
-        var booking = Booking.Create(@event.Id, ownerUserId, now);
+        var booking = Booking.Create(@event.Id, admin.Id, now);
 
         var transactionContextMock = new Mock<ITransactionContext>();
         transactionContextMock.Setup(tc => tc.DbContext).Returns(new object());
 
-        userRepositoryMock.Setup(r => r.GetByLoginAsync(adminLogin)).ReturnsAsync(admin);
+        userRepositoryMock.Setup(r => r.GetByIdAsync(admin.Id)).ReturnsAsync(admin);
         bookingRepositoryMock.Setup(r => r.GetByIdAsync(booking.Id, ct)).ReturnsAsync(booking);
         eventRepositoryMock.Setup(r => r.GetByIdWithLockInContextAsync(@event.Id, It.IsAny<object>(), ct)).ReturnsAsync(@event);
 
@@ -1395,7 +1378,7 @@ public class BookingServiceTests
             fakeTimeProvider);
 
         // Act
-        var result = await service.CancelBooking(booking.Id, adminLogin, ct);
+        var result = await service.CancelBooking(booking.Id, admin.Id, ct);
 
         // Assert
         result.Should().BeTrue();

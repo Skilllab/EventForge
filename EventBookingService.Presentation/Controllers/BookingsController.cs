@@ -42,18 +42,16 @@ public class BookingsController(IBookingService bookingService, ILogger<Bookings
     [Tags("API для бронирования")]
     public async Task<IActionResult> CancelBooking([Required] Guid bookingId, CancellationToken ct)
     {
-        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Name);
+        logger.LogDebug("Обработка запроса DELETE {methodName}. Удаление бронирования: {bookingId}", nameof(CancelBooking), bookingId);
+
+        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
 
         if (string.IsNullOrEmpty(userIdClaim?.Value) || !Guid.TryParse(userIdClaim.Value, out Guid userId))
         {
-            // Если ID нет в токене или он некорректный, возвращаем ошибку 401 Unauthorized
             return Unauthorized("Не удалось определить идентификатор пользователя.");
         }
 
-        //logger.LogDebug("Обработка запроса GET {methodName}. Получение информации для бронирования: {bookingId}", nameof(GetBooking), bookingId);
-
-        await bookingService.CancelBooking(bookingId, userIdClaim.Value, ct);
-
+        await bookingService.CancelBooking(bookingId, userId, ct);
         return NoContent();
     }
 }

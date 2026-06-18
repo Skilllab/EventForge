@@ -5,7 +5,7 @@ namespace EventBookingService.Application.Services
 {
     public class AuthService(IUserRepository userRepository, IPasswordHasher passwordHasher, IJwtTokenGenerator tokenGenerator) : IAuthService
     {
-        public async Task<bool> RegisterUserAsync(string login, string password, string role)
+        public async Task<bool> RegisterUserAsync(string login, string password, string? role)
         {
             var enumRole = RoleType.User;
 
@@ -47,7 +47,7 @@ namespace EventBookingService.Application.Services
             var isPasswordValid = passwordHasher.VerifyPassword(password, user.PasswordHash);
             return !isPasswordValid
                 ? null
-                : tokenGenerator.GenerateToken(user.Login, user.Role.ToString());
+                : tokenGenerator.GenerateToken(user.Id, user.Role.ToString());
         }
     }
 }

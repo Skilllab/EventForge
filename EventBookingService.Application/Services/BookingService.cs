@@ -93,13 +93,13 @@ public class BookingService(
             : MapToDTO(booking);
     }
 
-    public async Task<bool> CancelBooking(Guid bookingId, string userLogin, CancellationToken ct)
+    public async Task<bool> CancelBooking(Guid bookingId, Guid userId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
-        var user = await userRepository.GetByLoginAsync(userLogin);
+        var user = await userRepository.GetByIdAsync(userId);
         if (user == null)
-            throw new NotFoundException(nameof(User), userLogin);
+            throw new NotFoundException(nameof(User), userId.ToString());
 
         var userBooking = await bookingRepository.GetByIdAsync(bookingId, ct);
         if (userBooking == null)

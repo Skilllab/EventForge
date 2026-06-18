@@ -29,5 +29,12 @@ public interface IBookingService
     /// <returns></returns>
     Task<BookingInfoDTO> GetBookingByIdAsync(Guid bookingId, CancellationToken ct);
 
-    Task<bool> CancelBooking(Guid bookingId, string userLogin, CancellationToken ct);
+    /// <summary>
+    /// Отмена бронирования
+    /// </summary>
+    /// <param name="bookingId">ID бронирования</param>
+    /// <param name="userId">ID пользователя</param>
+    /// <param name="ct">Токен отмены</param>
+    /// <returns></returns>
+    Task<bool> CancelBooking(Guid bookingId, Guid userId, CancellationToken ct);
 }

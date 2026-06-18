@@ -105,11 +105,10 @@ public class EventsController(IEventService eventService, IBookingService bookin
     {
         logger.LogDebug("Обработка запроса POST {methodName}", nameof(CreateBook));
 
-        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Name);
+        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
 
-        if (string.IsNullOrEmpty(userIdClaim?.Value) || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+        if (string.IsNullOrEmpty(userIdClaim?.Value) || !Guid.TryParse(userIdClaim.Value, out var userId))
         {
-            // Если ID нет в токене или он некорректный, возвращаем ошибку 401 Unauthorized
             return Unauthorized("Не удалось определить идентификатор пользователя.");
         }
 

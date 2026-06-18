@@ -14,7 +14,7 @@ public class JwtTokenGenerator(IOptions<JwtSettings> options, TimeProvider timeP
 {
     private readonly JwtSettings _settings = options.Value;
 
-    public string GenerateToken(string login, string role)
+    public string GenerateToken(Guid id, string role)
     {
         var now = timeProvider.GetUtcNow();
         var lifeTime = now.AddHours(_settings.Lifetime);
@@ -22,8 +22,8 @@ public class JwtTokenGenerator(IOptions<JwtSettings> options, TimeProvider timeP
         // Здесь оставляем только данные пользователя и уникальный ID токена
         var claims = new[]
         {
-            // Логин
-            new Claim(JwtRegisteredClaimNames.Name, login),
+            // Уникальный идентификатор пользователя
+            new Claim(JwtRegisteredClaimNames.Sub, id.ToString()),
 
             // Роль (стандартный тип для работы [Authorize(Roles = ...)])
             new Claim("role", role),
