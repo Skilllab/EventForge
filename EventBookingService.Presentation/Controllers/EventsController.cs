@@ -1,9 +1,13 @@
 using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 
 using EventBookingService.Application.Interfaces;
+using EventBookingService.Domain.Entities;
+using EventBookingService.Infrastructure.Common;
 using EventBookingService.Presentation.DTO;
 using EventBookingService.Presentation.Mapping;
 
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -15,6 +19,7 @@ namespace EventBookingService.Presentation.Controllers;
 /// <param name="eventService">Сервис для обработки событий</param>
 /// <param name="bookingService">Сервис для обработки бронирований</param>
 /// <param name="logger">Логгер</param>
+[Authorize(Policy = StringConstants.CustomJwtPolicy)]
 [ApiController]
 [Route("[controller]")]
 [Produces("application/json")]
@@ -23,6 +28,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <summary>
     /// Получить список всех событий
     /// </summary>
+    [AllowAnonymous]
     [HttpGet]
     [Tags("API для событий")]
     public async Task<IActionResult> GetAllEvents([FromQuery] EventsFilterRequest filterRequest, CancellationToken ct)
@@ -36,6 +42,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <summary>
     /// Получить событие по id
     /// </summary>
+    [AllowAnonymous]
     [HttpGet("{eventId:guid}")]
     [Tags("API для событий")]
     public async Task<IActionResult> GetEvent([Required] Guid eventId, CancellationToken ct)
@@ -50,6 +57,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// Создать новое событие
     /// </summary>
     [HttpPost]
+    [Authorize(Roles = nameof(RoleType.Admin))]
     [Tags("API для событий")]
     public async Task<IActionResult> CreateEvent([FromBody][Required] CreateEventRequest request, CancellationToken ct)
     {
@@ -62,6 +70,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <summary>
     /// Обновить событие целиком
     /// </summary>
+    [Authorize(Roles = nameof(RoleType.Admin))]
     [HttpPut("{eventId:guid}")]
     [Tags("API для событий")]
     public async Task<IActionResult> ChangeEvent([Required] Guid eventId, [FromBody] UpdateEventRequest request, CancellationToken ct)
@@ -76,6 +85,7 @@ public class EventsController(IEventService eventService, IBookingService bookin
     /// <summary>
     /// Удалить событие
     /// </summary>
+    [Authorize(Roles = nameof(RoleType.Admin))]
     [HttpDelete("{eventId:guid}")]
     [Tags("API для событий")]
     public async Task<IActionResult> CancelEvent([Required] Guid eventId, CancellationToken ct)
@@ -95,7 +105,14 @@ public class EventsController(IEventService eventService, IBookingService bookin
     {
         logger.LogDebug("Обработка запроса POST {methodName}", nameof(CreateBook));
 
-        var bookingDto = await bookingService.CreateBookingAsync(eventId, ct);
+        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
+
+        if (string.IsNullOrEmpty(userIdClaim?.Value) || !Guid.TryParse(userIdClaim.Value, out var userId))
+        {
+            return Unauthorized("Не удалось определить идентификатор пользователя.");
+        }
+
+        var bookingDto = await bookingService.CreateBookingAsync(eventId, userId, ct);
 
         return AcceptedAtAction(
             actionName: "GetBooking",

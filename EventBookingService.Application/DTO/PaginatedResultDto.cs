@@ -7,9 +7,9 @@ namespace EventBookingService.Application.DTO;
 /// <param name="Events">Список событий</param>
 /// <param name="CurrentPageNumber">Номер текущей страницы</param>
 /// <param name="EventsCountOnCurrentPage">Количество элементов на текущей странице</param>
-public record PaginatedResultDto(
+public record PaginatedResultDTO(
     long EventsTotalCount,
-    List<EventDto> Events,
+    List<EventDTO> Events,
     int CurrentPageNumber,
     int EventsCountOnCurrentPage
 );

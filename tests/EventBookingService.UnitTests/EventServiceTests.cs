@@ -50,7 +50,6 @@ public class EventServiceTests
             .Including(x => x.StartAt)
             .Including(x => x.EndAt));
 
-        // Проверяем, что репозиторий действительно вызывался один раз
         repositoryMock.Verify(r => r.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()), Times.Once);
     }
    
@@ -106,22 +105,21 @@ public class EventServiceTests
         var now = fixedUtcNow.UtcDateTime;
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-        var filter = new EventsFilterDto(page: 1, pageSize: 80);
+        var filter = new EventsFilterDTO(page: 1, pageSize: 80);
         var ct = CancellationToken.None;
 
         var fakeEvents = new List<Event>
         {
-            Event.Create("test event 1", now, now.AddHours(1), Random.Shared.Next(1, 50)),
-            Event.Create("test event 2", now, now.AddHours(2), Random.Shared.Next(1, 50)),
-            Event.Create("test event 3", now, now.AddHours(3), Random.Shared.Next(1, 50)),
-            Event.Create("test event 4", now, now.AddHours(4), Random.Shared.Next(1, 50)),
-            Event.Create("test event 5", now, now.AddHours(5), Random.Shared.Next(1, 50)),
-            Event.Create("test event 6", now, now.AddHours(1), Random.Shared.Next(1, 50)),
-            Event.Create("test event 7", now, now.AddHours(1), Random.Shared.Next(1, 50)),
-            Event.Create("test event 8", now, now.AddHours(2), Random.Shared.Next(1, 50))
+            Event.Create("Событие 1", now, now.AddHours(1), Random.Shared.Next(1, 50)),
+            Event.Create("Событие 2", now, now.AddHours(2), Random.Shared.Next(1, 50)),
+            Event.Create("Событие 3", now, now.AddHours(3), Random.Shared.Next(1, 50)),
+            Event.Create("Событие 4", now, now.AddHours(4), Random.Shared.Next(1, 50)),
+            Event.Create("Событие 5", now, now.AddHours(5), Random.Shared.Next(1, 50)),
+            Event.Create("Событие 6", now, now.AddHours(1), Random.Shared.Next(1, 50)),
+            Event.Create("Событие 7", now, now.AddHours(1), Random.Shared.Next(1, 50)),
+            Event.Create("Событие 8", now, now.AddHours(2), Random.Shared.Next(1, 50))
         };
 
-        // Создаем record PagedResult: сначала Items, потом TotalCount
         var pagedResult = new PagedResult<Event>(fakeEvents, fakeEvents.Count);
 
         repositoryMock
@@ -171,7 +169,7 @@ public class EventServiceTests
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
         var filteredWord = "встреча";
         var totalSeats = 1;
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             title: filteredWord,
             page: 1,
@@ -237,7 +235,7 @@ public class EventServiceTests
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
         var totalSeats = 1;
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             from: now.AddHours(2)
         );
@@ -294,7 +292,7 @@ public class EventServiceTests
         var now = fixedUtcNow.UtcDateTime;
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             to: now.AddHours(1),
             page: 1,
@@ -356,7 +354,7 @@ public class EventServiceTests
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
         var totalSeats = 1;
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             to: now.Date
         );
@@ -426,14 +424,13 @@ public class EventServiceTests
         var now = fixedUtcNow.UtcDateTime;
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             page: 2,
             pageSize: 3
         );
         var totalSeats = 1;
         var ct = CancellationToken.None;
-        // Создаем список тестовых данных, которые "якобы" есть в репозитории
         var fakeEvents = new List<Event>
         {
             Event.Create("Событие 1", now, now.AddHours(1), totalSeats),
@@ -444,7 +441,6 @@ public class EventServiceTests
             Event.Create("Событие 6", now, now.AddHours(1), totalSeats)
         };
 
-        // Настраиваем Mock репозитория возвращать этот список
         repositoryMock
             .Setup(r => r.GetPagedAsync(
                 It.IsAny<string>(),
@@ -471,8 +467,8 @@ public class EventServiceTests
 
         // Assert
         result.Should().NotBeNull();
-        result.EventsTotalCount.Should().Be(6); // Проверяем общее количество
-        result.Events.Should().HaveCount(3); // Проверяем количество в текущей выборке
+        result.EventsTotalCount.Should().Be(6); 
+        result.Events.Should().HaveCount(3);
         result.Events.Should().ContainSingle(e => e.Title == "Событие 5");
         result.Events.Should().BeInAscendingOrder(e => e.Title); // Проверяем сортировку, которая есть в сервисе
 
@@ -505,8 +501,7 @@ public class EventServiceTests
             Event.Create("Событие 6", now.AddHours(1), now.AddHours(5), totalSeats)
         };
 
-        // Фильтр: ищем "10" и дату начала <= 3 часа от текущей
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             title: "цель",
             from: targetDate,
@@ -564,7 +559,6 @@ public class EventServiceTests
         var totalSeats = 1;
         var ct = CancellationToken.None;
 
-        //События добавлены в отсортированном порядке
         var fakeEvents = new List<Event>
         {
             Event.Create("Неважная встреча", now.AddHours(1), now.AddHours(5), totalSeats),
@@ -574,7 +568,7 @@ public class EventServiceTests
             Event.Create("Событие 3", now, now.AddHours(5), totalSeats),
             Event.Create("Событие 6", now.AddHours(1), now.AddHours(5), totalSeats)
         };
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             page: 2,
             pageSize: 2
@@ -628,7 +622,7 @@ public class EventServiceTests
         using var cts = new CancellationTokenSource();
         cts.Cancel(); // Отменяем токен сразу
 
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             page: 1,
             pageSize: 10
@@ -771,7 +765,6 @@ public class EventServiceTests
         // Assert
         await act.Should().ThrowAsync<NotFoundException>();
 
-        // Проверяем, что метод Update у репозитория НИКОГДА не вызывался
         repositoryMock.Verify(r => r.UpdateAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
@@ -814,7 +807,6 @@ public class EventServiceTests
             .Including(x => x.EndAt)
         );
 
-        // Проверяем, что сервис вызвал Update у репозитория ровно один раз с этим объектом
         repositoryMock.Verify(r => r.UpdateAsync(existedEvent, It.IsAny<CancellationToken>()), Times.Once);
     }
 

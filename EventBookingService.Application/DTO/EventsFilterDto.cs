@@ -1,6 +1,4 @@
 
-using System.ComponentModel.DataAnnotations;
-
 namespace EventBookingService.Application.DTO;
 
 /// <summary>
@@ -10,7 +8,7 @@ namespace EventBookingService.Application.DTO;
 /// DTO для фильтрации и пагинации событий. Содержит критерии поиска и параметры постраничного вывода.
 /// Все проверки выполняются в конструкторе, при невалидных данных выбрасывается ValidationException.
 /// </remarks>
-public class EventsFilterDto
+public class EventsFilterDTO
 {
     /// <summary>
     /// Название события для поиска
@@ -71,7 +69,7 @@ public class EventsFilterDto
     /// - PageSize не входит в диапазон от 1 до 100
     /// - To меньше From (при условии, что обе даты указаны)
     /// </exception>
-    public EventsFilterDto(
+    public EventsFilterDTO(
         string? title = null,
         DateTime? from = null,
         DateTime? to = null,

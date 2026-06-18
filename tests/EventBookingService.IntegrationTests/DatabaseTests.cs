@@ -33,7 +33,8 @@ namespace EventBookingService.IntegrationTests
             var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
             var fakeNow = fixedUtcNow.UtcDateTime;
-            var booking = Booking.Create(Guid.NewGuid(), fakeNow);
+            var userId = Guid.NewGuid();
+            var booking = Booking.Create(Guid.NewGuid(), userId, fakeNow);
 
             // Act
             context.Bookings.Add(booking.ToEntity());
@@ -55,11 +56,13 @@ namespace EventBookingService.IntegrationTests
             var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
             var now = fixedUtcNow.UtcDateTime;
+            // Используем dummy userId из миграции, который гарантированно существует в БД
+            var dummyUserId = new Guid("11111111-1111-1111-1111-111111111111");
             var startDate = now;
             var endDate = now.AddDays(2);
             var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription);
             context.Events.Add(@event.ToEntity());
-            var booking = Booking.Create(@event.Id, now);
+            var booking = Booking.Create(@event.Id, dummyUserId, now);
             context.Bookings.Add(booking.ToEntity());
             await context.SaveChangesAsync(CancellationToken.None);
 
@@ -71,6 +74,44 @@ namespace EventBookingService.IntegrationTests
 
             // Assert
             Assert.Empty(context.Bookings.Where(b => b.Id.Equals(booking.Id)));
+        }
+
+        [Fact]
+        public async Task Deleting_User_Should_Delete_Bookings_Cascade()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await using var context = await CreateContext();
+            var fakeTimeProvider = new FakeTimeProvider();
+            var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
+            fakeTimeProvider.SetUtcNow(fixedUtcNow);
+            var now = fixedUtcNow.UtcDateTime;
+
+            // Создаём пользователя
+            var user = User.Create("Тестовый на каскадное удаление", "password_hash", RoleType.User);
+            context.Users.Add(user.ToEntity());
+
+            // Создаём событие
+            var @event = Event.Create("Тестовое событие", now, now.AddHours(1), 10);
+            context.Events.Add(@event.ToEntity());
+
+            // Создаём бронирование для этого пользователя
+            var booking = Booking.Create(@event.Id, user.Id, now);
+            context.Bookings.Add(booking.ToEntity());
+
+            await context.SaveChangesAsync(CancellationToken.None);
+
+            // Act - удаляем пользователя
+            var userFromDb = await context.Users.FirstAsync(u => u.Id == user.Id);
+            context.Users.Remove(userFromDb);
+            await context.SaveChangesAsync(CancellationToken.None);
+
+            // Assert - бронирования должны быть удалены каскадно
+            var bookingsLeft = await context.Bookings
+                .Where(b => b.UserId == user.Id)
+                .ToListAsync();
+
+            Assert.Empty(bookingsLeft);
         }
     }
 }

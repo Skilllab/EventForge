@@ -1,6 +1,8 @@
+using EventBookingService.Application.Common;
 using EventBookingService.Application.Interfaces;
 using EventBookingService.Application.Services;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EventBookingService.Application;
@@ -14,12 +16,15 @@ public static class DependencyInjection
     /// Метод добавления сервисы
     /// </summary>
     /// <param name="services">Системная коллекция сервисов</param>
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton(TimeProvider.System);
 
+        services.Configure<BookingOptions>(configuration.GetSection(nameof(BookingOptions)));
+
         services.AddScoped<IEventService, EventService>();
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<IAuthService, AuthService>();
 
 
         return services;

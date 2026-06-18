@@ -4,15 +4,43 @@
     <img src="logo.png" alt="Logo" width="80" height="80">
   </a>
 
-  <h1 align="center">EventBookingService</h3>
+  <h1 align="center">EventBookingService</h1>
   <p align="center">
     Сервис для бронирования билетов на мероприятия   
   </p>
 </div>
 
+## Содержание
+
+- [О проекте](#о-проекте)
+- [Архитектура проекта](#архитектура-проекта)
+- [Ролевая модель и разграничение прав](#ролевая-модель-и-разграничение-прав)
+- [Аутентификация и JWT](#аутентификация-и-jwt)
+  - [Получение JWT-токена через Swagger](#получение-jwt-токена-через-swagger)
+  - [Настройка JWT в конфигурации](#настройка-jwt-в-конфигурации)
+- [Getting Started](#getting-started)
+  - [Установка и запуск](#установка-и-запуск)
+  - [Запуск через Docker Compose](#запуск-через-docker-compose)
+- [Использование API](#использование-api)
+- [Модели данных](#модели-данных)
+- [Операции с Событиями](#операции-с-событиями)
+- [Операции с Бронированием](#операции-с-бронированием)
+- [Миграции БД](#миграции-бд)
+- [Тестирование](#тестирование)
+- [Безопасность](#безопасность)
+
+---
+
 ## О проекте
 
-Данный проект является по сути PET проектом при прохождении курса "Продвинутая разработка на C# и .NET"
+EventBookingService — это RESTful API для управления событиями и бронированием билетов, построенный на принципах Clean Architecture с использованием ASP.NET Core 10, Entity Framework Core и PostgreSQL.
+
+**Ключевые особенности:**
+- **JWT-аутентификация** с ролевой моделью доступа (User/Admin)
+- **Защита от овербукинга** через транзакционные блокировки БД (`FOR UPDATE`)
+- **Фоновая обработка броней** с автоматическим изменением статусов
+- **Автоматические миграции БД** при старте приложения
+- **Полное покрытие unit и integration тестами**
 
 ## Архитектура проекта
 
@@ -49,106 +77,427 @@
 - **Extension-метод для DI** — `AddInfrastructure(IConfiguration)` в `DependencyInjection.cs` регистрирует `AppDbContext`, репозитории, `TransactionService`, `BookingBackgroundService` и `LoggingInterceptor`.
     
 ### Presentation (`EventBookingService.Presentation`)
-    
+
 Слой, отвечающий за **взаимодействие с внешним миром через HTTP API**.
-   
+
 **Содержит:**
-- **Контроллеры/эндпоинты** — `EventsController` (CRUD событий + создание брони), `BookingsController` (получение информации о брони). Получают HTTP-запрос, вызывают нужный сервис из Application, возвращают ответ. Используют DTO запросов/ответов (`CreateEventRequest`, `EventResponse` и др.) с атрибутами валидации (`[DateGreater]`, `[NotMinDateTime]`, `[Required]`).
-- **Глобальный обработчик исключений** — `GlobalExceptionHandlingMiddleware`. Перехватывает все необработанные исключения и маппит доменные исключения в HTTP-статусы: `NotFoundException` → 404, `ValidationCustomException` → 400, `NoAvailableSeatsException` → 409, `UnauthorizedAccessException` → 401, всё остальное → 500. Ответ формируется в формате `ProblemDetails (RFC 7807)`.
-- **Composition Root** — `Program.cs`. Компактная регистрация всех зависимостей через три extension-метода: `AddInfrastructure()`, `AddApplication()`, `AddPresentation()`. Здесь же выполняется автоматическая миграция БД при старте и подключается Swagger.
-    
+- **Контроллеры/эндпоинты:**
+  - `AuthController` — регистрация (`POST /auth/register`) и аутентификация (`POST /auth/login`) пользователей, возврат JWT-токена
+  - `EventsController` — CRUD событий (создание/изменение/удаление требуют роли Admin, просмотр публичный), создание брони (требует JWT)
+  - `BookingsController` — получение информации о бронировании (требует JWT), отмена брони (владелец или Admin)
+- **Глобальный обработчик исключений** — `GlobalExceptionHandlingMiddleware`. Перехватывает все необработанные исключения и маппит доменные исключения в HTTP-статусы: `NotFoundException` → 404, `ValidationCustomException` или `BookingPastEventException` → 400, `NoAvailableSeatsException` или `BookingLimitExceededException` → 409, `UnauthorizedAccessException` → 401, `InsufficientPermissionsException` → 403, всё остальное → 500. Ответ формируется в формате `ProblemDetails (RFC 7807)`.
+- **JWT-аутентификация и авторизация:**
+  - JWT Bearer authentication настроена в `DependencyInjection.cs` с валидацией по `Issuer`, `Audience`, `Lifetime` и `Secret`
+  - Middleware `UseAuthentication()` и `UseAuthorization()` зарегистрированы в `Program.cs`
+  - Защищённые endpoints используют `[Authorize(Policy = "CustomJwtPolicy")]` или `[Authorize(Roles = "Admin")]`
+- **Composition Root** — `Program.cs`. Компактная регистрация всех зависимостей через три extension-метода: `AddInfrastructure()`, `AddApplication()`, `AddPresentation()`. Здесь же выполняется автоматическая миграция БД при старте и подключается Swagger с поддержкой JWT Bearer авторизации.
+
 ```
 Presentation ──→ Application ──→ Domain
                       ↑
                Infrastructure
 ```
+
+---
+
+## Ролевая модель и разграничение прав
+
+Сервис использует **JWT-аутентификацию** с **двухуровневой ролевой моделью**:
+
+### Роли пользователей
+
+| Роль | Описание | Права доступа |
+|------|----------|---------------|
+| `User` | Обычный пользователь | • Просмотр событий<br>• Создание собственных броней<br>• Просмотр и отмена **только своих** броней<br>• Лимит активных броней: 10 (настраивается в `BookingOptions.MaxBookingCount`) |
+| `Admin` | Администратор | • **Все права User**<br>• Создание, изменение и удаление событий<br>• Отмена **любых** броней |
+
+### Разграничение доступа к API endpoints
+
+#### Публичные endpoints (без аутентификации)
+
+```http
+GET  /Events              # Список всех событий (с фильтрацией и пагинацией)
+GET  /Events/{eventId}    # Информация о конкретном событии
+POST /auth/register       # Регистрация нового пользователя
+POST /auth/login          # Аутентификация и получение JWT-токена
+```
+
+#### Endpoints, требующие аутентификации (роль User или Admin)
+
+```http
+POST   /Events/{eventId}/book        # Создание брони на событие
+GET    /Bookings/{bookingId}         # Получение информации о бронировании
+DELETE /Bookings/{bookingId}         # Отмена брони (только владелец или Admin)
+```
+
+**Бизнес-правила для User:**
+- Может создать бронь на будущее событие (если `Event.StartAt > now`)
+- Не может забронировать прошедшее событие → `400 BookingPastEventException`
+- Не может превысить лимит активных броней (по умолчанию 10) → `409 BookingLimitExceededException`
+- Не может отменить чужую бронь → `403 InsufficientPermissionsException`
+
+#### Admin-only endpoints (требуют роль Admin)
+
+```http
+POST   /Events                # Создание нового события
+PUT    /Events/{eventId}      # Изменение существующего события
+DELETE /Events/{eventId}      # Удаление/отмена события
+```
+
+**Дополнительные права Admin:**
+- Может отменять **любые** брони (в том числе чужие)
+- Не ограничен лимитом активных броней
+
+### Реализация в коде
+
+**Защита endpoints:**
+
+```csharp
+// EventsController.cs
+[Authorize(Policy = StringConstants.CustomJwtPolicy)] // Базовая защита JWT для всего контроллера
+[ApiController]
+[Route("[controller]")]
+public class EventsController : ControllerBase
+{
+    [AllowAnonymous] // Переопределяем — публичный доступ
+    [HttpGet]
+    public async Task<IActionResult> GetAllEvents(...) { }
+
+    [Authorize(Roles = nameof(RoleType.Admin))] // Только Admin
+    [HttpPost]
+    public async Task<IActionResult> CreateEvent(...) { }
+
+    [HttpPost("{eventId}/book")] // User или Admin (наследуется от контроллера)
+    public async Task<IActionResult> CreateBook(...) { }
+}
+```
+
+**Проверка прав владения брони:**
+
+```csharp
+// BookingService.cs
+public async Task<bool> CancelBooking(Guid bookingId, string userLogin, CancellationToken ct)
+{
+    var user = await userRepository.GetByLoginAsync(userLogin);
+    var booking = await bookingRepository.GetByIdAsync(bookingId, ct);
+
+    // Проверка: владелец брони ИЛИ Admin
+    if (booking.UserId != user.Id && user.Role != RoleType.Admin)
+        throw new InsufficientPermissionsException(...);
+
+    // Отмена брони...
+}
+```
+
+---
+
+## Аутентификация и JWT
+
+### Получение JWT-токена через Swagger
+
+1. **Регистрация пользователя**
+
+   Откройте Swagger UI: [https://localhost:5001/swagger/index.html](https://localhost:5001/swagger/index.html)
+
+   Найдите endpoint `POST /auth/register` и выполните запрос:
+
+   ```json
+   {
+     "login": "testuser",
+     "password": "SecurePassword123!",
+     "role": "User"
+   }
+   ```
+
+   **Доступные роли:** `"User"` или `"Admin"`
+
+   **Успешный ответ:** `204 No Content`
+
+2. **Получение JWT-токена**
+
+   Найдите endpoint `POST /auth/login` и выполните запрос:
+
+   ```json
+   {
+     "login": "testuser",
+     "password": "SecurePassword123!"
+   }
+   ```
+
+   **Успешный ответ:**
+   ```json
+   {
+     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0dXNlciIsInJvbGUiOiJVc2VyIiwianRpIjoiMTIzZTQ1NjctZTg5Yi0xMmQzLWE0NTYtNDI2NjE0MTc0MDAwIiwiaWF0IjoxNzE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+   }
+   ```
+
+   **Скопируйте значение `token`.**
+
+3. **Авторизация в Swagger**
+
+   - Нажмите кнопку **Authorize** в правом верхнем углу Swagger UI
+   - В поле **Value** введите: `Bearer <ваш_токен>`
+     ```
+     Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+     ```
+   - Нажмите **Authorize**, затем **Close**
+
+4. **Использование защищённых endpoints**
+
+   Теперь все запросы к защищённым endpoints (`POST /Events/{eventId}/book`, `GET /Bookings/{bookingId}` и т.д.) будут автоматически включать JWT-токен в заголовке `Authorization: Bearer <токен>`.
+
+   **Пример с curl:**
+   ```bash
+   curl -X 'POST' \
+     'https://localhost:5001/Events/ea482456-8da9-4026-9c8f-278bd1206b13/book' \
+     -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' \
+     -H 'Content-Type: application/json'
+   ```
+
+### Структура JWT-токена
+
+Токен содержит следующие claims:
+
+| Claim | Значение | Описание |
+|-------|----------|----------|
+| `sub` (`Name`) | Логин пользователя | Используется для идентификации пользователя в `BookingService.CancelBooking` |
+| `role` | `User` или `Admin` | Проверяется атрибутом `[Authorize(Roles = "Admin")]` |
+| `jti` | GUID | Уникальный идентификатор токена |
+| `iat` | Unix timestamp | Время выдачи токена |
+
+### Настройка JWT в конфигурации
+
+#### Конфигурация для разработки (`appsettings.Development.json`)
+
+```json
+{
+  "JwtSettings": {
+    "SchemeName": "EventBookingScheme",
+    "Secret": "SuperSecretKeyWithMoreThan32CharactersLength!!",
+    "Issuer": "EventBookingService",
+    "Audience": "EventBookingAPI",
+    "Lifetime": 2
+  }
+}
+```
+
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `SchemeName` | string | Название схемы аутентификации (используется в `AddAuthentication()`) |
+| `Secret` | string | **Секретный ключ для подписи JWT** (минимум 32 символа для HMAC SHA-256) |
+| `Issuer` | string | Издатель токена (проверяется при валидации) |
+| `Audience` | string | Целевая аудитория токена (проверяется при валидации) |
+| `Lifetime` | int | Время жизни токена в **часах** |
+
+#### Безопасность JWT Secret в продакшне
+
+**⚠️ ВАЖНО:** Значение `JwtSettings:Secret` из `appsettings.Development.json` предназначено **только для разработки** и не должно использоваться в продакшне!
+
+**Рекомендации для production:**
+
+1. **Используйте User Secrets (для локального тестирования):**
+   ```bash
+   dotnet user-secrets set "JwtSettings:Secret" "YourProductionSecretKeyWith64+Characters!!!"
+   ```
+
+2. **Используйте переменные окружения (для контейнеров/серверов):**
+   ```bash
+   export JwtSettings__Secret="YourProductionSecretKeyWith64+Characters!!!"
+   ```
+
+   Для Docker Compose:
+   ```yaml
+   # docker-compose.yml
+   services:
+     api:
+       environment:
+         - JwtSettings__Secret=${JWT_SECRET}
+   ```
+
+   ```env
+   # .env (не коммитить в Git!)
+   JWT_SECRET=YourProductionSecretKeyWith64+Characters!!!
+   ```
+
+3. **Требования к секрету:**
+   - Минимум **32 символа** (для HMAC SHA-256)
+   - Рекомендуется **64+ символов**
+   - Используйте криптографически стойкий генератор случайных данных
+   - Разные секреты для dev/staging/production окружений
+   - **Никогда** не коммитьте секрет в Git
+   - **Никогда** не публикуйте секрет в логах или ответах API
+
+**Проверка конфигурации при старте:**
+
+Приложение автоматически валидирует наличие всех обязательных параметров JWT при старте в `DependencyInjection.cs`:
+
+```csharp
+var jwtSettings = configuration.GetSection("JwtSettings").Get<JwtSettings>();
+if (string.IsNullOrEmpty(jwtSettings?.Secret) || jwtSettings.Secret.Length < 32)
+    throw new InvalidOperationException("JwtSettings:Secret must be at least 32 characters long!");
+```
     
-<!-- GETTING STARTED -->
+---
 ## Getting Started
 
 Ниже описана инструкция по первоначальной настройке проекта.
 
 ### Необходимые компоненты
 
-Проект разрабатывается на VS 2022 с использованием ASP .NET Core 10
+Проект разрабатывается на VS 2026 с использованием ASP .NET Core 10
 
 ### Требования
 
-- В системе должен быть установлен Docker Desktop
-- В системе должен быть установлен PostgreSQL (не ниже 16) для хранения данных в БД
+- **Docker Desktop** — для запуска интеграционных тестов и контейнеризации
+- **PostgreSQL 16+** — для хранения данных (может быть запущен локально или через Docker)
+- **.NET 10 SDK** — для сборки и запуска приложения
 
-### Подключение
-для установки подключения к БД настройте секреты
-```sh
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=ИМЯ_ХОСТА_ИЛИ_localhost;Port=5432;Database=ИМЯ_БД;Username=ЛОГИН;Password=ПАРОЛЬ"
+### Подключение к БД
+
+Для настройки строки подключения к PostgreSQL используйте **User Secrets** (рекомендуется для разработки):
+
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=eventapi;Username=postgres;Password=YOUR_PASSWORD" --project EventBookingService.Presentation
 ```
 
-### Установка
+**Альтернатива:** переменная окружения (для Docker/production):
+```bash
+export ConnectionStrings__DefaultConnection="Host=localhost;Port=5432;Database=eventapi;Username=postgres;Password=YOUR_PASSWORD"
+```
 
-1. Клонируйте репозиторий
-   ```sh
+### Настройка JWT для разработки
+
+Для локальной разработки JWT уже настроен в `appsettings.Development.json`. Для production используйте User Secrets:
+
+```bash
+dotnet user-secrets set "JwtSettings:Secret" "YourSecureProductionSecretWith64+Characters!!!" --project EventBookingService.Presentation
+```
+
+**Важно:** Секрет должен содержать минимум 32 символа. См. раздел [Настройка JWT в конфигурации](#настройка-jwt-в-конфигурации) для деталей.
+
+### Установка и запуск
+
+1. **Клонируйте репозиторий**
+   ```bash
    git clone https://github.com/Skilllab/EventBookingService.git
+   cd EventBookingService
    ```
-2. Откройте папку с решением и выполните сборку проекта Presentation
-   ```sh
+
+2. **Настройте подключение к БД** (см. раздел [Подключение к БД](#подключение-к-бд))
+
+3. **Соберите проект Presentation**
+   ```bash
    dotnet build EventBookingService.Presentation
    ```
-3. Запустите сборку проекта с Unit тестами
-   ```sh
-   dotnet build tests\EventBookingService.UnitTests
-   ```
-4. Запустите выполнение Unit тестов
-   ```sh
-    dotnet test --project tests\EventBookingService.UnitTests
-   ```
-5. Запустите сборку проекта с Интеграционными тестами
-   ```sh
-   dotnet build tests\EventBookingService.IntegrationTests
-   ```
-6. Запустите Docker Desktop
 
-7. Запустите выполнение Интеграционных тестов
-   ```sh
-    dotnet test --project tests\EventBookingService.IntegrationTests
+4. **Запустите Unit-тесты**
+   ```bash
+   dotnet test tests/EventBookingService.UnitTests
    ```
-8. Запустите проект
-   ```sh
+
+5. **Запустите Integration-тесты** (требуется Docker Desktop)
+   ```bash
+   # Запустите Docker Desktop, затем:
+   dotnet test tests/EventBookingService.IntegrationTests
+   ```
+
+6. **Запустите приложение**
+   ```bash
    dotnet run --project EventBookingService.Presentation
    ```
-     База данных будет создана исходя из строки подключения и при выполнении миграции при старте программы.
+
+   База данных будет создана автоматически при первом запуске (миграции применяются в `Program.cs`).
+
+7. **Откройте Swagger UI**
+
+   Перейдите по адресу: [https://localhost:5001/swagger/index.html](https://localhost:5001/swagger/index.html)
  
  ### Запуск через Docker Compose
- 
- Для быстрого запуска всего окружения (БД + приложение) выполните:
- ```sh
- docker-compose up
- ``` 
- Эта команда поднимет контейнеры с PostgreSQL и приложением, автоматически применит миграции и запустит сервис.
 
- Перед запуском создайте файл .env с описанием секретов
+ Для быстрого запуска всего окружения (PostgreSQL + приложение) выполните:
 
-  ```sh
- # Базовые секреты
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_NAME=eventapi
-DB_HOST=postgres_db
-DB_PORT=5438
+ 1. **Создайте файл `.env`** в корне проекта:
 
-# Строка подключения в формате .NET Npgsql
-# Используем переменные, объявленные выше
-CONNECTION_STRING=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+    ```env
+    # Базовые настройки БД
+    DB_USER=postgres
+    DB_PASSWORD=postgres
+    DB_NAME=eventapi
+    DB_HOST=postgres_db
+    DB_PORT=5438
 
-# Секреты для pgAdmin
-PGADMIN_EMAIL=admin@admin.com
-PGADMIN_PASSWORD=admin_password_987
- ``` 
+    # Строка подключения (использует переменные выше)
+    CONNECTION_STRING=Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASSWORD}
+
+    # Настройки pgAdmin
+    PGADMIN_EMAIL=admin@admin.com
+    PGADMIN_PASSWORD=admin_password_987
+    ```
+
+    **Важно:** Не коммитьте `.env` файл в Git! Он уже добавлен в `.gitignore`.
+
+ 2. **Запустите контейнеры:**
+
+    ```bash
+    docker-compose up
+    ```
+
+    Эта команда:
+    - Поднимет PostgreSQL на порту `5438`
+    - Автоматически применит миграции БД
+    - Запустит приложение на порту `5001`
+    - Поднимет pgAdmin на порту `5050` (доступ через `http://localhost:5050`)
+
+ 3. **Откройте Swagger UI:**
+
+    [https://localhost:5001/swagger/index.html](https://localhost:5001/swagger/index.html)
+
+ 4. **Остановка контейнеров:**
+
+    ```bash
+    docker-compose down
+    ```
 
 ---
 
 ## Использование API
 
-При запущенном проекте в браузере введите адрес на swagger [https://localhost:5001/swagger/index.html](https://localhost:5001/swagger/index.html) 
+### Быстрый старт с аутентификацией
+
+1. **Зарегистрируйте пользователя** через Swagger UI или curl:
+   ```bash
+   curl -X 'POST' 'https://localhost:5001/auth/register' \
+     -H 'Content-Type: application/json' \
+     -d '{"login": "testuser", "password": "SecurePass123!", "role": "User"}'
+   ```
+
+2. **Получите JWT-токен:**
+   ```bash
+   curl -X 'POST' 'https://localhost:5001/auth/login' \
+     -H 'Content-Type: application/json' \
+     -d '{"login": "testuser", "password": "SecurePass123!"}'
+   ```
+
+   **Ответ:**
+   ```json
+   {
+     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+   }
+   ```
+
+3. **Используйте токен в запросах:**
+   ```bash
+   curl -X 'POST' 'https://localhost:5001/Events/EVENT_ID/book' \
+     -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+   ```
+
+**Подробная инструкция:** см. раздел [Получение JWT-токена через Swagger](#получение-jwt-токена-через-swagger)
+
+### Swagger UI
+
+При запущенном приложении откройте Swagger UI для интерактивной работы с API:
+
+[https://localhost:5001/swagger/index.html](https://localhost:5001/swagger/index.html)
 
 ## Модели данных
 
@@ -642,64 +991,99 @@ curl -X 'GET' \
 
 ## Миграции БД
 
--
--
--
--
-   Миграции находятся в проекте **Infrastructure** (`EventBookingService.Infrastructure`), так как именно этот слой отвечает за доступ к данным и содержит `AppDbContext`, конфигурации маппинга сущностей (`EventConfiguration`, `BookingConfiguration`) и всё, что связано с технологией хранения (Entity Framework Core + Npgsql).
-+
-   При запуске приложения миграции применяются автоматически — в `Program.cs` (Presentation) вызывается `db.Database.Migrate()`, поэтому ручное обновление БД требуется только при отладке или ручном развёртывании.
-+
-   ### Структура миграций в проекте
-+
-   ```
-   EventBookingService.Infrastructure/
-   └── Migrations/
-       ├── {timestamp}_InitialCreate.cs
-       ├── {timestamp}_InitialCreate.Designer.cs
-       ├── {timestamp}_NextMigration.cs
-       └── AppDbContextModelSnapshot.cs
-   ```
-+
-   ### Создание новой миграции
-+
+Миграции находятся в проекте **Infrastructure** (`EventBookingService.Infrastructure`), так как именно этот слой отвечает за доступ к данным и содержит `AppDbContext`, конфигурации маппинга сущностей (`EventConfiguration`, `BookingConfiguration`) и всё, что связано с технологией хранения (Entity Framework Core + Npgsql).
+
+При запуске приложения миграции применяются автоматически — в `Program.cs` (Presentation) вызывается `db.Database.Migrate()`, поэтому ручное обновление БД требуется только при отладке или ручном развёртывании.
+
+### Создание новой миграции
+
    Для создания новой миграции выполните команду из **корня решения**:
-+
+
    ```bash
    dotnet ef migrations add <ИмяМиграции> --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
    ```
-+
+
    Где:
-+
+
    | Параметр | Значение | Пояснение |
    |----------|----------|------------|
    | `<ИмяМиграции>` | Например `AddEventCapacity`, `AddBookingIndex` | Осмысленное имя на PascalCase, отражающее суть изменений |
    | `--project` | `EventBookingService.Infrastructure` | Проект, где находится `AppDbContext` и папка `Migrations/` |
    | `--startup-project` | `EventBookingService.Presentation` | Проект с `Program.cs`, где сконфигурирована строка подключения и DI |
-+
+
    **Важно:** Поскольку `AppDbContext` использует `IDbContextFactory<AppDbContext>`, миграции должны создаваться с флагом `--startup-project`, указывающим на Presentation — именно там зарегистрирована фабрика контекстов и строка подключения.
-+
+
    ### Ручное обновление базы данных
-+
+
    Для явного применения миграций к базе данных (без запуска приложения) выполните:
-+
+
    ```bash
    dotnet ef database update --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
    ```
-+
+
    ### Удаление последней миграции
-+
+
    Если миграция была создана ошибочно и ещё не применена к БД:
-+
+
    ```bash
    dotnet ef migrations remove --project EventBookingService.Infrastructure --startup-project EventBookingService.Presentation
    ```
-+
+
    ### Принцип работы в рамках Clean Architecture
-+
+
    1. **Domain** определяет сущности (`Event`, `Booking`) без привязки к БД
    2. **Application** описывает интерфейсы репозиториев (`IEventRepository`, `IBookingRepository`)
    3. **Infrastructure** реализует репозитории, содержит `AppDbContext`, конфигурации маппинга и миграции — это единственный слой, который «знает» о том, как сущности хранятся в PostgreSQL
    4. **Presentation** при старте вызывает `Migrate()` и передаёт строку подключения через `appsettings.json` / user-secrets
-+
+
    Такое разделение позволяет заменить БД или ORM, не затрагивая Domain и Application — достаточно изменить только Infrastructure.
+
+---
+
+## Тестирование
+
+Проект содержит два уровня тестов:
+
+### Unit-тесты (`EventBookingService.UnitTests`)
+
+**Технологии:** xUnit, Moq, FluentAssertions
+
+**Запуск:**
+```bash
+dotnet test tests/EventBookingService.UnitTests
+```
+
+### Integration-тесты (`EventBookingService.IntegrationTests`)
+
+**Технологии:** xUnit, Testcontainers, WebApplicationFactory
+
+**Особенности:**
+- Используют **реальную PostgreSQL в Docker-контейнере** (через Testcontainers)
+- Каждый тест работает с изолированной БД
+- Проверяют **полный end-to-end flow** от HTTP-запроса до БД
+
+**Запуск:** (требуется запущенный Docker Desktop)
+```bash
+dotnet test tests/EventBookingService.IntegrationTests
+```
+
+---
+
+## Безопасность
+
+### JWT-аутентификация
+
+- Все защищённые endpoints требуют валидный JWT-токен
+- Токены подписаны HMAC SHA-256 с валидацией `Issuer`, `Audience`, `Lifetime`
+- Поддержка ролевой авторизации (`User`/`Admin`)
+
+### Защита от овербукинга
+
+- Транзакционные блокировки `FOR UPDATE` на уровне БД
+- Атомарность операций резервирования места и создания брони
+
+### Обработка ошибок
+
+- Глобальный обработчик исключений `GlobalExceptionHandlingMiddleware`
+- Стандартизированный формат ошибок `ProblemDetails (RFC 7807)`
+- Логирование всех необработанных исключений с `RequestId`

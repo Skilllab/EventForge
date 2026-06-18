@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 using EventBookingService.Application.DTO;
 
 using FluentAssertions;
@@ -32,7 +30,7 @@ public class EventsFilterDtoTests
         var pageSize = 20;
 
         // Act
-        var filter = new EventsFilterDto(title, from, to, page, pageSize);
+        var filter = new EventsFilterDTO(title, from, to, page, pageSize);
 
         // Assert
         filter.Should().NotBeNull();
@@ -47,7 +45,7 @@ public class EventsFilterDtoTests
     public void Constructor_WithDefaultParameters_ShouldApplyDefaults()
     {
         // Act
-        var filter = new EventsFilterDto();
+        var filter = new EventsFilterDTO();
 
         // Assert
         filter.Title.Should().BeNull();
@@ -64,7 +62,7 @@ public class EventsFilterDtoTests
         var validTitle = new string('A', 100);
 
         // Act
-        var filter = new EventsFilterDto(title: validTitle);
+        var filter = new EventsFilterDTO(title: validTitle);
 
         // Assert
         filter.Title.Should().HaveLength(100);
@@ -77,7 +75,7 @@ public class EventsFilterDtoTests
         var invalidTitle = new string('A', 101);
 
         // Act
-        Action act = () => new EventsFilterDto(title: invalidTitle);
+        Action act = () => new EventsFilterDTO(title: invalidTitle);
 
         // Assert
         act.Should().Throw<ArgumentException>().WithParameterName("title");
@@ -90,7 +88,7 @@ public class EventsFilterDtoTests
     public void Constructor_WhenPageIsLessThanOne_ShouldThrowValidationException(int invalidPage)
     {
         // Act
-        Action act = () => new EventsFilterDto(page: invalidPage);
+        Action act = () => new EventsFilterDTO(page: invalidPage);
 
         // Assert
         act.Should().Throw<ArgumentException>().WithParameterName("page");
@@ -103,7 +101,7 @@ public class EventsFilterDtoTests
     public void Constructor_WhenPageSizeIsOutOfRange_ShouldThrowValidationException(int invalidPageSize)
     {
         // Act
-        Action act = () => new EventsFilterDto(pageSize: invalidPageSize);
+        Action act = () => new EventsFilterDTO(pageSize: invalidPageSize);
 
         // Assert
         act.Should().Throw<ArgumentException>().WithParameterName("pageSize");
@@ -115,7 +113,7 @@ public class EventsFilterDtoTests
     public void Constructor_WhenPageSizeIsAtBoundaries_ShouldCreateSuccessfully(int boundaryPageSize)
     {
         // Act
-        var filter = new EventsFilterDto(pageSize: boundaryPageSize);
+        var filter = new EventsFilterDTO(pageSize: boundaryPageSize);
 
         // Assert
         filter.PageSize.Should().Be(boundaryPageSize);
@@ -129,7 +127,7 @@ public class EventsFilterDtoTests
         var invalidToDate = _now.AddDays(4); // Конец раньше начала
 
         // Act
-        Action act = () => new EventsFilterDto(from: fromDate, to: invalidToDate);
+        Action act = () => new EventsFilterDTO(from: fromDate, to: invalidToDate);
 
         // Assert
         act.Should().Throw<ArgumentException>().WithParameterName("to");
@@ -142,7 +140,7 @@ public class EventsFilterDtoTests
         var sameDate = _now;
 
         // Act
-        var filter = new EventsFilterDto(from: sameDate, to: sameDate);
+        var filter = new EventsFilterDTO(from: sameDate, to: sameDate);
 
         // Assert
         filter.From.Should().Be(sameDate);
@@ -156,7 +154,7 @@ public class EventsFilterDtoTests
         var fromDate = _now;
 
         // Act
-        var filter = new EventsFilterDto(from: fromDate, to: null);
+        var filter = new EventsFilterDTO(from: fromDate, to: null);
 
         // Assert
         filter.From.Should().Be(fromDate);
@@ -170,7 +168,7 @@ public class EventsFilterDtoTests
         var toDate = _now;
 
         // Act
-        var filter = new EventsFilterDto(from: null, to: toDate);
+        var filter = new EventsFilterDTO(from: null, to: toDate);
 
         // Assert
         filter.From.Should().BeNull();

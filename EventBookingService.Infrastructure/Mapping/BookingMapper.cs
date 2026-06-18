@@ -13,11 +13,12 @@ public static class BookingMapper
     /// </summary>
     public static Booking ToDomain(this BookingEntity entity)
     {
-        var domain = Booking.Create(entity.EventId, entity.CreatedAt);
+        var domain = Booking.Create(entity.EventId, entity.UserId, entity.CreatedAt);
 
         //Восстанавливаем состояние, которое закрыто для изменений извне
         var type = typeof(Booking);
         type.GetProperty(nameof(Booking.Id))?.SetValue(domain, entity.Id);
+        type.GetProperty(nameof(Booking.UserId))?.SetValue(domain, entity.UserId);
 
         domain.Status = Enum.Parse<BookingStatus>(entity.Status);
         domain.ProcessedAt = entity.ProcessedAt;
@@ -35,7 +36,8 @@ public static class BookingMapper
             EventId = domain.EventId,
             Status = domain.Status.ToString(),
             CreatedAt = domain.CreatedAt,
-            ProcessedAt = domain.ProcessedAt
+            ProcessedAt = domain.ProcessedAt,
+            UserId = domain.UserId
         };
 
     public static void UpdateEntity(this Booking domain, BookingEntity entity)

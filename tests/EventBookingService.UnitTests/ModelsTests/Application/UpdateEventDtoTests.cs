@@ -1,5 +1,4 @@
 using EventBookingService.Application.DTO;
-using EventBookingService.Domain.Exceptions;
 
 using FluentAssertions;
 

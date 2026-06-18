@@ -9,18 +9,32 @@ public class BookingEntity
     /// Уникальный идентификатор брони
     /// </summary>
     public Guid Id { get; set; }
+
+    /// <summary>
+    /// Идентификатор пользователя, создавшего бронирование
+    /// </summary>
+    public Guid UserId { get; set; }
+
+    /// <summary>
+    /// Навигационное свойство к пользователю
+    /// </summary>
+    public UserEntity? User { get; set; }
+
     /// <summary>
     /// Идентификатор события, к которому относится бронь
     /// </summary>
     public Guid EventId { get; set; }
+
     /// <summary>
     /// Текущий статус брони
     /// </summary>
     public required string Status { get; set; }
+
     /// <summary>
     /// Дата и время создания брони
     /// </summary>
     public DateTime CreatedAt { get; set; }
+
     /// <summary>
     /// Дата и время обработки брони
     /// </summary>

@@ -42,6 +42,7 @@ public interface IBookingRepository
     /// </summary>
     /// <param name="booking">Доменная модель бронирования</param>
     /// <param name="ct">Токен отмены</param>
+    [Obsolete("Используйте UpdateInContextAsync для работы в транзакциях")]
     Task UpdateAsync(Booking booking, CancellationToken ct);
 
     /// <summary>
@@ -51,4 +52,19 @@ public interface IBookingRepository
     /// <param name="context">Контекст БД</param>
     /// <param name="ct">Токен отмены</param>
     Task AddInContextAsync(Booking booking, object context, CancellationToken ct);
+
+    /// <summary>
+    /// Обновление бронирования в контексте. Метод не сохраняет изменения.
+    /// </summary>
+    /// <param name="booking">Доменная модель бронирования с новыми значениями</param>
+    /// <param name="context">Контекст БД</param>
+    /// <param name="ct">Токен отмены</param>
+    Task UpdateInContextAsync(Booking booking, object context, CancellationToken ct);
+
+    /// <summary>
+    /// Получить все бронирования указанного пользователя
+    /// </summary>
+    /// <param name="userId">ID пользователя</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<List<Booking>> GetUserBooking(Guid userId, CancellationToken ct);
 }

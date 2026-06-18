@@ -36,8 +36,15 @@ public class BookingConfiguration : IEntityTypeConfiguration<BookingEntity>
             .HasColumnName("created_at")
             .IsRequired();
 
+        builder.Property(p => p.UserId)
+            .HasColumnName("user_id");
+
+        builder.HasOne<UserEntity>()
+            .WithMany(u => u.Bookings)
+            .HasForeignKey(b => b.UserId);
+
         builder.Property(p => p.ProcessedAt)
-            .HasColumnName("processed_at"); ;
+            .HasColumnName("processed_at");
 
         builder.HasOne<EventEntity>()
             .WithMany(p => p.Bookings)

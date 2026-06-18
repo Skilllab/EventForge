@@ -1,4 +1,5 @@
 using EventBookingService.Application.Interfaces;
+using EventBookingService.Infrastructure.Common;
 using EventBookingService.Infrastructure.Context;
 using EventBookingService.Infrastructure.Interceptors;
 using EventBookingService.Infrastructure.Repositories;
@@ -43,12 +44,23 @@ public static class DependencyInjection
 
         });
 
+        services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
+
         // Репозитории
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
 
         // Сервисы
         services.AddScoped<ITransactionService, TransactionService>();
+        services.AddScoped<IPasswordHasher, PasswordHasher>();
+
+        services.AddScoped<IJwtTokenGenerator>(sp =>
+        {
+            var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtSettings>>();
+            var timeProvider = sp.GetRequiredService<TimeProvider>();
+            return new JwtTokenGenerator(options, timeProvider);
+        });
 
         return services;
     }
