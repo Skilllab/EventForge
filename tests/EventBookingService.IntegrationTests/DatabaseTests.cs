@@ -56,12 +56,13 @@ namespace EventBookingService.IntegrationTests
             var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
             var now = fixedUtcNow.UtcDateTime;
-            var userId1 = Guid.NewGuid();
+            // Используем dummy userId из миграции, который гарантированно существует в БД
+            var dummyUserId = new Guid("11111111-1111-1111-1111-111111111111");
             var startDate = now;
             var endDate = now.AddDays(2);
             var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription);
             context.Events.Add(@event.ToEntity());
-            var booking = Booking.Create(@event.Id, userId1, now);
+            var booking = Booking.Create(@event.Id, dummyUserId, now);
             context.Bookings.Add(booking.ToEntity());
             await context.SaveChangesAsync(CancellationToken.None);
 

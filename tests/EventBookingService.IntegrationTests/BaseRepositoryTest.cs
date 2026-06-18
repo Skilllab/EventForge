@@ -54,13 +54,15 @@ public abstract class BaseRepositoryTest : IAsyncLifetime
         // Получаем реальные имена таблиц из конфигурации EF
         var bookingTable = context.Model.FindEntityType(typeof(BookingEntity))?.GetTableName();
         var eventTable = context.Model.FindEntityType(typeof(EventEntity))?.GetTableName();
+        var userTable = context.Model.FindEntityType(typeof(UserEntity))?.GetTableName();
 
         // В проекте используется схема
         var bookingSchema = context.Model.FindEntityType(typeof(BookingEntity))?.GetSchema() ?? "public";
         var eventSchema = context.Model.FindEntityType(typeof(EventEntity))?.GetSchema() ?? "public";
+        var userSchema = context.Model.FindEntityType(typeof(UserEntity))?.GetSchema() ?? "public";
 
         // Собираем полный путь: "schema"."TableName"
-        var sql = $"TRUNCATE TABLE \"{bookingSchema}\".\"{bookingTable}\", \"{eventSchema}\".\"{eventTable}\" RESTART IDENTITY CASCADE;";
+        var sql = $"TRUNCATE TABLE \"{bookingSchema}\".\"{bookingTable}\", \"{eventSchema}\".\"{eventTable}\", \"{userSchema}\".\"{userTable}\" RESTART IDENTITY CASCADE;";
         await context.Database.ExecuteSqlRawAsync(sql);
 
     }
