@@ -65,6 +65,14 @@ public abstract class BaseRepositoryTest : IAsyncLifetime
         var sql = $"TRUNCATE TABLE \"{bookingSchema}\".\"{bookingTable}\", \"{eventSchema}\".\"{eventTable}\", \"{userSchema}\".\"{userTable}\" RESTART IDENTITY CASCADE;";
         await context.Database.ExecuteSqlRawAsync(sql);
 
+        // Переинсертим dummy user для тестов, так как TRUNCATE его удалил
+        var dummyUserId = new Guid("11111111-1111-1111-1111-111111111111");
+        var insertUserSql = $@"
+            INSERT INTO ""{userSchema}"".""{userTable}"" (id, login, password_hash, role)
+            VALUES ('{dummyUserId}', 'dummy_user', 'no_password_hash', 'User')
+            ON CONFLICT (id) DO NOTHING;
+        ";
+        await context.Database.ExecuteSqlRawAsync(insertUserSql);
     }
 
 

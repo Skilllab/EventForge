@@ -12,6 +12,9 @@ namespace EventBookingService.IntegrationTests;
 
 public class BookingRepositoryTests : BaseRepositoryTest
 {
+    // Используем dummy userId из миграции, который гарантированно существует в БД
+    private readonly Guid _dummyUserId = new Guid("11111111-1111-1111-1111-111111111111");
+
     private IBookingRepository CreateBookingRepo() => new BookingRepository(Factory);
     private IEventRepository CreateEventRepo() => new EventRepository(Factory);
 
@@ -28,12 +31,11 @@ public class BookingRepositoryTests : BaseRepositoryTest
         var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
         var title = "Очередное суперсобытие";
-        var userId = Guid.NewGuid();
 
         var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats);
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
-        var booking = Booking.Create(@event.Id, userId, fakeNow);
+        var booking = Booking.Create(@event.Id, _dummyUserId, fakeNow);
 
         // Act
 
@@ -62,7 +64,6 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await ResetDatabaseAsync();
         var eventRepo = CreateEventRepo();
         var bookingRepo = CreateBookingRepo();
-        var userId = Guid.NewGuid();
 
         var fakeTimeProvider = new FakeTimeProvider();
         var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
@@ -74,7 +75,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
         var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats);
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
-        var booking = Booking.Create(@event.Id, userId, fakeNow);
+        var booking = Booking.Create(@event.Id, _dummyUserId, fakeNow);
 
         var transactionService = new TransactionService(Factory);
         var ct = CancellationToken.None;
@@ -87,7 +88,10 @@ public class BookingRepositoryTests : BaseRepositoryTest
 
         // Act
         booking.Confirm(fakeNow.AddHours(1));
-        await bookingRepo.UpdateAsync(booking, CancellationToken.None);
+        await transactionService.ExecuteAsync(async (txContext) =>
+        {
+            await bookingRepo.UpdateInContextAsync(booking, txContext.DbContext, ct);
+        }, ct);
 
         // Assert
         var updated = await bookingRepo.GetByIdAsync(booking.Id, CancellationToken.None);
@@ -109,16 +113,14 @@ public class BookingRepositoryTests : BaseRepositoryTest
         fakeTimeProvider.SetUtcNow(fixedUtcNow);
         var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
-        var userId1 = Guid.NewGuid();
-        var userId2 = Guid.NewGuid();
 
         var title = "Очередное суперсобытие";
 
         var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats);
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
-        var b1 = Booking.Create(@event.Id, userId1, fakeNow);
-        var b2 = Booking.Create(@event.Id, userId2, fakeNow);
+        var b1 = Booking.Create(@event.Id, _dummyUserId, fakeNow);
+        var b2 = Booking.Create(@event.Id, _dummyUserId, fakeNow);
         b2.Reject(fakeNow);
 
         var transactionService = new TransactionService(Factory);
@@ -172,14 +174,13 @@ public class BookingRepositoryTests : BaseRepositoryTest
         fakeTimeProvider.SetUtcNow(fixedUtcNow);
         var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 100;
-        var userId = Guid.NewGuid();
 
         var title = "Очередное суперсобытие";
 
         var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats);
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
-        var booking = Booking.Create(@event.Id, userId, fakeNow);
+        var booking = Booking.Create(@event.Id, _dummyUserId, fakeNow);
 
         var transactionService = new TransactionService(Factory);
         var ct = CancellationToken.None;
@@ -264,8 +265,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
             {
                 try
                 {
-                    var userId = Guid.NewGuid();
-                    var booking = Booking.Create(@event.Id, userId, fakeNow);
+                    var booking = Booking.Create(@event.Id, _dummyUserId, fakeNow);
 
                     await transactionService.ExecuteAsync(async (txContext) =>
                     {
@@ -339,16 +339,14 @@ public class BookingRepositoryTests : BaseRepositoryTest
         fakeTimeProvider.SetUtcNow(fixedUtcNow);
         var fakeNow = fixedUtcNow.UtcDateTime;
         var totalSeats = 3;
-        var userId1 = Guid.NewGuid();
-        var userId2 = Guid.NewGuid();
         var title = "Событие с 3 местами для одной транзакции";
 
         var @event = Event.Create(title, fakeNow, fakeNow.AddDays(1), totalSeats);
         await eventRepo.AddAsync(@event, CancellationToken.None);
 
-        
-        var booking1 = Booking.Create(@event.Id, userId1, fakeNow);
-        var booking2 = Booking.Create(@event.Id, userId2, fakeNow);
+
+        var booking1 = Booking.Create(@event.Id, _dummyUserId, fakeNow);
+        var booking2 = Booking.Create(@event.Id, _dummyUserId, fakeNow);
 
         // Act - создаем несколько бронирований в одной транзакции используя AddInContextAsync
         var transactionService = new TransactionService(Factory);
