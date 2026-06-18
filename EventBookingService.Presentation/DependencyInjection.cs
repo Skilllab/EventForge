@@ -38,6 +38,7 @@ public static class DependencyInjection
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     RoleClaimType = "role",
+                    NameClaimType = "sub",
                     ValidateIssuer = true,
                     ValidIssuer = jwtOptions?.Issuer,
                     ValidateAudience = true,
