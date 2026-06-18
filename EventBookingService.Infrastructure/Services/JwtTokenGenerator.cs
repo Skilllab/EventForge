@@ -4,6 +4,7 @@ using System.Text;
 
 using EventBookingService.Application.DTO;
 using EventBookingService.Application.Interfaces;
+using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Common;
 
 using Microsoft.Extensions.Options;
@@ -27,7 +28,7 @@ public class JwtTokenGenerator(IOptions<JwtSettings> options, TimeProvider timeP
             new Claim(JwtRegisteredClaimNames.Name, login),
 
             // Роль (стандартный тип для работы [Authorize(Roles = ...)])
-            new Claim(ClaimTypes.Role, role),
+            new Claim("role", role),
 
             // Уникальный ID токена
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())

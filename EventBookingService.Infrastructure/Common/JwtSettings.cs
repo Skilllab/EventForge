@@ -6,6 +6,10 @@ namespace EventBookingService.Infrastructure.Common
     public class JwtSettings
     {
         /// <summary>
+        /// Имя схемы аутентификации
+        /// </summary>
+        public string SchemeName{ get; set; }
+        /// <summary>
         /// Секрет
         /// </summary>
         public string Secret { get; set; } = string.Empty;

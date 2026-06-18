@@ -29,5 +29,5 @@ public interface IBookingService
     /// <returns></returns>
     Task<BookingInfoDTO> GetBookingByIdAsync(Guid bookingId, CancellationToken ct);
 
-    Task<bool> CancelBooking(Guid bookingId, Guid userId, CancellationToken ct);
+    Task<bool> CancelBooking(Guid bookingId, string userLogin, CancellationToken ct);
 }

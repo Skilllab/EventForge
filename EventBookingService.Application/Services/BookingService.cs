@@ -93,19 +93,19 @@ public class BookingService(
             : MapToDTO(booking);
     }
 
-    public async Task<bool> CancelBooking(Guid bookingId, Guid userId, CancellationToken ct)
+    public async Task<bool> CancelBooking(Guid bookingId, string userLogin, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
-        var user = await userRepository.GetByIdAsync(userId);
+        var user = await userRepository.GetByLoginAsync(userLogin);
         if (user == null)
-            throw new NotFoundException(nameof(User), userId.ToString());
+            throw new NotFoundException(nameof(User), userLogin);
 
         var userBooking = await bookingRepository.GetByIdAsync(bookingId, ct);
         if (userBooking == null)
             throw new NotFoundException(nameof(Booking), bookingId.ToString());
 
-        if (userBooking.UserId != userId && user.Role != RoleType.Admin)
+        if (userBooking.UserId != user.Id && user.Role != RoleType.Admin)
             throw new InsufficientPermissionsException(nameof(Booking), bookingId.ToString(), "У пользователя недостаточно прав для отмены бронирования");
 
         return await transactionService.ExecuteAsync(async (txContext) =>

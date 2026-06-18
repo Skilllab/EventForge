@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text;
 
+using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Common;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -25,13 +26,15 @@ public static class DependencyInjection
         services.AddEndpointsApiExplorer();
 
         var jwtOptions = configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
+        var schemeName = jwtOptions?.SchemeName ?? JwtBearerDefaults.AuthenticationScheme;
 
         services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddJwtBearer(options =>
+            //Используем кастомную схему аутентификации JWT Bearer
+            .AddJwtBearer(schemeName, options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -46,7 +49,12 @@ public static class DependencyInjection
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy(StringConstants.CustomJwtPolicy, policy =>
+                policy.AddAuthenticationSchemes(schemeName)
+                    .RequireAuthenticatedUser());
+        });
 
 
         services.AddSwaggerGen(options =>
