@@ -41,7 +41,7 @@ public class BookingService(
                 throw new NotFoundException(nameof(Event), eventId.ToString());
             }
 
-            if (existedEvent.StartAt > timeProvider.GetUtcNow())
+            if (existedEvent.StartAt < timeProvider.GetUtcNow())
             {
                 logger.LogError("Событие уже началось и недоступно для бронирования. ID: {Id}", eventId);
                 throw new BookingPastEventException(nameof(Event), eventId.ToString());
@@ -163,7 +163,7 @@ public class BookingService(
         {
             try
             {
-                var existedEvent = await eventRepository.GetByIdWithLockInContextAsync(booking.EventId, txContext.DbContext, ct);
+                existedEvent = await eventRepository.GetByIdWithLockInContextAsync(booking.EventId, txContext.DbContext, ct);
                 if (existedEvent == null)
                 {
                     logger.LogWarning("Событие не найдено. ID: {Id}", booking.EventId);
