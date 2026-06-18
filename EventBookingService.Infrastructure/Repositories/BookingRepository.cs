@@ -88,10 +88,15 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
         await appDbContext.AddAsync(entity, ct);
     }
 
+    ///<inheritdoc/>
     public async Task<List<Booking>> GetUserBooking(Guid userId, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
-        return context.Bookings.AsNoTracking().Where(b=>b.UserId == userId).Select(e => e.ToDomain()).ToList();
+        return context.Bookings.AsNoTracking().Where(b=>
+            b.UserId == userId &&
+            (b.Status == nameof(BookingStatus.Pending) || b.Status == nameof(BookingStatus.Confirmed)))
+            .Select(e => e.ToDomain())
+            .ToList();
     }
 
     ///<inheritdoc/>
