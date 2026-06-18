@@ -14,9 +14,10 @@ public class BookingTests
         // Arrange
         var eventId = Guid.NewGuid();
         var createdAt = DateTime.UtcNow;
+        var userId = Guid.NewGuid();
 
         // Act
-        var booking = Booking.Create(eventId, createdAt);
+        var booking = Booking.Create(eventId, userId, createdAt);
 
         // Assert
         booking.Id.Should().NotBeEmpty();
@@ -32,10 +33,11 @@ public class BookingTests
         // Arrange
         var eventId = Guid.NewGuid();
         var createdAt = DateTime.UtcNow;
+        var userId = Guid.NewGuid();
 
         // Act
-        var booking1 = Booking.Create(eventId, createdAt);
-        var booking2 = Booking.Create(eventId, createdAt);
+        var booking1 = Booking.Create(eventId, userId, createdAt);
+        var booking2 = Booking.Create(eventId, userId, createdAt);
 
         // Assert
         booking1.Id.Should().NotBe(booking2.Id);
@@ -48,7 +50,11 @@ public class BookingTests
     public void BookingStatus_ShouldSupportAllEnumValues(BookingStatus status)
     {
         // Arrange
-        var booking = Booking.Create(Guid.NewGuid(), DateTime.UtcNow);
+        // Arrange
+        var eventId = Guid.NewGuid();
+        var createdAt = DateTime.UtcNow;
+        var userId = Guid.NewGuid();
+        var booking = Booking.Create(eventId, userId, createdAt);
 
         // Act
         booking.Status = status;
@@ -62,11 +68,12 @@ public class BookingTests
     {
         // Arrange
         var eventId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
         var fakeTimeProvider = new FakeTimeProvider();
         var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
         fakeTimeProvider.SetUtcNow(fixedUtcNow);
         var now = fixedUtcNow.UtcDateTime;
-        var booking = Booking.Create(eventId, now);
+        var booking = Booking.Create(eventId, userId, now);
 
 
         // Начальное состояние
@@ -92,11 +99,12 @@ public class BookingTests
     {
         // Arrange
         var eventId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
         var fakeTimeProvider = new FakeTimeProvider();
         var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
         fakeTimeProvider.SetUtcNow(fixedUtcNow);
         var now = fixedUtcNow.UtcDateTime;
-        var booking = Booking.Create(eventId, now);
+        var booking = Booking.Create(eventId, userId, now);
 
 
         // Act
