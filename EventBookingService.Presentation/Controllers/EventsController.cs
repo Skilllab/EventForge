@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 
 using EventBookingService.Application.Interfaces;
 using EventBookingService.Domain.Entities;
@@ -104,7 +105,15 @@ public class EventsController(IEventService eventService, IBookingService bookin
     {
         logger.LogDebug("Обработка запроса POST {methodName}", nameof(CreateBook));
 
-        var bookingDto = await bookingService.CreateBookingAsync(eventId, Guid.NewGuid(), ct);
+        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Name);
+
+        if (string.IsNullOrEmpty(userIdClaim?.Value) || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+        {
+            // Если ID нет в токене или он некорректный, возвращаем ошибку 401 Unauthorized
+            return Unauthorized("Не удалось определить идентификатор пользователя.");
+        }
+
+        var bookingDto = await bookingService.CreateBookingAsync(eventId, userId, ct);
 
         return AcceptedAtAction(
             actionName: "GetBooking",

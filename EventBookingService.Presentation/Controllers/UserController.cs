@@ -30,7 +30,7 @@ namespace EventBookingService.Presentation.Controllers
         {
             var token = await authService.LoginUserAsync(login, password);
             if (token == null)
-                return Unauthorized(new { message = "Неверный логин или пароль." });
+                return NotFound(new { message = "Неверный логин или пароль." });
 
             return Ok(new { Token = token });
         }
