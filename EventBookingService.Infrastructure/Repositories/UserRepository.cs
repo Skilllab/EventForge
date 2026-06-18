@@ -1,6 +1,7 @@
 using EventBookingService.Application.Interfaces;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Context;
+using EventBookingService.Infrastructure.Mapping;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -8,12 +9,41 @@ namespace EventBookingService.Infrastructure.Repositories
 {
     public class UserRepository(IDbContextFactory<AppDbContext> factory) : IUserRepository
     {
-        public Task<User?> GetByIdAsync(Guid id) => throw new NotImplementedException();
+        public async Task<User?> GetByIdAsync(Guid id)
+        {
+            await using var context = await factory.CreateDbContextAsync();
+            var user =  await context.Users
+                .Include(u => u.Bookings)
+                .FirstOrDefaultAsync(u => u.Id == id);
 
-        public Task<User?> GetByLoginAsync(string login) => throw new NotImplementedException();
+            return user?.ToDomain();
+        }
 
-        public Task AddAsync(User user) => throw new NotImplementedException();
+        public async Task<User?> GetByLoginAsync(string login)
+        {
+            await using var context = await factory.CreateDbContextAsync();
 
-        public Task<bool> ExistsAsync(string login) => throw new NotImplementedException();
+            var user = await context.Users
+                .FirstOrDefaultAsync(u => u.Login == login);
+
+            return user?.ToDomain();
+        }
+
+        public async Task AddAsync(User user)
+        {
+
+            await using var context = await factory.CreateDbContextAsync();
+
+            var entityUser = user.ToEntity();
+            await context.Users.AddAsync(entityUser);
+            await context.SaveChangesAsync();
+        }
+
+        public async Task<bool> ExistsAsync(string login)
+        {
+            await using var context = await factory.CreateDbContextAsync();
+
+            return await context.Users.AnyAsync(u => u.Login == login);
+        }
     }
 }

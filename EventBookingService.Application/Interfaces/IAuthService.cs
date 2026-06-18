@@ -13,7 +13,14 @@ public interface  IAuthService
     /// <param name="login">Имя входа (логин)</param>
     /// <param name="password">Пароль</param>
     /// <param name="role">Роль</param>
-    /// <returns></returns>
+    Task<bool> RegisterUserAsync(string login, string password, string role);
+
+    /// <summary>
+    /// Регистрация нового пользователя
+    /// </summary>
+    /// <param name="login">Имя входа (логин)</param>
+    /// <param name="password">Пароль</param>
+    /// <param name="role">Роль</param>
     Task<bool> RegisterUserAsync(string login, string password, RoleType role);
 
     /// <summary>
@@ -21,6 +28,7 @@ public interface  IAuthService
     /// </summary>
     /// <param name="login">Имя входа (логин)</param>
     /// <param name="password">Пароль</param>
-    Task<string> LoginUserAsync(string login, string password);
+    /// <returns>Токен</returns>
+    Task<string?> LoginUserAsync(string login, string password);
 
 }

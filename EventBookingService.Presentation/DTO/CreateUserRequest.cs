@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-using EventBookingService.Domain.Entities;
+using EventBookingService.Presentation.ValidationAttributes;
 
 namespace EventBookingService.Presentation.DTO
 {
@@ -24,7 +24,7 @@ namespace EventBookingService.Presentation.DTO
         /// <summary>
         /// Роль пользователя
         /// </summary>
-        [EnumDataType(typeof(RoleType), ErrorMessage = "Указана несуществующая роль.")]
+        [RoleValidation]
         public string? Role{ get; set; }
     }
 }
