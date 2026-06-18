@@ -33,7 +33,8 @@ namespace EventBookingService.IntegrationTests
             var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
             var fakeNow = fixedUtcNow.UtcDateTime;
-            var booking = Booking.Create(Guid.NewGuid(), fakeNow);
+            var userId = Guid.NewGuid();
+            var booking = Booking.Create(Guid.NewGuid(), userId, fakeNow);
 
             // Act
             context.Bookings.Add(booking.ToEntity());
@@ -55,11 +56,12 @@ namespace EventBookingService.IntegrationTests
             var fixedUtcNow = new DateTimeOffset(2025, 6, 15, 12, 0, 0, TimeSpan.Zero);
             fakeTimeProvider.SetUtcNow(fixedUtcNow);
             var now = fixedUtcNow.UtcDateTime;
+            var userId1 = Guid.NewGuid();
             var startDate = now;
             var endDate = now.AddDays(2);
             var @event = Event.Create(defaultTitle, startDate, endDate, defaultSeats, defaultDescription);
             context.Events.Add(@event.ToEntity());
-            var booking = Booking.Create(@event.Id, now);
+            var booking = Booking.Create(@event.Id, userId1, now);
             context.Bookings.Add(booking.ToEntity());
             await context.SaveChangesAsync(CancellationToken.None);
 
