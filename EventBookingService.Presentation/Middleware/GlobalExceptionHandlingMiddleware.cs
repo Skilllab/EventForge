@@ -109,11 +109,10 @@ public class GlobalExceptionHandlingMiddleware(
     private static int MapStatusCode(Exception ex)
         => ex switch
         {
-            ValidationCustomException or ValidationException => StatusCodes.Status400BadRequest,
+            ValidationCustomException or ValidationException or BookingPastEventException => StatusCodes.Status400BadRequest,
             NotFoundException => StatusCodes.Status404NotFound,
             UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             InsufficientPermissionsException => StatusCodes.Status403Forbidden,
-            BookingPastEventException => StatusCodes.Status422UnprocessableEntity,
             NoAvailableSeatsException or BookingLimitExceededException => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status500InternalServerError
         };

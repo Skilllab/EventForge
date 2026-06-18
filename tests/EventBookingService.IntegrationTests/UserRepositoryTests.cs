@@ -1,4 +1,3 @@
-using EventBookingService.Application.Interfaces;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Mapping;
 using EventBookingService.Infrastructure.Repositories;

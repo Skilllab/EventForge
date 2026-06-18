@@ -1,4 +1,3 @@
-using EventBookingService.Application.Common;
 using EventBookingService.Application.Interfaces;
 using EventBookingService.Infrastructure.Common;
 using EventBookingService.Infrastructure.Context;

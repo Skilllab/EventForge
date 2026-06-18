@@ -1,6 +1,4 @@
 
-using System.ComponentModel.DataAnnotations;
-
 namespace EventBookingService.Application.DTO;
 
 /// <summary>

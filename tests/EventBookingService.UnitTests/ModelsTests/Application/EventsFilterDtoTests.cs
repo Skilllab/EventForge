@@ -1,5 +1,3 @@
-using System.ComponentModel.DataAnnotations;
-
 using EventBookingService.Application.DTO;
 
 using FluentAssertions;

@@ -1,7 +1,6 @@
 using System.Reflection;
 using System.Text;
 
-using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Common;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;

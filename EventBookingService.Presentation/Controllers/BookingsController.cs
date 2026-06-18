@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 using EventBookingService.Application.Interfaces;
 using EventBookingService.Infrastructure.Common;

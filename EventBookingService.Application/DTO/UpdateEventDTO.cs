@@ -1,7 +1,3 @@
-using EventBookingService.Domain.Exceptions;
-
-using Microsoft.Extensions.Logging;
-
 namespace EventBookingService.Application.DTO;
 
 

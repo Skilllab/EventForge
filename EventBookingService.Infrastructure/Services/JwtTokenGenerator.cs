@@ -2,9 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-using EventBookingService.Application.DTO;
 using EventBookingService.Application.Interfaces;
-using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Common;
 
 using Microsoft.Extensions.Options;
