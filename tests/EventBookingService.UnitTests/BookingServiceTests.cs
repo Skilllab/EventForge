@@ -1304,8 +1304,6 @@ public class BookingServiceTests
         var bookingOptions = Options.Create(new BookingOptions { MaxBookingCount = 5 });
         var ct = CancellationToken.None;
 
-   
-
         var owner = User.Create("owner", "hash", RoleType.User);
         var otherUser = User.Create("Тестировщик", "hash", RoleType.User);
         var @event = Event.Create("И снова фабрика", now, now.AddHours(1), 10);

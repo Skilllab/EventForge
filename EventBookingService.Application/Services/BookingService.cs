@@ -48,7 +48,7 @@ public class BookingService(
             }
 
             var userBooking = await bookingRepository.GetUserBooking(userId, ct);
-            if (userBooking.Count > _bookingOptions.MaxBookingCount)
+            if (userBooking.Count >= _bookingOptions.MaxBookingCount)
                 throw new BookingLimitExceededException(nameof(Booking), userId.ToString(), "Превышено количество допустимых бронирований");
 
             // Проверяем и резервируем место (все в бизнес-слое)
