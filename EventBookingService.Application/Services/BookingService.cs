@@ -108,6 +108,14 @@ public class BookingService(
         if (userBooking.UserId != user.Id && user.Role != RoleType.Admin)
             throw new InsufficientPermissionsException(nameof(Booking), bookingId.ToString(), "У пользователя недостаточно прав для отмены бронирования");
 
+        // Защита от повторной отмены
+        if (userBooking.Status == BookingStatus.Cancelled)
+            throw new InvalidOperationException($"Бронирование '{bookingId}' уже было отменено");
+
+        // Защита от отмены отклонённых бронирований
+        if (userBooking.Status == BookingStatus.Rejected)
+            throw new InvalidOperationException($"Невозможно отменить уже отклонённое бронирование '{bookingId}'");
+
         return await transactionService.ExecuteAsync(async (txContext) =>
         {
             var existedEvent = await eventRepository.GetByIdWithLockInContextAsync(userBooking.EventId, txContext.DbContext, ct);
@@ -117,11 +125,13 @@ public class BookingService(
                 throw new NotFoundException(nameof(Event), userBooking.EventId.ToString());
             }
 
+            userBooking.Cancel(timeProvider.GetUtcNow().UtcDateTime);
+
             existedEvent.ReleaseSeats();
 
             // Все операции сохранения в рамках одной транзакции
             await eventRepository.UpdateInContextAsync(existedEvent, txContext.DbContext, ct);
-            await bookingRepository.DeleteAsync(bookingId, ct);
+            await bookingRepository.UpdateInContextAsync(userBooking, txContext.DbContext, ct);
 
             logger.LogInformation("Бронирование успешно отменено. ID: {Id} ", bookingId);
             return true;
@@ -170,7 +180,7 @@ public class BookingService(
                 if (existedEvent != null)
                 {
                     existedEvent.ReleaseSeats();
-                    await eventRepository.UpdateAsync(existedEvent, ct);
+                    await eventRepository.UpdateInContextAsync(existedEvent, txContext.DbContext, ct);
                     logger.LogInformation("Места для события {Id} восстановлены после ошибки", existedEvent.Id);
                 }
 
@@ -182,7 +192,7 @@ public class BookingService(
             finally
             {
                 // Сохраняем бронь ВСЕГДА (Confirmed или Rejected)
-                await bookingRepository.UpdateAsync(booking, ct);
+                await bookingRepository.UpdateInContextAsync(booking, txContext.DbContext, ct);
             }
 
         }, ct);

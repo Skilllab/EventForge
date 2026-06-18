@@ -1,6 +1,7 @@
 using EventBookingService.Application.Interfaces;
 using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Context;
+using EventBookingService.Infrastructure.Entities;
 using EventBookingService.Infrastructure.Mapping;
 
 using Microsoft.EntityFrameworkCore;
@@ -62,7 +63,8 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
             .ToList();
     }
 
-    ///<inheritdoc/>
+    //<inheritdoc/>
+    [Obsolete("Используйте UpdateInContextAsync для работы в транзакциях")]
     public async Task UpdateAsync(Booking booking, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -74,6 +76,7 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
             await context.SaveChangesAsync(ct);
         }
     }
+
 
     ///<inheritdoc/>
     public async Task AddInContextAsync(Booking booking, object context, CancellationToken ct)
@@ -89,5 +92,31 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
     {
         await using var context = await factory.CreateDbContextAsync(ct);
         return context.Bookings.AsNoTracking().Where(b=>b.UserId == userId).Select(e => e.ToDomain()).ToList();
+    }
+
+    ///<inheritdoc/>
+    public async Task UpdateInContextAsync(Booking booking, object context, CancellationToken ct)
+    {
+        var appDbContext = context as AppDbContext 
+            ?? throw new ArgumentException($"Context must be of type {nameof(AppDbContext)}", nameof(context));
+
+        // Ищем уже загруженную сущность в контексте
+        var trackedEntity = appDbContext.ChangeTracker
+            .Entries<BookingEntity>()
+            .FirstOrDefault(e => e.Entity.Id == booking.Id)
+            ?.Entity;
+
+        // Если сущность не загружена в контекст, загружаем её
+        if (trackedEntity == null)
+        {
+            trackedEntity = await appDbContext.Bookings
+                .FirstOrDefaultAsync(b => b.Id == booking.Id, ct);
+        }
+
+        if (trackedEntity != null)
+        {
+            // Обновляем только те свойства, которые могли измениться в доменной модели
+            booking.UpdateEntity(trackedEntity);
+        }
     }
 }
