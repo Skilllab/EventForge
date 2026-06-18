@@ -25,19 +25,6 @@ namespace EventBookingService.Application.Services
             return true;
         }
 
-        public async Task<bool> RegisterUserAsync(string login, string password, RoleType role)
-        {
-            if (await userRepository.ExistsAsync(login))
-                return false;
-
-            var hash = passwordHasher.HashPassword(password);
-            var user = User.Create(login, hash, role);
-
-            await userRepository.AddAsync(user);
-            return true;
-
-        }
-
         public async Task<string?> LoginUserAsync(string login, string password)
         {
             var user = await userRepository.GetByLoginAsync(login);
