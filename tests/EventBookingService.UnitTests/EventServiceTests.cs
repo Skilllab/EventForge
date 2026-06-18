@@ -106,7 +106,7 @@ public class EventServiceTests
         var now = fixedUtcNow.UtcDateTime;
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-        var filter = new EventsFilterDto(page: 1, pageSize: 80);
+        var filter = new EventsFilterDTO(page: 1, pageSize: 80);
         var ct = CancellationToken.None;
 
         var fakeEvents = new List<Event>
@@ -171,7 +171,7 @@ public class EventServiceTests
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
         var filteredWord = "встреча";
         var totalSeats = 1;
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             title: filteredWord,
             page: 1,
@@ -237,7 +237,7 @@ public class EventServiceTests
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
         var totalSeats = 1;
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             from: now.AddHours(2)
         );
@@ -294,7 +294,7 @@ public class EventServiceTests
         var now = fixedUtcNow.UtcDateTime;
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             to: now.AddHours(1),
             page: 1,
@@ -356,7 +356,7 @@ public class EventServiceTests
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
         var totalSeats = 1;
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             to: now.Date
         );
@@ -426,7 +426,7 @@ public class EventServiceTests
         var now = fixedUtcNow.UtcDateTime;
 
         var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             page: 2,
             pageSize: 3
@@ -506,7 +506,7 @@ public class EventServiceTests
         };
 
         // Фильтр: ищем "10" и дату начала <= 3 часа от текущей
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             title: "цель",
             from: targetDate,
@@ -574,7 +574,7 @@ public class EventServiceTests
             Event.Create("Событие 3", now, now.AddHours(5), totalSeats),
             Event.Create("Событие 6", now.AddHours(1), now.AddHours(5), totalSeats)
         };
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             page: 2,
             pageSize: 2
@@ -628,7 +628,7 @@ public class EventServiceTests
         using var cts = new CancellationTokenSource();
         cts.Cancel(); // Отменяем токен сразу
 
-        var filter = new EventsFilterDto
+        var filter = new EventsFilterDTO
         (
             page: 1,
             pageSize: 10
