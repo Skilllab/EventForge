@@ -3,6 +3,7 @@ using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Context;
 using EventBookingService.Infrastructure.Entities;
 using EventBookingService.Infrastructure.Mapping;
+using EventBookingService.Infrastructure.Services;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -132,12 +133,12 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
     }
 
     ///<inheritdoc/>
-    public async Task<Event?> GetByIdWithLockInContextAsync(Guid id, object context, CancellationToken ct)
+    public async Task<Event?> GetByIdWithLockInContextAsync(Guid id, ITransactionContext context, CancellationToken ct)
     {
-        var appDbContext = context as AppDbContext 
-            ?? throw new ArgumentException($"Context must be of type {nameof(AppDbContext)}", nameof(context));
+        var appDbContext = context as TransactionContext 
+            ?? throw new ArgumentException($"Context must be of type {nameof(TransactionContext)}", nameof(context));
 
-        var entity = await appDbContext.Events
+        var entity = await appDbContext.DbContext.Events
             .FromSqlInterpolated<EventEntity>($"SELECT * FROM \"EventBooking\".\"Events\" WHERE \"id\" = {id} FOR UPDATE")
             .Include(e => e.Bookings)
             .FirstOrDefaultAsync(ct);
@@ -146,13 +147,13 @@ public class EventRepository(IDbContextFactory<AppDbContext> factory) : IEventRe
     }
 
     ///<inheritdoc/>
-    public async Task UpdateInContextAsync(Event @event, object context, CancellationToken ct)
+    public async Task UpdateInContextAsync(Event @event, ITransactionContext context, CancellationToken ct)
     {
-        var appDbContext = context as AppDbContext 
-            ?? throw new ArgumentException($"Context must be of type {nameof(AppDbContext)}", nameof(context));
+        var appDbContext = context as TransactionContext 
+            ?? throw new ArgumentException($"Context must be of type {nameof(TransactionContext)}", nameof(context));
 
         // Ищем уже загруженную сущность в контексте
-        var trackedEntity = appDbContext.ChangeTracker
+        var trackedEntity = appDbContext.DbContext.ChangeTracker
             .Entries<EventEntity>()
             .FirstOrDefault(e => e.Entity.Id == @event.Id)
             ?.Entity;

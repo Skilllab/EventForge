@@ -4,16 +4,9 @@ using EventBookingService.Infrastructure.Context;
 namespace EventBookingService.Infrastructure.Services;
 
 /// <summary>
-/// Контекст для операций в рамках транзакции
+/// Контекст для операций в рамках транзакции с internal доступом к DbContext.
 /// </summary>
-internal class TransactionContext : ITransactionContext
+internal sealed class TransactionContext(AppDbContext dbContext) : ITransactionContext
 {
-    private readonly AppDbContext _dbContext;
-
-    public TransactionContext(AppDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-
-    public object DbContext => _dbContext;
+    internal AppDbContext DbContext { get; } = dbContext;
 }

@@ -34,7 +34,7 @@ public class BookingService(
         return await transactionService.ExecuteAsync(async (txContext) =>
         {
             // Получаем событие с блокировкой FOR UPDATE внутри транзакции
-            var existedEvent = await eventRepository.GetByIdWithLockInContextAsync(eventId, txContext.DbContext, ct);
+            var existedEvent = await eventRepository.GetByIdWithLockInContextAsync(eventId, txContext, ct);
             if (existedEvent == null)
             {
                 logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
@@ -47,7 +47,7 @@ public class BookingService(
                 throw new BookingPastEventException(nameof(Event), eventId.ToString());
             }
 
-            var userBooking = await bookingRepository.GetUserBooking(userId, ct);
+            var userBooking = await bookingRepository.GetUserBookingInContextAsync(userId, txContext, ct);
             if (userBooking.Count >= _bookingOptions.MaxBookingCount)
                 throw new BookingLimitExceededException(nameof(Booking), userId.ToString(), $"Превышено количество допустимых бронирований. Допустимо: {_bookingOptions.MaxBookingCount}");
 
@@ -63,8 +63,8 @@ public class BookingService(
             );
 
             // Все операции сохранения в рамках одной транзакции
-            await eventRepository.UpdateInContextAsync(existedEvent, txContext.DbContext, ct);
-            await bookingRepository.AddInContextAsync(newBooking, txContext.DbContext, ct);
+            await eventRepository.UpdateInContextAsync(existedEvent, txContext, ct);
+            await bookingRepository.AddInContextAsync(newBooking, txContext, ct);
 
             logger.LogInformation("Бронирование успешно создано. ID: {Id} ", newBooking.Id);
             return MapToDTO(newBooking);
@@ -118,7 +118,7 @@ public class BookingService(
 
         return await transactionService.ExecuteAsync(async (txContext) =>
         {
-            var existedEvent = await eventRepository.GetByIdWithLockInContextAsync(userBooking.EventId, txContext.DbContext, ct);
+            var existedEvent = await eventRepository.GetByIdWithLockInContextAsync(userBooking.EventId, txContext, ct);
             if (existedEvent == null)
             {
                 logger.LogError("Событие не найдено при запросе. ID: {Id}", userBooking.EventId);
@@ -130,8 +130,8 @@ public class BookingService(
             existedEvent.ReleaseSeats();
 
             // Все операции сохранения в рамках одной транзакции
-            await eventRepository.UpdateInContextAsync(existedEvent, txContext.DbContext, ct);
-            await bookingRepository.UpdateInContextAsync(userBooking, txContext.DbContext, ct);
+            await eventRepository.UpdateInContextAsync(existedEvent, txContext, ct);
+            await bookingRepository.UpdateInContextAsync(userBooking, txContext, ct);
 
             logger.LogInformation("Бронирование успешно отменено. ID: {Id} ", bookingId);
             return true;
@@ -163,7 +163,7 @@ public class BookingService(
         {
             try
             {
-                existedEvent = await eventRepository.GetByIdWithLockInContextAsync(booking.EventId, txContext.DbContext, ct);
+                existedEvent = await eventRepository.GetByIdWithLockInContextAsync(booking.EventId, txContext, ct);
                 if (existedEvent == null)
                 {
                     logger.LogWarning("Событие не найдено. ID: {Id}", booking.EventId);
@@ -180,7 +180,7 @@ public class BookingService(
                 if (existedEvent != null)
                 {
                     existedEvent.ReleaseSeats();
-                    await eventRepository.UpdateInContextAsync(existedEvent, txContext.DbContext, ct);
+                    await eventRepository.UpdateInContextAsync(existedEvent, txContext, ct);
                     logger.LogInformation("Места для события {Id} восстановлены после ошибки", existedEvent.Id);
                 }
 
@@ -192,7 +192,7 @@ public class BookingService(
             finally
             {
                 // Сохраняем бронь ВСЕГДА (Confirmed или Rejected)
-                await bookingRepository.UpdateInContextAsync(booking, txContext.DbContext, ct);
+                await bookingRepository.UpdateInContextAsync(booking, txContext, ct);
             }
 
         }, ct);

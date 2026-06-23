@@ -3,6 +3,7 @@ using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Context;
 using EventBookingService.Infrastructure.Entities;
 using EventBookingService.Infrastructure.Mapping;
+using EventBookingService.Infrastructure.Services;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -79,34 +80,36 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
 
 
     ///<inheritdoc/>
-    public async Task AddInContextAsync(Booking booking, object context, CancellationToken ct)
+    public async Task AddInContextAsync(Booking booking, ITransactionContext context, CancellationToken ct)
     {
-        var appDbContext = context as AppDbContext 
+        var appDbContext = context as TransactionContext
             ?? throw new ArgumentException($"Context must be of type {nameof(AppDbContext)}", nameof(context));
 
         var entity = booking.ToEntity();
-        await appDbContext.AddAsync(entity, ct);
+        await appDbContext.DbContext.AddAsync(entity, ct);
     }
 
-    ///<inheritdoc/>
-    public async Task<List<Booking>> GetUserBooking(Guid userId, CancellationToken ct)
+    public async Task<List<Booking>> GetUserBookingInContextAsync(Guid userId, ITransactionContext context, CancellationToken ct)
     {
-        await using var context = await factory.CreateDbContextAsync(ct);
-        return context.Bookings.AsNoTracking().Where(b=>
-            b.UserId == userId &&
-            (b.Status == nameof(BookingStatus.Pending) || b.Status == nameof(BookingStatus.Confirmed)))
+        var tx = context as TransactionContext
+                 ?? throw new ArgumentException($"Context must be {nameof(TransactionContext)}", nameof(context));
+
+        return await tx.DbContext.Bookings
+            .AsNoTracking()
+            .Where(b => b.UserId == userId &&
+                        (b.Status == nameof(BookingStatus.Pending) || b.Status == nameof(BookingStatus.Confirmed)))
             .Select(e => e.ToDomain())
-            .ToList();
+            .ToListAsync(ct);
     }
 
     ///<inheritdoc/>
-    public async Task UpdateInContextAsync(Booking booking, object context, CancellationToken ct)
+    public async Task UpdateInContextAsync(Booking booking, ITransactionContext context, CancellationToken ct)
     {
-        var appDbContext = context as AppDbContext 
-            ?? throw new ArgumentException($"Context must be of type {nameof(AppDbContext)}", nameof(context));
+        var appDbContext = context as TransactionContext 
+            ?? throw new ArgumentException($"Context must be of type {nameof(TransactionContext)}", nameof(context));
 
         // Ищем уже загруженную сущность в контексте
-        var trackedEntity = appDbContext.ChangeTracker
+        var trackedEntity = appDbContext.DbContext.ChangeTracker
             .Entries<BookingEntity>()
             .FirstOrDefault(e => e.Entity.Id == booking.Id)
             ?.Entity;
@@ -114,7 +117,7 @@ public class BookingRepository(IDbContextFactory<AppDbContext> factory) : IBooki
         // Если сущность не загружена в контекст, загружаем её
         if (trackedEntity == null)
         {
-            trackedEntity = await appDbContext.Bookings
+            trackedEntity = await appDbContext.DbContext.Bookings
                 .FirstOrDefaultAsync(b => b.Id == booking.Id, ct);
         }
 

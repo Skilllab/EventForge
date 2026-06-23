@@ -64,7 +64,7 @@ public interface IEventRepository
     /// <param name="id">Идентификатор события</param>
     /// <param name="context">Контекст БД</param>
     /// <param name="ct">Токен отмены</param>
-    Task<Event?> GetByIdWithLockInContextAsync(Guid id, object context, CancellationToken ct);
+    Task<Event?> GetByIdWithLockInContextAsync(Guid id, ITransactionContext context, CancellationToken ct);
 
     /// <summary>
     /// Обновить событие в контексте. Метод не сохраняет изменения.
@@ -72,5 +72,5 @@ public interface IEventRepository
     /// <param name="event">Доменная модель события с новыми значениями</param>
     /// <param name="context">Контекст БД</param>
     /// <param name="ct">Токен отмены</param>
-    Task UpdateInContextAsync(Event @event, object context, CancellationToken ct);
+    Task UpdateInContextAsync(Event @event, ITransactionContext context, CancellationToken ct);
 }
