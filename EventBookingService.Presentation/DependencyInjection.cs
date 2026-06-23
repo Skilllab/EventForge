@@ -39,6 +39,7 @@ public static class DependencyInjection
                 {
                     RoleClaimType = "role",
                     NameClaimType = "sub",
+                    
                     ValidateIssuer = true,
                     ValidIssuer = jwtOptions?.Issuer,
                     ValidateAudience = true,
@@ -48,6 +49,8 @@ public static class DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions?.Secret ?? string.Empty)),
                     ClockSkew = TimeSpan.Zero
                 };
+
+                options.MapInboundClaims = false;
             });
 
         services.AddAuthorization(options =>
