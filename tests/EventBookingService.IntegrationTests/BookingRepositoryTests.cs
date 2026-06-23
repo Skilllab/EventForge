@@ -44,7 +44,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
 
         await transactionService.ExecuteAsync(async (txContext) =>
         {
-            await bookingRepo.AddInContextAsync(booking, txContext.DbContext, ct);
+            await bookingRepo.AddInContextAsync(booking, txContext, ct);
         }, ct);
 
         // Assert
@@ -82,7 +82,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
 
         await transactionService.ExecuteAsync(async (txContext) =>
         {
-            await bookingRepo.AddInContextAsync(booking, txContext.DbContext, ct);
+            await bookingRepo.AddInContextAsync(booking, txContext, ct);
         }, ct);
 
 
@@ -90,7 +90,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
         booking.Confirm(fakeNow.AddHours(1));
         await transactionService.ExecuteAsync(async (txContext) =>
         {
-            await bookingRepo.UpdateInContextAsync(booking, txContext.DbContext, ct);
+            await bookingRepo.UpdateInContextAsync(booking, txContext, ct);
         }, ct);
 
         // Assert
@@ -128,7 +128,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
 
         await transactionService.ExecuteAsync(async (txContext) =>
         {
-            await bookingRepo.AddInContextAsync(b1, txContext.DbContext, ct);
+            await bookingRepo.AddInContextAsync(b1, txContext, ct);
 
             return true;
         }, ct);
@@ -137,7 +137,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await transactionService.ExecuteAsync(async (txContext) =>
         {
             // Получаем событие с блокировкой FOR UPDATE внутри транзакции
-            var eventInTx = await eventRepo.GetByIdWithLockInContextAsync(@event.Id, txContext.DbContext, ct);
+            var eventInTx = await eventRepo.GetByIdWithLockInContextAsync(@event.Id, txContext, ct);
             eventInTx.Should().NotBeNull();
 
             // Проверяем и резервируем место (все в бизнес-слое)
@@ -147,8 +147,8 @@ public class BookingRepositoryTests : BaseRepositoryTest
             }
 
             // Все операции сохранения в рамках одной транзакции
-            await eventRepo.UpdateInContextAsync(eventInTx, txContext.DbContext, ct);
-            await bookingRepo.AddInContextAsync(b2, txContext.DbContext, ct);
+            await eventRepo.UpdateInContextAsync(eventInTx, txContext, ct);
+            await bookingRepo.AddInContextAsync(b2, txContext, ct);
 
             return true;
         }, ct);
@@ -188,7 +188,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
 
         await transactionService.ExecuteAsync(async (txContext) =>
         {
-            await bookingRepo.AddInContextAsync(booking, txContext.DbContext, ct);
+            await bookingRepo.AddInContextAsync(booking, txContext, ct);
         }, ct);
 
 
@@ -270,7 +270,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
                     await transactionService.ExecuteAsync(async (txContext) =>
                     {
                         // Получаем событие с блокировкой FOR UPDATE внутри транзакции
-                        var eventInTx = await eventRepo.GetByIdWithLockInContextAsync(@event.Id, txContext.DbContext, ct);
+                        var eventInTx = await eventRepo.GetByIdWithLockInContextAsync(@event.Id, txContext, ct);
                         eventInTx.Should().NotBeNull();
 
                         // Проверяем и резервируем место (все в бизнес-слое)
@@ -280,8 +280,8 @@ public class BookingRepositoryTests : BaseRepositoryTest
                         }
 
                         // Все операции сохранения в рамках одной транзакции
-                        await eventRepo.UpdateInContextAsync(eventInTx, txContext.DbContext, ct);
-                        await bookingRepo.AddInContextAsync(booking, txContext.DbContext, ct);
+                        await eventRepo.UpdateInContextAsync(eventInTx, txContext, ct);
+                        await bookingRepo.AddInContextAsync(booking, txContext, ct);
 
                         return true;
                     }, ct);
@@ -355,8 +355,8 @@ public class BookingRepositoryTests : BaseRepositoryTest
         await transactionService.ExecuteAsync(async (txContext) =>
         {
             // Добавляем оба бронирования в одной транзакции
-            await bookingRepo.AddInContextAsync(booking1, txContext.DbContext, ct);
-            await bookingRepo.AddInContextAsync(booking2, txContext.DbContext, ct);
+            await bookingRepo.AddInContextAsync(booking1, txContext, ct);
+            await bookingRepo.AddInContextAsync(booking2, txContext, ct);
         }, ct);
 
         // Assert - проверяем, что оба бронирования созданы в БД
