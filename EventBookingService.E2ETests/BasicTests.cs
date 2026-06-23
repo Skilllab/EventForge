@@ -21,7 +21,6 @@ namespace EventBookingService.E2ETests
         }
         /// <summary>
         /// Создает HTTP-запрос с фейковым телом для методов POST/PUT, 
-        /// чтобы избежать ошибок валидации модели (400 Bad Request) до проверки авторизации.
         /// </summary>
         private static HttpRequestMessage CreateRequestWithEmptyBody(string url, string httpMethod)
         {
