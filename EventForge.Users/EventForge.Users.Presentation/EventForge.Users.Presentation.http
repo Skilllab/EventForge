@@ -1,6 +1,0 @@
-@EventForge.Users.Presentation_HostAddress = http://localhost:5008
-
-GET {{EventForge.Users.Presentation_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
