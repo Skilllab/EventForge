@@ -1,4 +1,4 @@
-﻿using EventBookingService.Application;
+using EventBookingService.Application;
 using EventBookingService.Infrastructure;
 using EventBookingService.Infrastructure.Context;
 using EventBookingService.Presentation;
@@ -54,8 +54,6 @@ else
 
 app.UseAuthentication();
 app.UseAuthorization();
-
-app.UseHttpsRedirection();
 
 app.MapControllers();
 

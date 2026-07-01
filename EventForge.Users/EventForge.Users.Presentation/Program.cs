@@ -13,6 +13,16 @@ builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddPresentation(builder.Configuration);
 
+if (builder.Environment.IsDevelopment())
+{
+    builder.Host.UseDefaultServiceProvider(options =>
+    {
+        options.ValidateScopes = true;
+        options.ValidateOnBuild = true;
+    });
+}
+
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -21,7 +31,7 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
