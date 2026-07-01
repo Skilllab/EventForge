@@ -1,35 +1,127 @@
 services:
-  # 1. База данных PostgreSQL
-  postgres_db:
+  # =========================================================================
+  # 1. МОДУЛЬ ПОЛЬЗОВАТЕЛЕЙ (Сервис + Свой контейнер СУБД)
+  # =========================================================================
+  postgres_users:
     image: postgres:16-alpine
-    container_name: my_postgres
+    container_name: my_postgres_users
     restart: always
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_DB: ${USERS_DB}
     ports:
-      - "${DB_PORT}:5432"
+      - "${USERS_PORT}:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_users_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eventforge_users_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # # 2. Ваше ASP.NET Core приложение
-  # web_api:
-    # image: my_asp_app_image:latest  # Имя вашего Docker-образа приложения
-    # build:
-      # context: .
-      # dockerfile: Dockerfile        # Путь к вашему Dockerfile
-    # restart: always
-    # ports:
-      # - "8080:8080"                  # Стандартный порт для .NET 8 / .NET 9
-    # environment:
-      # - ASPNETCORE_ENVIRONMENT=Production
-      # # Магия .NET: двойное подчеркивание заменит двоеточие из appsettings.json
-      # - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
-    # depends_on:
-      # - postgres_db
+  users_api:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: eventforge_users_api
+    working_dir: /src
+    command: >
+      dotnet watch run --no-launch-profile 
+      --project EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj 
+      --urls "http://*:8080" 
+    volumes:
+      - ./:/src
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ConnectionStrings__DefaultConnection: ${USERS_CONNECTION_STRING}
+    ports:
+      - "5008:8080"
+    depends_on:
+      postgres_users:
+        condition: service_healthy
 
-  # 3. Панель pgAdmin
+  # =========================================================================
+  # 2. МОДУЛЬ МЕРОПРИЯТИЙ (Сервис + Свой контейнер СУБД)
+  # =========================================================================
+  postgres_events:
+    image: postgres:16-alpine
+    container_name: my_postgres_events
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${EVENTS_DB}
+    ports:
+      - "${EVENTS_PORT}:5432"
+    volumes:
+      - pg_events_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eventforge_events_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  events_api:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: eventforge_events_api
+    working_dir: /src
+    command: >
+      dotnet watch run --no-launch-profile 
+      --project EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj 
+      --urls "http://*:8080" 
+    volumes:
+      - ./:/src
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ConnectionStrings__DefaultConnection: ${EVENTS_CONNECTION_STRING}
+    ports:
+      - "5009:8080"
+    depends_on:
+      postgres_events:
+        condition: service_healthy
+
+  # =========================================================================
+  # 3. МОДУЛЬ БРОНИРОВАНИЯ (Сервис + Свой контейнер СУБД)
+  # =========================================================================
+  postgres_booking:
+    image: postgres:16-alpine
+    container_name: my_postgres_booking
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${BOOKING_DB}
+    ports:
+      - "${BOOKING_PORT}:5432"
+    volumes:
+      - pg_booking_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d eventforge_booking_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  booking_api:
+    image: mcr.microsoft.com/dotnet/sdk:10.0
+    container_name: eventforge_booking_api
+    working_dir: /src
+    command: >
+      dotnet watch run --no-launch-profile 
+      --project EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj 
+      --urls "http://*:8080" 
+    volumes:
+      - ./:/src
+    environment:
+      ASPNETCORE_ENVIRONMENT: Docker
+      ConnectionStrings__DefaultConnection: ${BOOKING_CONNECTION_STRING}
+    ports:
+      - "5010:8080"
+    depends_on:
+      postgres_booking:
+        condition: service_healthy
+
+  # =========================================================================
+  # ОБЩИЙ ИНСТРУМЕНТ УПРАВЛЕНИЯ (pgAdmin)
+  # =========================================================================
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: my_pgadmin
@@ -42,8 +134,13 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
-      - postgres_db
+      - postgres_users
+      - postgres_events
+      - postgres_booking
 
+# Отдельные хранилища для каждого контейнера базы данных
 volumes:
-  pg_data:
+  pg_users_data:
+  pg_events_data:
+  pg_booking_data:
   pgadmin_data:
