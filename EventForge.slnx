@@ -30,4 +30,5 @@
   <Project Path="EventBookingService.Domain/EventBookingService.Domain.csproj" Id="5b8c461b-2c23-4280-bc8d-0a6dfcef62c1" />
   <Project Path="EventBookingService.Infrastructure/EventBookingService.Infrastructure.csproj" Id="a5be6556-f36d-41f3-9a4a-739a9780b1e1" />
   <Project Path="EventBookingService.Presentation/EventBookingService.Presentation.csproj" />
+  <Project Path="EventForge.Contract/EventForge.Contract.csproj" Id="a7b2124a-b4ad-41af-90bc-73eb8656e771" />
 </Solution>
