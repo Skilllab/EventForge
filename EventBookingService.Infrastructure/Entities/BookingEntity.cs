@@ -16,11 +16,6 @@ public class BookingEntity
     public Guid UserId { get; set; }
 
     /// <summary>
-    /// Навигационное свойство к пользователю
-    /// </summary>
-    public UserEntity? User { get; set; }
-
-    /// <summary>
     /// Идентификатор события, к которому относится бронь
     /// </summary>
     public Guid EventId { get; set; }

@@ -15,7 +15,7 @@ namespace EventBookingService.Application.Services;
 public class BookingService(
     IBookingRepository bookingRepository,
     IEventRepository eventRepository,
-    IUserRepository userRepository,
+    //IUserRepository userRepository,
     IOptions<BookingOptions> bookingOptions,
     ITransactionService transactionService,
     ILogger<BookingService> logger,
@@ -97,9 +97,9 @@ public class BookingService(
     {
         ct.ThrowIfCancellationRequested();
 
-        var user = await userRepository.GetByIdAsync(userId);
-        if (user == null)
-            throw new NotFoundException(nameof(User), userId.ToString());
+        //var user = await userRepository.GetByIdAsync(userId);
+        //if (user == null)
+        //    throw new NotFoundException(nameof(User), userId.ToString());
 
         var userBooking = await bookingRepository.GetByIdAsync(bookingId, ct);
         if (userBooking == null)

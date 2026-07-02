@@ -49,7 +49,7 @@ public static class DependencyInjection
         // Репозитории
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
-        services.AddScoped<IUserRepository, UserRepository>();
+        //services.AddScoped<IUserRepository, UserRepository>();
 
         // Сервисы
         services.AddScoped<ITransactionService, TransactionService>();

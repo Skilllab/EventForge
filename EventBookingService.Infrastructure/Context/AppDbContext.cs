@@ -10,7 +10,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<EventEntity> Events => Set<EventEntity>();
     public DbSet<BookingEntity> Bookings => Set<BookingEntity>();
-    public DbSet<UserEntity> Users => Set<UserEntity>();
+    //public DbSet<UserEntity> Users => Set<UserEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

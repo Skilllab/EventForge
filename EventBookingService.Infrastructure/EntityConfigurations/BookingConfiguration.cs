@@ -39,10 +39,6 @@ public class BookingConfiguration : IEntityTypeConfiguration<BookingEntity>
         builder.Property(p => p.UserId)
             .HasColumnName("user_id");
 
-        builder.HasOne<UserEntity>()
-            .WithMany(u => u.Bookings)
-            .HasForeignKey(b => b.UserId);
-
         builder.Property(p => p.ProcessedAt)
             .HasColumnName("processed_at");
 
