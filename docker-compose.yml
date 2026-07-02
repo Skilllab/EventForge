@@ -119,6 +119,24 @@ services:
       postgres_booking:
         condition: service_healthy
 
+
+  # =========================================================================
+  # ДЛЯ МОНОЛИТА
+  # =========================================================================
+  postgres_db:
+    image: postgres:16-alpine
+    container_name: my_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_MONO_NAME}
+    ports:
+      - "${DB_MONO_PORT}:5432"
+    volumes:
+      - pg_mono_data:/var/lib/postgresql/data
+      
+      
   # =========================================================================
   # ОБЩИЙ ИНСТРУМЕНТ УПРАВЛЕНИЯ (pgAdmin)
   # =========================================================================
@@ -143,4 +161,5 @@ volumes:
   pg_users_data:
   pg_events_data:
   pg_booking_data:
+  pg_mono_data:
   pgadmin_data:
