@@ -194,4 +194,4 @@ FakesAssemblies/
 .env
 
 #git
-.github/
+*.github/
