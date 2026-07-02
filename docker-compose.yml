@@ -1,11 +1,11 @@
 services:
-  # =========================================================================
-  # 1. МОДУЛЬ ПОЛЬЗОВАТЕЛЕЙ (Сервис + Свой контейнер СУБД)
-  # =========================================================================
+  # ===========================================================================
+  # USERS DB
+  # ===========================================================================
   postgres_users:
     image: postgres:16-alpine
     container_name: my_postgres_users
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -15,23 +15,31 @@ services:
     volumes:
       - pg_users_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d eventforge_users_dev"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${USERS_DB}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   users_api:
-    image: mcr.microsoft.com/dotnet/sdk:10.0
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+        WORKDIR /src
+        COPY . .
+        RUN dotnet restore "EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj"
+        RUN dotnet publish "EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+        FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+        WORKDIR /app
+        EXPOSE 8080
+        ENV ASPNETCORE_URLS=http://+:8080
+        ENV ASPNETCORE_ENVIRONMENT=Docker
+        COPY --from=build /app/publish .
+        ENTRYPOINT ["dotnet", "EventForge.Users.Presentation.dll"]
     container_name: eventforge_users_api
-    working_dir: /src
-    command: >
-      dotnet watch run --no-launch-profile 
-      --project EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj 
-      --urls "http://*:8080" 
-    volumes:
-      - ./:/src
+    restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__DefaultConnection: ${USERS_CONNECTION_STRING}
     ports:
       - "5008:8080"
@@ -39,13 +47,13 @@ services:
       postgres_users:
         condition: service_healthy
 
-  # =========================================================================
-  # 2. МОДУЛЬ МЕРОПРИЯТИЙ (Сервис + Свой контейнер СУБД)
-  # =========================================================================
+  # ===========================================================================
+  # EVENTS DB
+  # ===========================================================================
   postgres_events:
     image: postgres:16-alpine
     container_name: my_postgres_events
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -55,23 +63,31 @@ services:
     volumes:
       - pg_events_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d eventforge_events_dev"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${EVENTS_DB}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   events_api:
-    image: mcr.microsoft.com/dotnet/sdk:10.0
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+        WORKDIR /src
+        COPY . .
+        RUN dotnet restore "EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj"
+        RUN dotnet publish "EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+        FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+        WORKDIR /app
+        EXPOSE 8080
+        ENV ASPNETCORE_URLS=http://+:8080
+        ENV ASPNETCORE_ENVIRONMENT=Docker
+        COPY --from=build /app/publish .
+        ENTRYPOINT ["dotnet", "EventForge.Events.Presentation.dll"]
     container_name: eventforge_events_api
-    working_dir: /src
-    command: >
-      dotnet watch run --no-launch-profile 
-      --project EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj 
-      --urls "http://*:8080" 
-    volumes:
-      - ./:/src
+    restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__DefaultConnection: ${EVENTS_CONNECTION_STRING}
     ports:
       - "5009:8080"
@@ -79,13 +95,13 @@ services:
       postgres_events:
         condition: service_healthy
 
-  # =========================================================================
-  # 3. МОДУЛЬ БРОНИРОВАНИЯ (Сервис + Свой контейнер СУБД)
-  # =========================================================================
+  # ===========================================================================
+  # BOOKING DB
+  # ===========================================================================
   postgres_booking:
     image: postgres:16-alpine
     container_name: my_postgres_booking
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -95,23 +111,31 @@ services:
     volumes:
       - pg_booking_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d eventforge_booking_dev"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${BOOKING_DB}"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
 
   booking_api:
-    image: mcr.microsoft.com/dotnet/sdk:10.0
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+        WORKDIR /src
+        COPY . .
+        RUN dotnet restore "EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj"
+        RUN dotnet publish "EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+        FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+        WORKDIR /app
+        EXPOSE 8080
+        ENV ASPNETCORE_URLS=http://+:8080
+        ENV ASPNETCORE_ENVIRONMENT=Docker
+        COPY --from=build /app/publish .
+        ENTRYPOINT ["dotnet", "EventForge.Booking.Presentation.dll"]
     container_name: eventforge_booking_api
-    working_dir: /src
-    command: >
-      dotnet watch run --no-launch-profile 
-      --project EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj 
-      --urls "http://*:8080" 
-    volumes:
-      - ./:/src
+    restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: Docker
       ConnectionStrings__DefaultConnection: ${BOOKING_CONNECTION_STRING}
     ports:
       - "5010:8080"
@@ -119,14 +143,13 @@ services:
       postgres_booking:
         condition: service_healthy
 
-
-  # =========================================================================
-  # ДЛЯ МОНОЛИТА
-  # =========================================================================
+  # ===========================================================================
+  # MONOLITH DB
+  # ===========================================================================
   postgres_db:
     image: postgres:16-alpine
     container_name: my_postgres
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -135,15 +158,14 @@ services:
       - "${DB_MONO_PORT}:5432"
     volumes:
       - pg_mono_data:/var/lib/postgresql/data
-      
-      
-  # =========================================================================
-  # ОБЩИЙ ИНСТРУМЕНТ УПРАВЛЕНИЯ (pgAdmin)
-  # =========================================================================
+
+  # ===========================================================================
+  # PGADMIN
+  # ===========================================================================
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: my_pgadmin
-    restart: always
+    restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
@@ -151,12 +173,14 @@ services:
       - "8020:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json
+      - ./pgadmin/pgpass:/pgpassfile:ro
     depends_on:
       - postgres_users
       - postgres_events
       - postgres_booking
-
-# Отдельные хранилища для каждого контейнера базы данных
+      - postgres_db
+      
 volumes:
   pg_users_data:
   pg_events_data:
