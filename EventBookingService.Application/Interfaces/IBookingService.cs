@@ -1,4 +1,5 @@
 using EventBookingService.Application.DTO;
+using EventBookingService.Domain.Entities;
 
 namespace EventBookingService.Application.Interfaces;
 
@@ -36,5 +37,5 @@ public interface IBookingService
     /// <param name="userId">ID пользователя</param>
     /// <param name="ct">Токен отмены</param>
     /// <returns></returns>
-    Task<bool> CancelBooking(Guid bookingId, Guid userId, CancellationToken ct);
+    Task<bool> CancelBooking(Guid bookingId, Guid userId, RoleType userRole,  CancellationToken ct);
 }

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.IdentityModel.Tokens.Jwt;
 
 using EventBookingService.Application.Interfaces;
+using EventBookingService.Domain.Entities;
 using EventBookingService.Infrastructure.Common;
 using EventBookingService.Presentation.Mapping;
 
@@ -45,13 +46,19 @@ public class BookingsController(IBookingService bookingService, ILogger<Bookings
         logger.LogDebug("Обработка запроса DELETE {methodName}. Удаление бронирования: {bookingId}", nameof(CancelBooking), bookingId);
 
         var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
+        var roleClaim = User.FindFirst("role");
+
 
         if (string.IsNullOrEmpty(userIdClaim?.Value) || !Guid.TryParse(userIdClaim.Value, out Guid userId))
         {
             return Unauthorized("Не удалось определить идентификатор пользователя.");
         }
 
-        await bookingService.CancelBooking(bookingId, userId, ct);
+        if (string.IsNullOrWhiteSpace(roleClaim?.Value) || !Enum.TryParse<RoleType>(roleClaim.Value, true, out var userRole))
+            return Unauthorized("Не удалось определить роль пользователя.");
+
+
+        await bookingService.CancelBooking(bookingId, userId, userRole, ct);
         return NoContent();
     }
 }

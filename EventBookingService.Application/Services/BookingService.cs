@@ -93,7 +93,7 @@ public class BookingService(
             : MapToDTO(booking);
     }
 
-    public async Task<bool> CancelBooking(Guid bookingId, Guid userId, CancellationToken ct)
+    public async Task<bool> CancelBooking(Guid bookingId, Guid userId, RoleType userRole, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
@@ -105,7 +105,7 @@ public class BookingService(
         if (userBooking == null)
             throw new NotFoundException(nameof(Booking), bookingId.ToString());
 
-        if (userBooking.UserId != user.Id && user.Role != RoleType.Admin)
+        if (userBooking.UserId != userId && userRole != RoleType.Admin)
             throw new InsufficientPermissionsException(nameof(Booking), bookingId.ToString(), "У пользователя недостаточно прав для отмены бронирования");
 
         // Защита от повторной отмены
