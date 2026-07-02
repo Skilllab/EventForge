@@ -4,10 +4,12 @@ using EventBookingService.Infrastructure.Context;
 using EventBookingService.Infrastructure.Interceptors;
 using EventBookingService.Infrastructure.Repositories;
 using EventBookingService.Infrastructure.Services;
+using EventBookingService.Infrastructure.Services.External;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace EventBookingService.Infrastructure;
 
@@ -46,21 +48,29 @@ public static class DependencyInjection
 
         services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
 
+        //Регистрируем сервис для работы с микросервисом )))
+        services.Configure<EventsServiceOptions>(configuration.GetSection(nameof(EventsServiceOptions)));
+        services.AddHttpContextAccessor();
+        services.AddTransient<AuthorizationHeaderForwardingHandler>();
+
+
         // Репозитории
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IBookingRepository, BookingRepository>();
-        //services.AddScoped<IUserRepository, UserRepository>();
-
+        
         // Сервисы
         services.AddScoped<ITransactionService, TransactionService>();
-        services.AddScoped<IPasswordHasher, PasswordHasher>();
 
-        services.AddScoped<IJwtTokenGenerator>(sp =>
-        {
-            var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<JwtSettings>>();
-            var timeProvider = sp.GetRequiredService<TimeProvider>();
-            return new JwtTokenGenerator(options, timeProvider);
-        });
+        services.AddHttpClient<IEventService, EventsApiClient>((sp, client) =>
+            {
+                var options = sp.GetRequiredService<IOptions<EventsServiceOptions>>().Value;
+
+                client.BaseAddress = new Uri(options.BaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+            })
+            .AddHttpMessageHandler<AuthorizationHeaderForwardingHandler>();
+
+
 
         return services;
     }

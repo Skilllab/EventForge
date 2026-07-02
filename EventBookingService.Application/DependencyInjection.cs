@@ -22,7 +22,6 @@ public static class DependencyInjection
 
         services.Configure<BookingOptions>(configuration.GetSection(nameof(BookingOptions)));
 
-        services.AddScoped<IEventService, EventService>();
         services.AddScoped<IBookingService, BookingService>();
 
 

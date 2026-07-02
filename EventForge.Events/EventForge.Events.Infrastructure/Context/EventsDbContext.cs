@@ -1,0 +1,23 @@
+using EventForge.Events.Infrastructure.Entities;
+
+using Microsoft.EntityFrameworkCore;
+
+namespace EventForge.Events.Infrastructure.Context
+{
+    /// <summary>
+    /// DbContext сервиса событий.
+    /// </summary>
+    public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options) : DbContext(options)
+    {
+        /// <summary>
+        /// Таблица событий.
+        /// </summary>
+        public DbSet<EventEntity> Events => Set<EventEntity>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.HasDefaultSchema("Events");
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(EventsDbContext).Assembly);
+        }
+    }
+}

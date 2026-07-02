@@ -1,27 +1,31 @@
 namespace EventForge.Users.Infrastructure.Common;
 
 /// <summary>
-/// Настройки генерации и валидации JWT-токена.
+/// Класс для настроек генерации токена
 /// </summary>
 public class JwtSettings
 {
     /// <summary>
-    /// Секрет подписи токена.
+    /// Имя схемы аутентификации
+    /// </summary>
+    public string SchemeName { get; set; }
+    /// <summary>
+    /// Секрет
     /// </summary>
     public string Secret { get; set; } = string.Empty;
 
     /// <summary>
-    /// Издатель токена.
+    /// Издатель
     /// </summary>
     public string Issuer { get; set; } = string.Empty;
 
     /// <summary>
-    /// Получатель токена.
+    /// Получатель
     /// </summary>
     public string Audience { get; set; } = string.Empty;
 
     /// <summary>
-    /// Время жизни токена в часах.
+    /// Время жизни токена в часах
     /// </summary>
     public int Lifetime { get; set; }
 }
