@@ -1,9 +1,12 @@
 using System.Reflection;
 using System.Text;
 
+using EventForge.ExceptionMiddleware;
+using EventForge.Users.Domain.Exceptions;
 using EventForge.Users.Infrastructure.Common;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
@@ -81,6 +84,29 @@ public static class DependencyInjection
                 [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
             });
         });
+
+
+        services.Configure<ExceptionHandlingOptions>(options =>
+        {
+            options.ExceptionHandler = exception => exception switch
+            {
+                ValidationCustomException nfe => (
+                    StatusCodes.Status400BadRequest,
+                    new ProblemDetails
+                    {
+                        Type = nfe.EntityName,
+                        Instance = nfe.EntityId,
+                        Status = StatusCodes.Status400BadRequest,
+                        Detail = nfe.Message
+                    }
+                ),
+
+                // ... другие исключения сервиса
+                _ => (StatusCodes.Status500InternalServerError, new ProblemDetails { Detail = exception.Message })
+            };
+        });
+
+
 
         return services;
     }

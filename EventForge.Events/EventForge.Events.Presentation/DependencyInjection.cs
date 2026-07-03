@@ -1,9 +1,12 @@
 using System.Reflection;
 using System.Text;
 
+using EventForge.Events.Domain.Exceptions;
 using EventForge.Events.Infrastructure.Common;
+using EventForge.ExceptionMiddleware;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
@@ -84,6 +87,28 @@ public static class DependencyInjection
             });
 
         });
+
+
+        services.Configure<ExceptionHandlingOptions>(options =>
+        {
+            options.ExceptionHandler = exception => exception switch
+            {
+                NotFoundException nfe => (
+                    StatusCodes.Status404NotFound,
+                    new ProblemDetails
+                    {
+                        Type = nfe.EntityName,
+                        Instance = nfe.EntityId,
+                        Status = StatusCodes.Status404NotFound,
+                        Detail = nfe.Message
+                    }
+                ),
+
+                // ... другие исключения сервиса
+                _ => (StatusCodes.Status500InternalServerError, new ProblemDetails { Detail = exception.Message })
+            };
+        });
+
 
         return services;
     }

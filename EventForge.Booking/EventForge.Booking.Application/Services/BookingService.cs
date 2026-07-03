@@ -3,6 +3,7 @@ using EventForge.Booking.Application.DTO;
 using EventForge.Booking.Application.Interfaces;
 using EventForge.Booking.Domain.Entities;
 using EventForge.Booking.Domain.Exceptions;
+using EventForge.Shared.Entities.Enums;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

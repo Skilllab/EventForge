@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\EventForge.Shared\EventForge.ExceptionMiddleware\EventForge.ExceptionMiddleware.csproj" />
     <ProjectReference Include="..\EventForge.Booking.Application\EventForge.Booking.Application.csproj" />
     <ProjectReference Include="..\EventForge.Booking.Domain\EventForge.Booking.Domain.csproj" />
     <ProjectReference Include="..\EventForge.Booking.Infrastructure\EventForge.Booking.Infrastructure.csproj" />

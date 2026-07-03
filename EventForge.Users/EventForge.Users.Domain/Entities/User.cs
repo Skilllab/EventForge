@@ -1,3 +1,4 @@
+using EventForge.Shared.Entities.Enums;
 using EventForge.Users.Domain.Exceptions;
 
 namespace EventForge.Users.Domain.Entities;

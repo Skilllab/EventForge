@@ -2,6 +2,7 @@ using EventForge.Booking.Application;
 using EventForge.Booking.Infrastructure;
 using EventForge.Booking.Infrastructure.Context;
 using EventForge.Booking.Presentation;
+using EventForge.ExceptionMiddleware;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -35,6 +36,10 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Глобальный обработчик ошибок
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
 
 app.UseAuthentication();
 app.UseAuthorization();

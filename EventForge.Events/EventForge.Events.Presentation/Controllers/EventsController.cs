@@ -4,7 +4,7 @@ using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Infrastructure.Common;
 using EventForge.Events.Presentation.DTO;
 using EventForge.Events.Presentation.Mapping;
-using EventForge.Users.Domain.Entities;
+using EventForge.Shared.Entities.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

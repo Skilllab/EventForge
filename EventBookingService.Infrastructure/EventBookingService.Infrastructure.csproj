@@ -19,9 +19,4 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\EventBookingService.Application\EventBookingService.Application.csproj" />
-    <ProjectReference Include="..\EventBookingService.Domain\EventBookingService.Domain.csproj" />
-  </ItemGroup>
-
 </Project>

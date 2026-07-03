@@ -11,6 +11,10 @@
     <Project Path="EventForge.Events/EventForge.Events.Infrastructure/EventForge.Events.Infrastructure.csproj" Id="645b90c9-aa77-4d06-ac9d-96dfd6c7be5e" />
     <Project Path="EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj" Id="70b8c5bc-c2eb-40e5-88a2-57ab8e499b7a" />
   </Folder>
+  <Folder Name="/EventForge.Shared/">
+    <Project Path="EventForge.Shared/EventForge.Entities/EventForge.Shared.Entities.csproj" />
+    <Project Path="EventForge.Shared/EventForge.ExceptionMiddleware/EventForge.ExceptionMiddleware.csproj" Id="99f14210-c2a1-4fbf-9e8a-77e22b342e43" />
+  </Folder>
   <Folder Name="/EventForge.Users/">
     <Project Path="EventForge.Users/EventForge.Users.Application/EventForge.Users.Application.csproj" Id="46567de2-8fb4-4ce4-a7af-39e246a5ce32" />
     <Project Path="EventForge.Users/EventForge.Users.Domain/EventForge.Users.Domain.csproj" Id="59f562f8-af18-4f8a-857a-7857a5851766" />
@@ -26,9 +30,4 @@
     <File Path=".editorconfig" />
     <File Path="README.md" />
   </Folder>
-  <Project Path="EventBookingService.Application/EventBookingService.Application.csproj" Id="6486ce7e-774c-46fb-b49a-9fd831091760" />
-  <Project Path="EventBookingService.Domain/EventBookingService.Domain.csproj" Id="5b8c461b-2c23-4280-bc8d-0a6dfcef62c1" />
-  <Project Path="EventBookingService.Infrastructure/EventBookingService.Infrastructure.csproj" Id="a5be6556-f36d-41f3-9a4a-739a9780b1e1" />
-  <Project Path="EventBookingService.Presentation/EventBookingService.Presentation.csproj" />
-  <Project Path="EventForge.Contract/EventForge.Contract.csproj" Id="a7b2124a-b4ad-41af-90bc-73eb8656e771" />
 </Solution>

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-using EventForge.Users.Domain.Entities;
+using EventForge.Shared.Entities.Enums;
 
 namespace EventForge.Events.Presentation.ValidationAttributes;
 

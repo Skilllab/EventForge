@@ -1,3 +1,4 @@
+using EventForge.ExceptionMiddleware;
 using EventForge.Users.Application;
 using EventForge.Users.Infrastructure;
 using EventForge.Users.Infrastructure.Context;
@@ -36,6 +37,9 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Глобальный обработчик ошибок
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
 app.UseAuthentication();
 app.UseAuthorization();

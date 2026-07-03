@@ -1,4 +1,4 @@
-using EventForge.Users.Domain.Entities;
+using EventForge.Shared.Entities.Enums;
 
 namespace EventForge.Users.Infrastructure.Entities;
 

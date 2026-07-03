@@ -1,5 +1,5 @@
 using EventForge.Booking.Application.DTO;
-using EventForge.Booking.Domain.Entities;
+using EventForge.Shared.Entities.Enums;
 
 namespace EventForge.Booking.Application.Interfaces;
 

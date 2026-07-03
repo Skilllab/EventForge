@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
 using EventForge.Booking.Application.Interfaces;
-using EventForge.Booking.Domain.Entities;
 using EventForge.Booking.Infrastructure.Common;
+using EventForge.Shared.Entities.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

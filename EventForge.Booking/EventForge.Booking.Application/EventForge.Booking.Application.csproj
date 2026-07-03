@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\EventForge.Shared\EventForge.Entities\EventForge.Shared.Entities.csproj" />
     <ProjectReference Include="..\EventForge.Booking.Domain\EventForge.Booking.Domain.csproj" />
   </ItemGroup>
 
