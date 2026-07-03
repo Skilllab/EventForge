@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+namespace EventForge.Users.Infrastructure.Common;
 
-namespace EventForge.Users.Infrastructure.Common
+public static class StringConstants
 {
-    public static class StringConstants
-    {
-        public const string CustomJwtPolicy = nameof(CustomJwtPolicy);
-    }
+    public const string CustomJwtPolicy = nameof(CustomJwtPolicy);
 }

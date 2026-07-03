@@ -7,28 +7,27 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace EventForge.Events.Infrastructure
+namespace EventForge.Events.Infrastructure;
+
+/// <summary>
+/// Регистрация зависимостей слоя Infrastructure.
+/// </summary>
+public static class DependencyInjection
 {
     /// <summary>
-    /// Регистрация зависимостей слоя Infrastructure.
+    /// Регистрирует зависимости слоя Infrastructure.
     /// </summary>
-    public static class DependencyInjection
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        /// <summary>
-        /// Регистрирует зависимости слоя Infrastructure.
-        /// </summary>
-        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+        services.AddDbContextFactory<EventsDbContext>(options =>
         {
-            services.AddDbContextFactory<EventsDbContext>(options =>
-            {
-                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
-            });
+            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+        });
 
-            services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
+        services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
 
-            services.AddScoped<IEventRepository, EventRepository>();
+        services.AddScoped<IEventRepository, EventRepository>();
 
-            return services;
-        }
+        return services;
     }
 }

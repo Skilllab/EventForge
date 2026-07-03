@@ -1,7 +1,6 @@
-﻿namespace EventForge.Contract
-{
-    public class Class1
-    {
+namespace EventForge.Contract;
 
-    }
+public class Class1
+{
+
 }

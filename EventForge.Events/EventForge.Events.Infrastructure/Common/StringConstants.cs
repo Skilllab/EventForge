@@ -1,7 +1,6 @@
-namespace EventForge.Events.Infrastructure.Common
+namespace EventForge.Events.Infrastructure.Common;
+
+public static class StringConstants
 {
-    public static class StringConstants
-    {
-        public const string CustomJwtPolicy = nameof(CustomJwtPolicy);
-    }
+    public const string CustomJwtPolicy = nameof(CustomJwtPolicy);
 }

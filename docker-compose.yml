@@ -28,7 +28,7 @@ services:
         WORKDIR /src
         COPY . .
         RUN dotnet restore "EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj"
-        RUN dotnet publish "EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj" -c Release -o /app/publish /p:UseAppHost=false
+        RUN dotnet publish "EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj" -c Debug -o /app/publish /p:UseAppHost=false
 
         FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
         WORKDIR /app
@@ -76,7 +76,7 @@ services:
         WORKDIR /src
         COPY . .
         RUN dotnet restore "EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj"
-        RUN dotnet publish "EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj" -c Release -o /app/publish /p:UseAppHost=false
+        RUN dotnet publish "EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj" -c Debug -o /app/publish /p:UseAppHost=false
 
         FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
         WORKDIR /app
@@ -106,6 +106,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${BOOKING_DB}
+      EventsServiceOptions__BaseUrl: "http://eventforge_events_api:8080/"
     ports:
       - "${BOOKING_PORT}:5432"
     volumes:
@@ -124,7 +125,7 @@ services:
         WORKDIR /src
         COPY . .
         RUN dotnet restore "EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj"
-        RUN dotnet publish "EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj" -c Release -o /app/publish /p:UseAppHost=false
+        RUN dotnet publish "EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj" -c Debug -o /app/publish /p:UseAppHost=false
 
         FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
         WORKDIR /app

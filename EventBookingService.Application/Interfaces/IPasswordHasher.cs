@@ -1,22 +1,21 @@
-namespace EventBookingService.Application.Interfaces
+namespace EventBookingService.Application.Interfaces;
+
+/// <summary>
+/// Компонент хэширования паролей
+/// </summary>
+public interface IPasswordHasher
 {
     /// <summary>
-    /// Компонент хэширования паролей
+    /// Создать хэш пароля
     /// </summary>
-    public interface IPasswordHasher
-    {
-        /// <summary>
-        /// Создать хэш пароля
-        /// </summary>
-        /// <param name="password">Пароль</param>
-        string HashPassword(string password);
+    /// <param name="password">Пароль</param>
+    string HashPassword(string password);
 
-        /// <summary>
-        /// Проверить пароль на соответствие хэшу
-        /// </summary>
-        /// <param name="password">Пароль</param>
-        /// <param name="hash">Хэш</param>
-        /// <returns></returns>
-        bool VerifyPassword(string password, string hash);
-    }
+    /// <summary>
+    /// Проверить пароль на соответствие хэшу
+    /// </summary>
+    /// <param name="password">Пароль</param>
+    /// <param name="hash">Хэш</param>
+    /// <returns></returns>
+    bool VerifyPassword(string password, string hash);
 }

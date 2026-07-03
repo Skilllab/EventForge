@@ -1,0 +1,73 @@
+using EventForge.Booking.Application.Interfaces;
+using EventForge.Booking.Domain.Entities;
+using EventForge.Booking.Infrastructure.Context;
+using EventForge.Booking.Infrastructure.Mapping;
+
+using Microsoft.EntityFrameworkCore;
+
+namespace EventForge.Booking.Infrastructure.Repositories;
+
+/// <summary>
+/// Репозиторий бля бронирования
+/// </summary>
+/// <param name="factory"></param>
+public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IBookingRepository
+{
+    ///<inheritdoc/>
+    public async Task AddAsync(BookingModel booking, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+        await context.AddAsync(booking.ToEntity(), ct);
+        await context.SaveChangesAsync(ct);
+    }
+
+    ///<inheritdoc/>
+    public async Task<BookingModel?> GetByIdAsync(Guid id, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entity = await context.Bookings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == id, ct);
+
+        return entity?.ToDomain();
+    }
+
+    ///<inheritdoc/>
+    public async Task<List<BookingModel>> GetAllAsync(BookingStatus status, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entities = await context.Bookings
+            .AsNoTracking()
+            .Where(b => b.Status == status.ToString())
+            .ToListAsync(ct);
+
+        return entities.Select(e => e.ToDomain()).ToList();
+    }
+
+    public async Task<int> GetUserActiveBookingsCountAsync(Guid userId, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        return await context.Bookings.CountAsync(
+            b => b.UserId == userId &&
+                 (b.Status == nameof(BookingStatus.Pending) || b.Status == nameof(BookingStatus.Confirmed)),
+            ct);
+    }
+
+    //<inheritdoc/>
+    public async Task UpdateAsync(BookingModel booking, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == booking.Id, ct);
+        if (entity == null)
+        {
+            return;
+        }
+
+        booking.UpdateEntity(entity);
+        await context.SaveChangesAsync(ct);
+    }
+}

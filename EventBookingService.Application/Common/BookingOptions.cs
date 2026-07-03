@@ -1,10 +1,9 @@
-namespace EventBookingService.Application.Common
+namespace EventBookingService.Application.Common;
+
+public class BookingOptions
 {
-    public class BookingOptions
-    {
-        /// <summary>
-        /// Максимальное количество бронирований на пользователя
-        /// </summary>
-        public int MaxBookingCount { get; set; }
-    }
+    /// <summary>
+    /// Максимальное количество бронирований на пользователя
+    /// </summary>
+    public int MaxBookingCount { get; set; }
 }

@@ -4,23 +4,22 @@ using EventForge.Events.Application.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace EventForge.Events.Application
+namespace EventForge.Events.Application;
+
+/// <summary>
+/// Регистрация зависимостей слоя Application.
+/// </summary>
+public static class DependencyInjection
 {
     /// <summary>
-    /// Регистрация зависимостей слоя Application.
+    /// Регистрирует зависимости слоя Application.
     /// </summary>
-    public static class DependencyInjection
+    public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {
-        /// <summary>
-        /// Регистрирует зависимости слоя Application.
-        /// </summary>
-        public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
-        {
-            services.AddSingleton(TimeProvider.System);
+        services.AddSingleton(TimeProvider.System);
 
-            services.AddScoped<IEventService, EventService>();
+        services.AddScoped<IEventService, EventService>();
 
-            return services;
-        }
+        return services;
     }
 }

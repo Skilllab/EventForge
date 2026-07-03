@@ -1,18 +1,17 @@
 using System.ComponentModel;
 
-namespace EventBookingService.Domain.Entities
+namespace EventBookingService.Domain.Entities;
+
+public enum RoleType
 {
-    public enum RoleType
-    {
-        /// <summary>
-        /// Роль обычного пользователя
-        /// </summary>
-        [Description("Роль обычного пользователя")]
-        User,
-        /// <summary>
-        /// Роль администратора
-        /// </summary>
-        [Description("Роль администратора")]
-        Admin
-    }
+    /// <summary>
+    /// Роль обычного пользователя
+    /// </summary>
+    [Description("Роль обычного пользователя")]
+    User,
+    /// <summary>
+    /// Роль администратора
+    /// </summary>
+    [Description("Роль администратора")]
+    Admin
 }

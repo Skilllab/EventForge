@@ -1,18 +1,17 @@
 using System.ComponentModel;
 
-namespace EventForge.Events.Domain.Entities
+namespace EventForge.Events.Domain.Entities;
+
+public enum RoleType
 {
-    public enum RoleType
-    {
-        /// <summary>
-        /// Роль обычного пользователя
-        /// </summary>
-        [Description("Роль обычного пользователя")]
-        User,
-        /// <summary>
-        /// Роль администратора
-        /// </summary>
-        [Description("Роль администратора")]
-        Admin
-    }
+    /// <summary>
+    /// Роль обычного пользователя
+    /// </summary>
+    [Description("Роль обычного пользователя")]
+    User,
+    /// <summary>
+    /// Роль администратора
+    /// </summary>
+    [Description("Роль администратора")]
+    Admin
 }
