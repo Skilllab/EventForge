@@ -1,3 +1,4 @@
+using EventForge.LoggingDBInterceptor;
 using EventForge.Users.Application.Interfaces;
 using EventForge.Users.Infrastructure.Common;
 using EventForge.Users.Infrastructure.Context;
@@ -24,6 +25,9 @@ public static class DependencyInjection
     /// <returns>Обновленная коллекция сервисов.</returns>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton<LoggingInterceptor>();
+
+
         services.AddDbContextFactory<UsersDbContext>(options =>
         {
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));

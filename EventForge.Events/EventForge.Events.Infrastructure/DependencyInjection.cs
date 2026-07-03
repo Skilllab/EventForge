@@ -2,6 +2,7 @@ using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Infrastructure.Common;
 using EventForge.Events.Infrastructure.Context;
 using EventForge.Events.Infrastructure.Repositories;
+using EventForge.LoggingDBInterceptor;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +20,9 @@ public static class DependencyInjection
     /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton<LoggingInterceptor>();
+
+
         services.AddDbContextFactory<EventsDbContext>(options =>
         {
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));

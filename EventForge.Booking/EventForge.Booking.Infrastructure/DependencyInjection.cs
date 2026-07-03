@@ -5,6 +5,7 @@ using EventForge.Booking.Infrastructure.Context;
 using EventForge.Booking.Infrastructure.Repositories;
 using EventForge.Booking.Infrastructure.Services;
 using EventForge.Booking.Infrastructure.Services.External;
+using EventForge.LoggingDBInterceptor;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -21,6 +22,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddSingleton<LoggingInterceptor>();
+
+
         services.AddDbContextFactory<BookingDbContext>(options =>
         {
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
