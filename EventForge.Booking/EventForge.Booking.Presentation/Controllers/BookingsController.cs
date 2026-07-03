@@ -19,6 +19,10 @@ namespace EventForge.Booking.Presentation.Controllers;
 [Produces("application/json")]
 public class BookingsController(IBookingService bookingService, ILogger<BookingsController> logger) : ControllerBase
 {
+    /// <summary>
+    /// Создать новое бронирование
+    /// </summary>
+    /// <param name="eventId">Идентификатор события</param>
     [HttpPost("{eventId:guid}")]
     [Tags("API для бронирования")]
     public async Task<IActionResult> CreateBooking([Required] Guid eventId, CancellationToken ct)
@@ -35,6 +39,10 @@ public class BookingsController(IBookingService bookingService, ILogger<Bookings
         return Accepted(bookingInfo);
     }
 
+    /// <summary>
+    /// Получить информацию по бронированию
+    /// </summary>
+    /// <param name="bookingId">Идентификатор бронирования</param>
     [HttpGet("{bookingId:guid}")]
     [Tags("API для бронирования")]
     public async Task<IActionResult> GetBooking([Required] Guid bookingId, CancellationToken ct)
@@ -45,6 +53,10 @@ public class BookingsController(IBookingService bookingService, ILogger<Bookings
         return Ok(bookingInfo);
     }
 
+    /// <summary>
+    /// Удалить бронирование
+    /// </summary>
+    /// <param name="bookingId">Идентификатор бронирования</param>
     [HttpDelete("{bookingId:guid}")]
     [Tags("API для бронирования")]
     public async Task<IActionResult> CancelBooking([Required] Guid bookingId, CancellationToken ct)

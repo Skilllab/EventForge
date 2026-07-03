@@ -25,6 +25,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// <summary>
     /// Получить список всех событий
     /// </summary>
+    /// <param name="filterRequest">Фильтры для поиска событий</param>
     [AllowAnonymous]
     [HttpGet]
     [Tags("API для событий")]
@@ -39,6 +40,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// <summary>
     /// Получить событие по id
     /// </summary>
+    /// <param name="eventId">Идентификатор события</param>
     [AllowAnonymous]
     [HttpGet("{eventId:guid}")]
     [Tags("API для событий")]
@@ -53,6 +55,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// <summary>
     /// Создать новое событие
     /// </summary>
+    /// <param name="request">Данные для создания события</param>
     [HttpPost]
     [Authorize(Roles = nameof(RoleType.Admin))]
     [Tags("API для событий")]
@@ -67,6 +70,8 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// <summary>
     /// Обновить событие целиком
     /// </summary>
+    /// <param name="eventId">Идентификатор события</param>
+    /// <param name="request">Данные для обновления события</param>
     [Authorize(Roles = nameof(RoleType.Admin))]
     [HttpPut("{eventId:guid}")]
     [Tags("API для событий")]
@@ -82,6 +87,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// <summary>
     /// Удалить событие
     /// </summary>
+    /// <param name="eventId">Идентификатор события</param>
     [Authorize(Roles = nameof(RoleType.Admin))]
     [HttpDelete("{eventId:guid}")]
     [Tags("API для событий")]
@@ -93,6 +99,12 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
         return NoContent();
     }
 
+
+    /// <summary>
+    /// Зарезервировать место на событие
+    /// </summary>
+    /// <param name="eventId">Идентификатор события</param>
+    /// <returns>Результат операции</returns>
     [HttpPost("{eventId:guid}/reserve-seat")]
     [Tags("API для событий")]
     public async Task<IActionResult> ReserveSeat([Required] Guid eventId, CancellationToken ct)
@@ -103,6 +115,12 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
         return reserved ? NoContent() : Conflict(new { message = "Нет свободных мест." });
     }
 
+
+    /// <summary>
+    /// Освободить место на событие
+    /// </summary>
+    /// <param name="eventId">Идентификатор события</param>
+    /// <returns>Результат операции</returns>
     [HttpPost("{eventId:guid}/release-seat")]
     [Tags("API для событий")]
     public async Task<IActionResult> ReleaseSeat([Required] Guid eventId, CancellationToken ct)
