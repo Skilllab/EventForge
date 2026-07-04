@@ -8,42 +8,53 @@ public class OutboxMessage
     /// <summary>
     /// Уникальный идентификатор outbox-сообщения
     /// </summary>
-    public Guid Id{ get; set; }
+    public Guid Id { get; init; }
 
     /// <summary>
     /// Тип сообщения
     /// </summary>
-    public required string Type{ get; set; }
+    public string Type { get; private set; }
 
     /// <summary>
     /// Имя топика Kafka
     /// </summary>
-    public required string Topic{ get; set; }
+    public string Topic { get; private set; }
 
     /// <summary>
     /// Ключ сообщения Kafka
     /// </summary>
-    public required string MessageKey{ get; set; }
+    public string MessageKey { get; private set; }
 
     /// <summary>
     /// JSON-представление события
     /// </summary>
-    public required string Payload{ get; set; }
+    public string Payload { get; private set; }
 
     /// <summary>
     /// Время создания записи
     /// </summary>
-    public DateTime CreatedAt{ get; set; }
+    public DateTime CreatedAt { get; private set; }
 
     /// <summary>
     /// Время успешной публикации
     /// </summary>
-    public DateTime? ProcessedAt{ get; set; }
+    public DateTime? ProcessedAt { get; private set; }
 
     /// <summary>
     /// Последняя ошибка публикации
     /// </summary>
-    public string? Error{ get; set; }
+    public string? Error { get; private set; }
+
+    private OutboxMessage(string type, string topic, string messageKey, string payload, DateTime createdAt, string? error)
+    {
+        Id = Guid.NewGuid();
+        Type = type;
+        Topic = topic;
+        MessageKey = messageKey;
+        Payload = payload;
+        CreatedAt = createdAt;
+        Error = error;
+    }
 
     /// <summary>
     /// Создает новый экземпляр OutboxMessage
@@ -57,15 +68,6 @@ public class OutboxMessage
     /// <returns>Новый экземпляр OutboxMessage</returns>
     public static OutboxMessage Create(string type, string topic, string messageKey, string payload, DateTime createdAt, string? error)
     {
-        return new OutboxMessage
-        {
-            Id = Guid.NewGuid(),
-            Type = type,
-            Topic = topic,
-            MessageKey = messageKey,
-            Payload = payload,
-            CreatedAt = createdAt,
-            Error = error
-        };
+        return new OutboxMessage(type, topic, messageKey, payload, createdAt, error);
     }
 }

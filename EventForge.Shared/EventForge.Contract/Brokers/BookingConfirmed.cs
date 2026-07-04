@@ -3,50 +3,67 @@ using System;
 namespace EventForge.Contract.Brokers;
 
 /// <summary>
-/// Контракт события подтвержденного бронирования.
-/// Содержит только данные, нужные подписчику.
+/// Контракт события подтвержденного бронирования
 /// </summary>
-/// <param name="messageId">Уникальный идентификатор сообщения для идемпотентной обработки</param>
-/// <param name="bookingId">Идентификатор бронирования</param>
-/// <param name="eventId">Идентификатор события</param>
-/// <param name="userId">Идентификатор пользователя</param>
-/// <param name="seatsCount">Количество подтвержденных мест</param>
-/// <param name="confirmedAt">Время подтверждения</param>
-public sealed class BookingConfirmed(
-    Guid messageId,
-    Guid bookingId,
-    Guid eventId,
-    Guid userId,
-    int seatsCount,
-    DateTime confirmedAt)
+public sealed class BookingConfirmed
 {
     /// <summary>
     /// Уникальный идентификатор сообщения для идемпотентной обработки
     /// </summary>
-    public Guid MessageId{ get; } = messageId;
+    public Guid MessageId { get; private set; }
 
     /// <summary>
     /// Идентификатор бронирования
     /// </summary>
-    public Guid BookingId{ get; } = bookingId;
+    public Guid BookingId { get; private set; }
 
     /// <summary>
     /// Идентификатор события
     /// </summary>
-    public Guid EventId{ get; } = eventId;
+    public Guid EventId { get; private set; }
 
     /// <summary>
     /// Идентификатор пользователя
     /// </summary>
-    public Guid UserId{ get; } = userId;
+    public Guid UserId { get; private set; }
 
     /// <summary>
     /// Количество подтвержденных мест
     /// </summary>
-    public int SeatsCount{ get; } = seatsCount;
+    public int SeatsCount { get; private set; }
 
     /// <summary>
     /// Время подтверждения
     /// </summary>
-    public DateTime ConfirmedAt{ get; } = confirmedAt;
+    public DateTime ConfirmedAt { get; private set; }
+
+    private BookingConfirmed(Guid messageId, Guid bookingId, Guid bookingEventId, Guid bookingUserId, int seatsCount, DateTime processingTime)
+    {
+        MessageId = messageId;
+        BookingId = bookingId;
+        EventId = bookingEventId;
+        UserId = bookingUserId;
+        SeatsCount = seatsCount;
+        ConfirmedAt = processingTime;
+    }
+
+    /// <summary>
+    /// Создает новый экземпляр события подтвержденного бронирования
+    /// </summary>
+    /// <param name="messageId">Уникальный идентификатор сообщения для идемпотентной обработки</param>
+    /// <param name="bookingId">Идентификатор бронирования</param>
+    /// <param name="bookingEventId">Идентификатор события</param>
+    /// <param name="bookingUserId">Идентификатор пользователя</param>
+    /// <param name="seatsCount">Количество подтвержденных мест</param>
+    /// <param name="processingTime">Время подтверждения</param>
+    /// <returns></returns>
+    public static BookingConfirmed Create(Guid messageId, Guid bookingId, Guid bookingEventId, Guid bookingUserId, int seatsCount, DateTime processingTime) =>
+        new(
+            messageId,
+            bookingId,
+            bookingEventId,
+            bookingUserId,
+            seatsCount,
+            processingTime
+        );
 }

@@ -1,8 +1,11 @@
+using System.Text.Json;
+
 using EventForge.Booking.Application.Common;
 using EventForge.Booking.Application.DTO;
 using EventForge.Booking.Application.Interfaces;
 using EventForge.Booking.Domain.Entities;
 using EventForge.Booking.Domain.Exceptions;
+using EventForge.Contract.Brokers;
 using EventForge.Shared.Entities.Enums;
 
 using Microsoft.Extensions.Logging;
@@ -15,6 +18,7 @@ namespace EventForge.Booking.Application.Services;
 /// </summary>
 public class BookingService(
     IBookingRepository bookingRepository,
+    IOutboxRepository outboxRepository,
     IEventsGateway eventsGateway,
     IOptions<BookingOptions> bookingOptions,
     ILogger<BookingService> logger,
@@ -50,6 +54,7 @@ public class BookingService(
                 $"Превышено количество допустимых бронирований. Допустимо: {_bookingOptions.MaxBookingCount}");
         }
 
+        // Пока оставим REST вариант
         var reserved = await eventsGateway.TryReserveSeatAsync(eventId, ct);
         if (!reserved)
         {
@@ -110,6 +115,8 @@ public class BookingService(
         userBooking.Cancel(timeProvider.GetUtcNow().UtcDateTime);
 
         await bookingRepository.UpdateAsync(userBooking, ct);
+
+        // Пока оставляем так
         await eventsGateway.ReleaseSeatAsync(userBooking.EventId, ct);
 
         logger.LogInformation("Бронирование успешно отменено. ID: {Id}", bookingId);
@@ -140,10 +147,33 @@ public class BookingService(
                 return;
             }
 
+            // Сохраняем подтверждение в БД.
             booking.Confirm(processingTime);
             await bookingRepository.UpdateAsync(booking, ct);
 
-            logger.LogInformation("Бронь {Id} подтверждена", booking.Id);
+            // Пишем интеграционное событие в Outbox.
+            var message = BookingConfirmed.Create(
+                Guid.NewGuid(),
+                booking.Id,
+                booking.EventId,
+                booking.UserId,
+                1,
+                processingTime
+            );
+
+            var outbox = OutboxMessage.Create(
+            
+            type: nameof(BookingConfirmed),
+            topic: TopicNames.BookingConfirmed,
+            messageKey: booking.EventId.ToString(),
+            payload: JsonSerializer.Serialize(message),
+            createdAt: DateTime.UtcNow,
+            error: null
+            );
+
+            await outboxRepository.AddAsync(outbox, ct);
+
+            logger.LogInformation("Бронь {Id} подтверждена и записана в Outbox", booking.Id);
         }
         catch (Exception ex)
         {
