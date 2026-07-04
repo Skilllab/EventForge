@@ -40,11 +40,16 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
 // Глобальный обработчик ошибок
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
+// Включаем CORS (должен быть выше авторизации и контроллеров!)
+app.UseCors();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.MapControllers();
 
