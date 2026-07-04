@@ -28,11 +28,7 @@ public class BookingBackgroundService(
         {
             try
             {
-                await using var scope = scopeFactory.CreateAsyncScope();
-                var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-
-                // Ключевая бизнес-обработка pending бронирований.
-                await bookingService.UpdateBookingAsync(stoppingToken);
+                await ProcessOnceAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -45,6 +41,14 @@ public class BookingBackgroundService(
 
             await Task.Delay(TimeSpan.FromSeconds(delayForRepeatInSeconds), timeProvider, stoppingToken);
         }
+    }
+
+    public async Task ProcessOnceAsync(CancellationToken stoppingToken)
+    {
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
+
+        await bookingService.UpdateBookingAsync(stoppingToken);
     }
 
     /// <inheritdoc/>

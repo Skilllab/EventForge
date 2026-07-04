@@ -33,6 +33,14 @@ public sealed class KafkaBookingConfirmedPublisher : IBookingConfirmedPublisher,
         _producer = new ProducerBuilder<string, string>(config).Build();
     }
 
+    public KafkaBookingConfirmedPublisher(
+        IProducer<string, string> producer,
+        ILogger<KafkaBookingConfirmedPublisher> logger)
+    {
+        _producer = producer;
+        _logger = logger;
+    }
+
     //<inheritdoc />
     public async Task PublishAsync(BookingConfirmed message, CancellationToken ct)
     {

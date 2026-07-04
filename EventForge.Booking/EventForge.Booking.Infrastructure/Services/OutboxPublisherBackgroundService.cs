@@ -23,25 +23,7 @@ public class OutboxPublisherBackgroundService(
         {
             try
             {
-                await using var scope = scopeFactory.CreateAsyncScope();
-                var outboxRepository = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
-                var publisher = scope.ServiceProvider.GetRequiredService<IBookingConfirmedPublisher>();
-
-                var messages = await outboxRepository.GetPendingAsync(BatchSize, stoppingToken);
-
-                foreach (var message in messages)
-                {
-                    try
-                    {
-                        await publisher.PublishRawAsync(message.Topic, message.MessageKey, message.Payload, stoppingToken);
-                        await outboxRepository.MarkProcessedAsync(message.Id, stoppingToken);
-                    }
-                    catch (Exception ex)
-                    {
-                        await outboxRepository.MarkFailedAsync(message.Id, ex.Message, stoppingToken);
-                        logger.LogError(ex, "Ошибка публикации outbox сообщения {MessageId}", message.Id);
-                    }
-                }
+                await ProcessOnceAsync(stoppingToken);
             }
             catch (Exception ex)
             {
@@ -49,6 +31,29 @@ public class OutboxPublisherBackgroundService(
             }
 
             await Task.Delay(TimeSpan.FromSeconds(DelaySeconds), timeProvider, stoppingToken);
+        }
+    }
+
+    public async Task ProcessOnceAsync(CancellationToken stoppingToken)
+    {
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var outboxRepository = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
+        var publisher = scope.ServiceProvider.GetRequiredService<IBookingConfirmedPublisher>();
+
+        var messages = await outboxRepository.GetPendingAsync(BatchSize, stoppingToken);
+
+        foreach (var message in messages)
+        {
+            try
+            {
+                await publisher.PublishRawAsync(message.Topic, message.MessageKey, message.Payload, stoppingToken);
+                await outboxRepository.MarkProcessedAsync(message.Id, stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                await outboxRepository.MarkFailedAsync(message.Id, ex.Message, stoppingToken);
+                logger.LogError(ex, "Ошибка публикации outbox сообщения {MessageId}", message.Id);
+            }
         }
     }
 }
