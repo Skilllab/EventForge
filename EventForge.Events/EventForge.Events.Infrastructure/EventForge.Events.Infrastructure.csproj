@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\EventForge.Shared\EventForge.Contract\EventForge.Contract.csproj" />
     <ProjectReference Include="..\..\EventForge.Shared\EventForge.LoggingDBInterceptor\EventForge.LoggingDBInterceptor.csproj" />
     <ProjectReference Include="..\EventForge.Events.Application\EventForge.Events.Application.csproj" />
     <ProjectReference Include="..\EventForge.Events.Domain\EventForge.Events.Domain.csproj" />

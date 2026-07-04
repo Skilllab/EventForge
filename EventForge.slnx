@@ -12,6 +12,7 @@
     <Project Path="EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj" Id="70b8c5bc-c2eb-40e5-88a2-57ab8e499b7a" />
   </Folder>
   <Folder Name="/EventForge.Shared/">
+    <Project Path="EventForge.Shared/EventForge.Contract/EventForge.Contract.csproj" Id="cd90d111-bd6c-4db9-97e3-ba7c9e310523" />
     <Project Path="EventForge.Shared/EventForge.Entities/EventForge.Shared.Entities.csproj" />
     <Project Path="EventForge.Shared/EventForge.ExceptionMiddleware/EventForge.ExceptionMiddleware.csproj" Id="99f14210-c2a1-4fbf-9e8a-77e22b342e43" />
     <Project Path="EventForge.Shared/EventForge.LoggingDBInterceptor/EventForge.LoggingDBInterceptor.csproj" Id="633c4d51-9249-474f-b5e0-8f6b20bd6a14" />
