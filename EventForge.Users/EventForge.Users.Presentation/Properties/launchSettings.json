@@ -8,7 +8,6 @@
       "applicationUrl": "http://localhost:5008",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ConnectionStrings__DefaultConnection": ""
       }
     },
     "https": {
@@ -18,18 +17,7 @@
       "applicationUrl": "https://localhost:7189;http://localhost:5008",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ConnectionStrings__DefaultConnection": "Host=localhost;Port=5432;Database=eventforge_users_dev;Username=postgres;Password=postgres"
       }
-    },
-    "docker": {
-      "commandName": "Project",
-      "dotnetRunMessages": true,
-      "launchBrowser": false,
-      "applicationUrl": "http://0.0.0.0:8080",
-      "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Docker",
-        "ConnectionStrings__DefaultConnection": "Host=users-db;Port=5432;Database=eventforge_users;Username=postgres;Password=postgres"
-      }
-    }
+    }    
   }
 }
