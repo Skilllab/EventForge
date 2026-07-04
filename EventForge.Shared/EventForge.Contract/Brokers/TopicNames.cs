@@ -6,7 +6,17 @@ namespace EventForge.Contract.Brokers;
 public static class TopicNames
 {
     /// <summary>
-    /// Топик подтвержденных бронирований.
+    /// Топик подтвержденных бронирований
     /// </summary>
     public const string BookingConfirmed = "booking-confirmed";
+
+    /// <summary>
+    /// Топик отклоненных бронирований
+    /// </summary>
+    public const string BookingRejected = "booking-rejected";
+
+    /// <summary>
+    /// Топик отмененных бронирований
+    /// </summary>
+    public const string BookingCancelled = "booking-cancelled";
 }

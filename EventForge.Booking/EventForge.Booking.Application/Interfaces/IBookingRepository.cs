@@ -55,4 +55,32 @@ public interface IBookingRepository
     /// <param name="ct">Токен отмены</param>
     Task<bool> ConfirmAndAddOutboxAsync(Guid bookingId, DateTime processedAt, OutboxMessage outboxMessage, CancellationToken ct);
 
+
+    /// <summary>
+    /// Атомарно отменяет бронь и добавляет интеграционное событие в outbox.
+    /// </summary>
+    /// <param name="bookingId">ID бронирования</param>
+    /// <param name="userId">ID пользователя</param>
+    /// <param name="processedAt">Время обработки бронирования</param>
+    /// <param name="outboxMessage">Сообщение для добавления в outbox</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<bool> CancelAndAddOutboxAsync(Guid bookingId, Guid userId, DateTime processedAt, OutboxMessage outboxMessage, CancellationToken ct);
+
+    /// <summary>
+    /// Атомарно отклоняет бронь и добавляет интеграционное событие в outbox.
+    /// </summary>
+    /// <param name="bookingId">ID бронирования</param>
+    /// <param name="processedAt">Время обработки бронирования</param>
+    /// <param name="outboxMessage">Сообщение для добавления в outbox</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<bool> RejectAndAddOutboxAsync(Guid bookingId, DateTime processedAt, OutboxMessage outboxMessage, CancellationToken ct);
+
+
+    /// <summary>
+    /// Отклоняет бронь и добавляет интеграционное событие в outbox  
+    /// </summary>
+    /// <param name="outboxMessage">Сообщение для добавления в outbox</param>
+    /// <param name="ct">Токен отмены</param>
+    Task AddOutboxMessageAsync(OutboxMessage outboxMessage, CancellationToken ct);
+
 }

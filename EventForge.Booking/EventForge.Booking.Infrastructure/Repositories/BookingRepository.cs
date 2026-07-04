@@ -100,5 +100,77 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         return true;
     }
 
+    ///<inheritdoc/>
+    public async Task<bool> CancelAndAddOutboxAsync(
+        Guid bookingId,
+        Guid userId,
+        DateTime processedAt,
+        OutboxMessage outboxMessage,
+        CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
 
+        var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
+        if (entity == null)
+        {
+            return false;
+        }
+
+        if (entity.UserId != userId)
+        {
+            return false;
+        }
+
+        if (entity.Status == nameof(BookingStatus.Cancelled) || entity.Status == nameof(BookingStatus.Rejected))
+        {
+            return false;
+        }
+
+        entity.Status = nameof(BookingStatus.Cancelled);
+        entity.ProcessedAt = processedAt;
+
+        await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
+        await context.SaveChangesAsync(ct);
+
+        return true;
+    }
+
+    ///<inheritdoc/>
+    public async Task<bool> RejectAndAddOutboxAsync(
+        Guid bookingId,
+        DateTime processedAt,
+        OutboxMessage outboxMessage,
+        CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
+        if (entity == null)
+        {
+            return false;
+        }
+
+        if (entity.Status != nameof(BookingStatus.Pending))
+        {
+            return false;
+        }
+
+        entity.Status = nameof(BookingStatus.Rejected);
+        entity.ProcessedAt = processedAt;
+
+        await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
+        await context.SaveChangesAsync(ct);
+
+        return true;
+    }
+
+
+
+    ///<inheritdoc/>
+    public async Task AddOutboxMessageAsync(OutboxMessage outboxMessage, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+        await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
+        await context.SaveChangesAsync(ct);
+    }
 }

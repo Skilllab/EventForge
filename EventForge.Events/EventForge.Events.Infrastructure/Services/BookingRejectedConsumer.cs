@@ -4,7 +4,6 @@ using Confluent.Kafka;
 
 using EventForge.Contract.Brokers;
 using EventForge.Events.Application.Interfaces;
-using EventForge.Events.Domain.Exceptions;
 using EventForge.Events.Infrastructure.Common;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -15,13 +14,14 @@ using Microsoft.Extensions.Options;
 namespace EventForge.Events.Infrastructure.Services;
 
 /// <summary>
-/// Kafka consumer события BookingConfirmed.
-/// Обработка идемпотентна по MessageId.
+/// Consumer события BookingRejected.
+/// Сейчас используется для аналитики и фиксации факта обработки.
+/// Места не освобождает, так как по текущей модели они уменьшаются только на Confirmed.
 /// </summary>
-public class BookingConfirmedConsumer(
+public class BookingRejectedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
-    ILogger<BookingConfirmedConsumer> logger) : BackgroundService
+    ILogger<BookingRejectedConsumer> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -33,7 +33,7 @@ public class BookingConfirmedConsumer(
         };
 
         using var consumer = new ConsumerBuilder<string, string>(config).Build();
-        consumer.Subscribe(TopicNames.BookingConfirmed);
+        consumer.Subscribe(TopicNames.BookingRejected);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -45,10 +45,10 @@ public class BookingConfirmedConsumer(
                     continue;
                 }
 
-                var message = JsonSerializer.Deserialize<BookingConfirmed>(consumeResult.Message.Value);
+                var message = JsonSerializer.Deserialize<BookingRejected>(consumeResult.Message.Value);
                 if (message == null)
                 {
-                    logger.LogWarning("Получено пустое или невалидное сообщение BookingConfirmed");
+                    logger.LogWarning("Получено пустое или невалидное сообщение BookingRejected");
                     consumer.Commit(consumeResult);
                     continue;
                 }
@@ -56,7 +56,6 @@ public class BookingConfirmedConsumer(
                 await using var scope = scopeFactory.CreateAsyncScope();
 
                 var processedRepository = scope.ServiceProvider.GetRequiredService<IProcessedMessageRepository>();
-                var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
 
                 if (await processedRepository.ExistsAsync(message.MessageId, stoppingToken))
                 {
@@ -65,32 +64,12 @@ public class BookingConfirmedConsumer(
                     continue;
                 }
 
-                bool reserved;
+                logger.LogInformation(
+                    "Получено аналитическое событие BookingRejected. BookingId={BookingId}, EventId={EventId}",
+                    message.BookingId,
+                    message.EventId);
 
-                try
-                {
-                    reserved = await eventService.TryReserveSeatAsync(message.EventId, stoppingToken);
-                }
-                catch (NotFoundException ex)
-                {
-                    logger.LogWarning(ex,
-                        "Событие {EventId} не найдено для сообщения {MessageId}. Сообщение будет помечено обработанным.",
-                        message.EventId,
-                        message.MessageId);
-
-                    await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
-                    consumer.Commit(consumeResult);
-                    continue;
-                }
-
-                if (!reserved)
-                {
-                    logger.LogWarning("Не удалось уменьшить места для EventId={EventId}. Нет свободных мест.", message.EventId);
-                    consumer.Commit(consumeResult);
-                    continue;
-                }
-
-                await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
+                await processedRepository.AddAsync(message.MessageId, nameof(BookingRejected), stoppingToken);
                 consumer.Commit(consumeResult);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -99,7 +78,7 @@ public class BookingConfirmedConsumer(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Ошибка при обработке сообщения BookingConfirmed");
+                logger.LogError(ex, "Ошибка при обработке сообщения BookingRejected");
             }
         }
     }

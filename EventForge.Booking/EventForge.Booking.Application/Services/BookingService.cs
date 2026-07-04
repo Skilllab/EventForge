@@ -90,9 +90,35 @@ public class BookingService(
             throw new InvalidOperationException($"Невозможно отменить уже отклонённое бронирование '{bookingId}'");
         }
 
-        userBooking.Cancel(timeProvider.GetUtcNow().UtcDateTime);
+        var cancelledAt = timeProvider.GetUtcNow().UtcDateTime;
 
-        await bookingRepository.UpdateAsync(userBooking, ct);
+        var cancelledMessage = BookingCancelled.Create(
+            Guid.NewGuid(),
+            userBooking.Id,
+            userBooking.EventId,
+            userBooking.UserId,
+            1,
+            cancelledAt);
+
+        var cancelledOutbox = OutboxMessage.Create(
+            type: nameof(BookingCancelled),
+            topic: TopicNames.BookingCancelled,
+            messageKey: userBooking.EventId.ToString(),
+            payload: JsonSerializer.Serialize(cancelledMessage),
+            createdAt: cancelledAt,
+            error: null);
+
+        var saved = await bookingRepository.CancelAndAddOutboxAsync(
+            userBooking.Id,
+            userBooking.UserId,
+            cancelledAt,
+            cancelledOutbox,
+            ct);
+
+        if (!saved)
+        {
+            throw new InvalidOperationException($"Не удалось отменить бронирование '{bookingId}'");
+        }
 
         logger.LogInformation("Бронирование успешно отменено. ID: {Id}", bookingId);
         return true;
@@ -113,7 +139,8 @@ public class BookingService(
 
         try
         {
-            var message = new BookingConfirmed(
+            // По текущей модели бронь подтверждается.
+            var confirmedMessage = new BookingConfirmed(
                 Guid.NewGuid(),
                 booking.Id,
                 booking.EventId,
@@ -121,18 +148,18 @@ public class BookingService(
                 1,
                 processingTime);
 
-            var outbox = OutboxMessage.Create(
+            var confirmedOutbox = OutboxMessage.Create(
                 type: nameof(BookingConfirmed),
                 topic: TopicNames.BookingConfirmed,
                 messageKey: booking.EventId.ToString(),
-                payload: JsonSerializer.Serialize(message),
+                payload: JsonSerializer.Serialize(confirmedMessage),
                 createdAt: processingTime,
                 error: null);
 
             var saved = await bookingRepository.ConfirmAndAddOutboxAsync(
                 booking.Id,
                 processingTime,
-                outbox,
+                confirmedOutbox,
                 ct);
 
             if (!saved)
@@ -148,6 +175,36 @@ public class BookingService(
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
             logger.LogError(ex, "Ошибка при обработке бронирования {Id}", booking.Id);
+
+            var rejectedAt = timeProvider.GetUtcNow().UtcDateTime;
+
+            var rejectedMessage = BookingRejected.Create(
+                Guid.NewGuid(),
+                booking.Id,
+                booking.EventId,
+                booking.UserId,
+                1,
+                rejectedAt);
+
+            var rejectedOutbox = OutboxMessage.Create(
+                type: nameof(BookingRejected),
+                topic: TopicNames.BookingRejected,
+                messageKey: booking.EventId.ToString(),
+                payload: JsonSerializer.Serialize(rejectedMessage),
+                createdAt: rejectedAt,
+                error: null);
+
+            var rejected = await bookingRepository.RejectAndAddOutboxAsync(
+                booking.Id,
+                rejectedAt,
+                rejectedOutbox,
+                ct);
+
+            if (rejected)
+            {
+                logger.LogInformation("Бронь {Id} отклонена и записана в Outbox", booking.Id);
+            }
+
             throw;
         }
     }

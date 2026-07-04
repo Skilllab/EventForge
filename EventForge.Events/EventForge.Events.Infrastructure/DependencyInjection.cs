@@ -23,7 +23,6 @@ public static class DependencyInjection
     {
         services.AddSingleton<LoggingInterceptor>();
 
-
         services.AddDbContextFactory<EventsDbContext>(options =>
         {
             options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
@@ -37,6 +36,8 @@ public static class DependencyInjection
 
         services.AddHostedService<KafkaTopicInitializer>();
         services.AddHostedService<BookingConfirmedConsumer>();
+        services.AddHostedService<BookingCancelledConsumer>();
+        services.AddHostedService<BookingRejectedConsumer>();
 
         return services;
     }
