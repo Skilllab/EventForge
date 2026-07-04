@@ -110,6 +110,18 @@ public static class DependencyInjection
         });
 
 
+        // Добавляем CORS-политику
+        services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(policy =>
+            {
+                policy.AllowAnyOrigin()    // Разрешить запросы с любого URL (включая все ваши порты Swagger)
+                    .AllowAnyHeader()    // Разрешить любые заголовки (включая Authorization с JWT)
+                    .AllowAnyMethod();   // Разрешить любые методы (GET, POST и т.д.)
+            });
+        });
+
+
         return services;
     }
 }

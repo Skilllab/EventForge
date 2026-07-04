@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text;
 
 using EventForge.ExceptionMiddleware;
@@ -31,11 +31,17 @@ public static class DependencyInjection
         var jwtOptions = configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
         var schemeName = jwtOptions?.SchemeName ?? JwtBearerDefaults.AuthenticationScheme;
 
+        if (jwtOptions is null || string.IsNullOrWhiteSpace(jwtOptions.Secret))
+        {
+            throw new InvalidOperationException(
+                "JwtSettings section is missing or Secret is empty in configuration. " +
+                "Ensure appsettings.{Environment}.json contains the JwtSettings section with Secret, Issuer, and Audience.");
+        }
 
         services.AddAuthentication(options =>
             {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultAuthenticateScheme = schemeName;
+                options.DefaultChallengeScheme = schemeName;
             })
             .AddJwtBearer(schemeName, options =>
             {
@@ -44,13 +50,13 @@ public static class DependencyInjection
                     RoleClaimType = "role",
                     NameClaimType = "sub",
                     ValidateIssuer = true,
-                    ValidIssuer = jwtOptions?.Issuer,
+                    ValidIssuer = jwtOptions.Issuer,
                     ValidateAudience = true,
-                    ValidAudience = jwtOptions?.Audience,
+                    ValidAudience = jwtOptions.Audience,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions?.Secret ?? string.Empty)),
-                    ClockSkew = TimeSpan.Zero,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)),
+                    ClockSkew = TimeSpan.FromMinutes(5),
                 };
 
                 options.MapInboundClaims = false;
