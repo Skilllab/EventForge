@@ -14,6 +14,11 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options) :
     /// </summary>
     public DbSet<EventEntity> Events => Set<EventEntity>();
 
+    /// <summary>
+    /// Таблица обработанных сообщений
+    /// </summary>
+    public DbSet<ProcessedMessageEntity> ProcessedMessages => Set<ProcessedMessageEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("Events");

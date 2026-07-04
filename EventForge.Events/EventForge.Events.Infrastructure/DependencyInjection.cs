@@ -2,6 +2,7 @@ using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Infrastructure.Common;
 using EventForge.Events.Infrastructure.Context;
 using EventForge.Events.Infrastructure.Repositories;
+using EventForge.Events.Infrastructure.Services;
 using EventForge.LoggingDBInterceptor;
 
 using Microsoft.EntityFrameworkCore;
@@ -29,8 +30,13 @@ public static class DependencyInjection
         });
 
         services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
+        services.Configure<KafkaOptions>(configuration.GetSection(nameof(KafkaOptions)));
 
         services.AddScoped<IEventRepository, EventRepository>();
+        services.AddScoped<IProcessedMessageRepository, ProcessedMessageRepository>();
+
+        services.AddHostedService<KafkaTopicInitializer>();
+        services.AddHostedService<BookingConfirmedConsumer>();
 
         return services;
     }
