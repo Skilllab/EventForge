@@ -23,6 +23,32 @@ public class BookingRejectedConsumer(
     IOptions<KafkaOptions> kafkaOptions,
     ILogger<BookingRejectedConsumer> logger) : BackgroundService
 {
+    public async Task HandleMessageAsync(BookingRejected? message, CancellationToken stoppingToken)
+    {
+        if (message == null)
+        {
+            logger.LogWarning("Получено пустое или невалидное сообщение BookingRejected");
+            return;
+        }
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+
+        var processedRepository = scope.ServiceProvider.GetRequiredService<IProcessedMessageRepository>();
+
+        if (await processedRepository.ExistsAsync(message.MessageId, stoppingToken))
+        {
+            logger.LogInformation("Сообщение {MessageId} уже обработано, пропускаем", message.MessageId);
+            return;
+        }
+
+        logger.LogInformation(
+            "Получено аналитическое событие BookingRejected. BookingId={BookingId}, EventId={EventId}",
+            message.BookingId,
+            message.EventId);
+
+        await processedRepository.AddAsync(message.MessageId, nameof(BookingRejected), stoppingToken);
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var config = new ConsumerConfig
@@ -46,30 +72,7 @@ public class BookingRejectedConsumer(
                 }
 
                 var message = JsonSerializer.Deserialize<BookingRejected>(consumeResult.Message.Value);
-                if (message == null)
-                {
-                    logger.LogWarning("Получено пустое или невалидное сообщение BookingRejected");
-                    consumer.Commit(consumeResult);
-                    continue;
-                }
-
-                await using var scope = scopeFactory.CreateAsyncScope();
-
-                var processedRepository = scope.ServiceProvider.GetRequiredService<IProcessedMessageRepository>();
-
-                if (await processedRepository.ExistsAsync(message.MessageId, stoppingToken))
-                {
-                    logger.LogInformation("Сообщение {MessageId} уже обработано, пропускаем", message.MessageId);
-                    consumer.Commit(consumeResult);
-                    continue;
-                }
-
-                logger.LogInformation(
-                    "Получено аналитическое событие BookingRejected. BookingId={BookingId}, EventId={EventId}",
-                    message.BookingId,
-                    message.EventId);
-
-                await processedRepository.AddAsync(message.MessageId, nameof(BookingRejected), stoppingToken);
+                await HandleMessageAsync(message, stoppingToken);
                 consumer.Commit(consumeResult);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

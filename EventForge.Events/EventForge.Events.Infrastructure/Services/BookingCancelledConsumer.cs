@@ -23,6 +23,38 @@ public class BookingCancelledConsumer(
     IOptions<KafkaOptions> kafkaOptions,
     ILogger<BookingCancelledConsumer> logger) : BackgroundService
 {
+    public async Task HandleMessageAsync(BookingCancelled? message, CancellationToken stoppingToken)
+    {
+        if (message == null)
+        {
+            return;
+        }
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+
+        var processedRepository = scope.ServiceProvider.GetRequiredService<IProcessedMessageRepository>();
+        var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        if (await processedRepository.ExistsAsync(message.MessageId, stoppingToken))
+        {
+            return;
+        }
+
+        try
+        {
+            await eventService.ReleaseSeatAsync(message.EventId, stoppingToken);
+        }
+        catch (NotFoundException ex)
+        {
+            logger.LogWarning(ex,
+                "Событие {EventId} не найдено для сообщения {MessageId}. Сообщение будет помечено обработанным.",
+                message.EventId,
+                message.MessageId);
+        }
+
+        await processedRepository.AddAsync(message.MessageId, nameof(BookingCancelled), stoppingToken);
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var config = new ConsumerConfig
@@ -46,36 +78,7 @@ public class BookingCancelledConsumer(
                 }
 
                 var message = JsonSerializer.Deserialize<BookingCancelled>(consumeResult.Message.Value);
-                if (message == null)
-                {
-                    consumer.Commit(consumeResult);
-                    continue;
-                }
-
-                await using var scope = scopeFactory.CreateAsyncScope();
-
-                var processedRepository = scope.ServiceProvider.GetRequiredService<IProcessedMessageRepository>();
-                var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
-
-                if (await processedRepository.ExistsAsync(message.MessageId, stoppingToken))
-                {
-                    consumer.Commit(consumeResult);
-                    continue;
-                }
-
-                try
-                {
-                    await eventService.ReleaseSeatAsync(message.EventId, stoppingToken);
-                }
-                catch (NotFoundException ex)
-                {
-                    logger.LogWarning(ex,
-                        "Событие {EventId} не найдено для сообщения {MessageId}. Сообщение будет помечено обработанным.",
-                        message.EventId,
-                        message.MessageId);
-                }
-
-                await processedRepository.AddAsync(message.MessageId, nameof(BookingCancelled), stoppingToken);
+                await HandleMessageAsync(message, stoppingToken);
                 consumer.Commit(consumeResult);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

@@ -1,0 +1,34 @@
+using EventForge.Events.Infrastructure.Repositories;
+
+using FluentAssertions;
+
+namespace EventForge.Events.IntegrationTests;
+
+public class ProcessedMessageRepositoryTests : BaseRepositoryTest
+{
+    private ProcessedMessageRepository CreateRepository() => new(Factory);
+
+    [Fact]
+    public async Task AddAsync_Should_Save_Message_And_ExistsAsync_Should_Return_True()
+    {
+        await ResetDatabaseAsync();
+        var repository = CreateRepository();
+        var messageId = Guid.NewGuid();
+
+        await repository.AddAsync(messageId, "BookingConfirmed", CancellationToken.None);
+        var exists = await repository.ExistsAsync(messageId, CancellationToken.None);
+
+        exists.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ExistsAsync_Should_Return_False_For_Unknown_Message()
+    {
+        await ResetDatabaseAsync();
+        var repository = CreateRepository();
+
+        var exists = await repository.ExistsAsync(Guid.NewGuid(), CancellationToken.None);
+
+        exists.Should().BeFalse();
+    }
+}

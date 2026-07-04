@@ -23,6 +23,51 @@ public class BookingConfirmedConsumer(
     IOptions<KafkaOptions> kafkaOptions,
     ILogger<BookingConfirmedConsumer> logger) : BackgroundService
 {
+    public async Task HandleMessageAsync(BookingConfirmed? message, CancellationToken stoppingToken)
+    {
+        if (message == null)
+        {
+            logger.LogWarning("Получено пустое или невалидное сообщение BookingConfirmed");
+            return;
+        }
+
+        await using var scope = scopeFactory.CreateAsyncScope();
+
+        var processedRepository = scope.ServiceProvider.GetRequiredService<IProcessedMessageRepository>();
+        var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+
+        if (await processedRepository.ExistsAsync(message.MessageId, stoppingToken))
+        {
+            logger.LogInformation("Сообщение {MessageId} уже обработано, пропускаем", message.MessageId);
+            return;
+        }
+
+        bool reserved;
+
+        try
+        {
+            reserved = await eventService.TryReserveSeatAsync(message.EventId, stoppingToken);
+        }
+        catch (NotFoundException ex)
+        {
+            logger.LogWarning(ex,
+                "Событие {EventId} не найдено для сообщения {MessageId}. Сообщение будет помечено обработанным.",
+                message.EventId,
+                message.MessageId);
+
+            await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
+            return;
+        }
+
+        if (!reserved)
+        {
+            logger.LogWarning("Не удалось уменьшить места для EventId={EventId}. Нет свободных мест.", message.EventId);
+            return;
+        }
+
+        await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         var config = new ConsumerConfig
@@ -46,51 +91,7 @@ public class BookingConfirmedConsumer(
                 }
 
                 var message = JsonSerializer.Deserialize<BookingConfirmed>(consumeResult.Message.Value);
-                if (message == null)
-                {
-                    logger.LogWarning("Получено пустое или невалидное сообщение BookingConfirmed");
-                    consumer.Commit(consumeResult);
-                    continue;
-                }
-
-                await using var scope = scopeFactory.CreateAsyncScope();
-
-                var processedRepository = scope.ServiceProvider.GetRequiredService<IProcessedMessageRepository>();
-                var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
-
-                if (await processedRepository.ExistsAsync(message.MessageId, stoppingToken))
-                {
-                    logger.LogInformation("Сообщение {MessageId} уже обработано, пропускаем", message.MessageId);
-                    consumer.Commit(consumeResult);
-                    continue;
-                }
-
-                bool reserved;
-
-                try
-                {
-                    reserved = await eventService.TryReserveSeatAsync(message.EventId, stoppingToken);
-                }
-                catch (NotFoundException ex)
-                {
-                    logger.LogWarning(ex,
-                        "Событие {EventId} не найдено для сообщения {MessageId}. Сообщение будет помечено обработанным.",
-                        message.EventId,
-                        message.MessageId);
-
-                    await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
-                    consumer.Commit(consumeResult);
-                    continue;
-                }
-
-                if (!reserved)
-                {
-                    logger.LogWarning("Не удалось уменьшить места для EventId={EventId}. Нет свободных мест.", message.EventId);
-                    consumer.Commit(consumeResult);
-                    continue;
-                }
-
-                await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
+                await HandleMessageAsync(message, stoppingToken);
                 consumer.Commit(consumeResult);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

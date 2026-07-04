@@ -11,6 +11,10 @@
     <Project Path="EventForge.Events/EventForge.Events.Infrastructure/EventForge.Events.Infrastructure.csproj" Id="645b90c9-aa77-4d06-ac9d-96dfd6c7be5e" />
     <Project Path="EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj" Id="70b8c5bc-c2eb-40e5-88a2-57ab8e499b7a" />
   </Folder>
+  <Folder Name="/EventForge.Events/Tests/">
+    <Project Path="EventForge.Events/Tests/EventForge.Events.IntegrationTests/EventForge.Events.IntegrationTests.csproj" />
+    <Project Path="EventForge.Events/Tests/EventForge.Events.UnitTests/EventForge.Events.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/EventForge.Shared/">
     <Project Path="EventForge.Shared/EventForge.Contract/EventForge.Contract.csproj" Id="cd90d111-bd6c-4db9-97e3-ba7c9e310523" />
     <Project Path="EventForge.Shared/EventForge.Entities/EventForge.Shared.Entities.csproj" />
@@ -26,11 +30,6 @@
   <Folder Name="/EventForge.Users/Tests/">
     <Project Path="EventForge.Users/Tests/EventForge.Users.IntegrationTests/EventForge.Users.IntegrationTests.csproj" />
     <Project Path="EventForge.Users/Tests/EventForge.Users.UnitTests/EventForge.Users.UnitTests.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="EventBookingService.E2ETests/EventBookingService.E2ETests.csproj" Id="d9bff800-35f5-43e6-8a91-2af58d426107" />
-    <Project Path="tests/EventBookingService.IntegrationTests/EventBookingService.IntegrationTests.csproj" Id="38f184fb-edf2-42d3-a95c-df3b1875984f" />
-    <Project Path="tests/EventBookingService.UnitTests/EventBookingService.UnitTests.csproj" Id="c64449d8-de18-4a1d-a442-eebe1c3f93d2" />
   </Folder>
   <Folder Name="/Элементы решения/">
     <File Path=".editorconfig" />
