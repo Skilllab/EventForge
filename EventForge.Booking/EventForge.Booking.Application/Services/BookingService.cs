@@ -54,12 +54,12 @@ public class BookingService(
                 $"Превышено количество допустимых бронирований. Допустимо: {_bookingOptions.MaxBookingCount}");
         }
 
-        // Пока оставим REST вариант
-        var reserved = await eventsGateway.TryReserveSeatAsync(eventId, ct);
-        if (!reserved)
-        {
-            throw new NoAvailableSeatsException("Event", eventId.ToString());
-        }
+        //// Пока оставим REST вариант
+        //var reserved = await eventsGateway.TryReserveSeatAsync(eventId, ct);
+        //if (!reserved)
+        //{
+        //    throw new NoAvailableSeatsException("Event", eventId.ToString());
+        //}
 
         var newBooking = BookingModel.Create(
             eventId,
@@ -116,8 +116,8 @@ public class BookingService(
 
         await bookingRepository.UpdateAsync(userBooking, ct);
 
-        // Пока оставляем так
-        await eventsGateway.ReleaseSeatAsync(userBooking.EventId, ct);
+        //// Пока оставляем так
+        //await eventsGateway.ReleaseSeatAsync(userBooking.EventId, ct);
 
         logger.LogInformation("Бронирование успешно отменено. ID: {Id}", bookingId);
         return true;

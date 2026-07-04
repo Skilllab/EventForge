@@ -31,12 +31,21 @@ public static class DependencyInjection
         });
 
         services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
+        services.Configure<EventsServiceOptions>(configuration.GetSection(nameof(EventsServiceOptions)));
+        services.Configure<KafkaOptions>(configuration.GetSection(nameof(KafkaOptions)));
 
+
+        // Фоновая обработка pending бронирований.
         services.AddHostedService<BookingBackgroundService>();
 
+        // Фоновая публикация сообщений из outbox.
+        services.AddHostedService<OutboxPublisherBackgroundService>();
+
         services.AddScoped<IBookingRepository, BookingRepository>();
-        //Регистрируем сервис для работы с микросервисом )))
-        services.Configure<EventsServiceOptions>(configuration.GetSection(nameof(EventsServiceOptions)));
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
+
+        services.AddSingleton<IBookingConfirmedPublisher, KafkaBookingConfirmedPublisher>();
+
         services.AddHttpContextAccessor();
         services.AddTransient<AuthorizationHeaderForwardingHandler>();
 

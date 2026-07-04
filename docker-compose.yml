@@ -15,7 +15,7 @@ services:
       retries: 10
 
   # ===========================================================================
-  # ZOOKEEPER
+  # KAFKA
   # ===========================================================================      
   kafka:
     image: confluentinc/cp-kafka:7.6.1
@@ -37,7 +37,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     healthcheck:
-      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:29092 --list || exit 1"]
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 15
@@ -132,12 +132,14 @@ services:
     restart: unless-stopped
     environment:
       ConnectionStrings__DefaultConnection: ${EVENTS_CONNECTION_STRING}
-      Kafka__BootstrapServers: kafka:9092
-      Kafka__ConsumerGroup: eventforge-events
+      KafkaOptions__BootstrapServers: kafka:29092
+      KafkaOptions__ConsumerGroup: eventforge-events
     ports:
       - "5009:8080"
     depends_on:
       postgres_events:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
 
   # ===========================================================================
@@ -183,28 +185,14 @@ services:
     restart: unless-stopped
     environment:
       ConnectionStrings__DefaultConnection: ${BOOKING_CONNECTION_STRING}
-      Kafka__BootstrapServers: kafka:9092
+      KafkaOptions__BootstrapServers: kafka:29092
     ports:
       - "5010:8080"
     depends_on:
       postgres_booking:
         condition: service_healthy
-
-  # ===========================================================================
-  # MONOLITH DB
-  # ===========================================================================
-  postgres_db:
-    image: postgres:16-alpine
-    container_name: my_postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_MONO_NAME}
-    ports:
-      - "${DB_MONO_PORT}:5432"
-    volumes:
-      - pg_mono_data:/var/lib/postgresql/data
+      kafka:
+        condition: service_healthy
 
   # ===========================================================================
   # PGADMIN
@@ -226,11 +214,9 @@ services:
       - postgres_users
       - postgres_events
       - postgres_booking
-      - postgres_db
       
 volumes:
   pg_users_data:
   pg_events_data:
   pg_booking_data:
-  pg_mono_data:
   pgadmin_data:
