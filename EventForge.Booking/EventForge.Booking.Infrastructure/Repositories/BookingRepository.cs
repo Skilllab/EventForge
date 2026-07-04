@@ -70,4 +70,35 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         booking.UpdateEntity(entity);
         await context.SaveChangesAsync(ct);
     }
+
+    ///<inheritdoc/>
+    public async Task<bool> ConfirmAndAddOutboxAsync(
+        Guid bookingId,
+        DateTime processedAt,
+        OutboxMessage outboxMessage,
+        CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
+        if (entity == null)
+        {
+            return false;
+        }
+
+        if (entity.Status != nameof(BookingStatus.Pending))
+        {
+            return false;
+        }
+
+        entity.Status = nameof(BookingStatus.Confirmed);
+        entity.ProcessedAt = processedAt;
+
+        await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
+        await context.SaveChangesAsync(ct);
+
+        return true;
+    }
+
+
 }

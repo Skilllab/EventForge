@@ -129,5 +129,47 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         var affected = await context.Events.Where(e => e.Id == id).ExecuteDeleteAsync(ct);
         return affected > 0;
     }
-      
+
+    ///<inheritdoc/>
+    public async Task<bool> TryReserveSeatAsync(Guid eventId, int seatsCount, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entity = await context.Events.FirstOrDefaultAsync(e => e.Id == eventId, ct);
+        if (entity == null)
+        {
+            return false;
+        }
+
+        if (seatsCount <= 0 || entity.AvailableSeats < seatsCount)
+        {
+            return false;
+        }
+
+        entity.AvailableSeats -= seatsCount;
+        await context.SaveChangesAsync(ct);
+
+        return true;
+    }
+
+    ///<inheritdoc/>
+    public async Task ReleaseSeatAsync(Guid eventId, int seatsCount, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entity = await context.Events.FirstOrDefaultAsync(e => e.Id == eventId, ct);
+        if (entity == null)
+        {
+            return;
+        }
+
+        if (seatsCount <= 0)
+        {
+            return;
+        }
+
+        entity.AvailableSeats = Math.Min(entity.TotalSeats, entity.AvailableSeats + seatsCount);
+        await context.SaveChangesAsync(ct);
+    }
+
 }

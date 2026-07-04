@@ -12,12 +12,14 @@ public static class MessageMapper
     /// Из сущности БД в доменную модель
     /// </summary>
     public static OutboxMessage ToDomain(this OutboxMessageEntity entity) =>
-        OutboxMessage.Create(
+        OutboxMessage.Restore(
+            entity.Id,
             entity.Type,
             entity.Topic,
             entity.MessageKey,
             entity.Payload,
             entity.CreatedAt,
+            entity.ProcessedAt,
             entity.Error);
 
     /// <summary>
@@ -35,6 +37,4 @@ public static class MessageMapper
             ProcessedAt = domain.ProcessedAt,
             Error = domain.Error
         };
-
-       
 }

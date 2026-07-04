@@ -46,4 +46,13 @@ public interface IBookingRepository
     /// <returns>Количество активных бронирований пользователя</returns>
     Task<int> GetUserActiveBookingsCountAsync(Guid userId, CancellationToken ct);
 
+    /// <summary>
+    /// Атомарно подтверждает бронь и добавляет интеграционное событие в outbox.
+    /// </summary>
+    /// <param name="bookingId">ID бронирования</param>
+    /// <param name="processedAt">Время обработки бронирования</param>
+    /// <param name="outboxMessage">Сообщение для добавления в outbox</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<bool> ConfirmAndAddOutboxAsync(Guid bookingId, DateTime processedAt, OutboxMessage outboxMessage, CancellationToken ct);
+
 }

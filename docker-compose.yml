@@ -42,6 +42,22 @@ services:
       timeout: 10s
       retries: 15
   
+  akhq:
+    image: tchiotludo/akhq:0.25.0
+    container_name: eventforge_akhq
+    ports:
+      - "8080:8080"
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka:
+              properties:
+                bootstrap.servers: "kafka:29092"
+    depends_on:
+      kafka:
+        condition: service_healthy
+        
   # ===========================================================================
   # USERS DB
   # ===========================================================================
@@ -153,7 +169,6 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${BOOKING_DB}
-      EventsServiceOptions__BaseUrl: "http://eventforge_events_api:8080/"
     ports:
       - "${BOOKING_PORT}:5432"
     volumes:

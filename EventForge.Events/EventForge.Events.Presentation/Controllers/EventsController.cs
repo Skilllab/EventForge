@@ -98,37 +98,4 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
         await eventService.CancelEventAsync(eventId, ct);
         return NoContent();
     }
-
-
-    /// <summary>
-    /// Зарезервировать место на событие
-    /// </summary>
-    /// <param name="eventId">Идентификатор события</param>
-    /// <returns>Результат операции</returns>
-    [HttpPost("{eventId:guid}/reserve-seat")]
-    [Tags("API для событий")]
-    public async Task<IActionResult> ReserveSeat([Required] Guid eventId, CancellationToken ct)
-    {
-        logger.LogDebug("Обработка запроса POST {methodName} c id: {id}", nameof(ReserveSeat), eventId);
-
-        var reserved = await eventService.TryReserveSeatAsync(eventId, ct);
-        return reserved ? NoContent() : Conflict(new { message = "Нет свободных мест." });
-    }
-
-
-    /// <summary>
-    /// Освободить место на событие
-    /// </summary>
-    /// <param name="eventId">Идентификатор события</param>
-    /// <returns>Результат операции</returns>
-    [HttpPost("{eventId:guid}/release-seat")]
-    [Tags("API для событий")]
-    public async Task<IActionResult> ReleaseSeat([Required] Guid eventId, CancellationToken ct)
-    {
-        logger.LogDebug("Обработка запроса POST {methodName} c id: {id}", nameof(ReleaseSeat), eventId);
-
-        await eventService.ReleaseSeatAsync(eventId, ct);
-        return NoContent();
-    }
-
 }

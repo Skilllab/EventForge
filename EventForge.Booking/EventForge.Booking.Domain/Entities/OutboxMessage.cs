@@ -8,7 +8,7 @@ public class OutboxMessage
     /// <summary>
     /// Уникальный идентификатор outbox-сообщения
     /// </summary>
-    public Guid Id { get; init; }
+    public Guid Id { get; private set; }
 
     /// <summary>
     /// Тип сообщения
@@ -45,29 +45,65 @@ public class OutboxMessage
     /// </summary>
     public string? Error { get; private set; }
 
-    private OutboxMessage(string type, string topic, string messageKey, string payload, DateTime createdAt, string? error)
+    private OutboxMessage(
+        Guid id,
+        string type,
+        string topic,
+        string messageKey,
+        string payload,
+        DateTime createdAt,
+        DateTime? processedAt,
+        string? error)
     {
-        Id = Guid.NewGuid();
+        Id = id;
         Type = type;
         Topic = topic;
         MessageKey = messageKey;
         Payload = payload;
         CreatedAt = createdAt;
+        ProcessedAt = processedAt;
         Error = error;
     }
 
     /// <summary>
     /// Создает новый экземпляр OutboxMessage
     /// </summary>
-    /// <param name="type">Тип сообщения</param>
-    /// <param name="topic">Имя топика Kafka</param>
-    /// <param name="messageKey">Ключ сообщения Kafka</param>
-    /// <param name="payload">JSON-представление события</param>
-    /// <param name="createdAt">Время создания записи</param>
-    /// <param name="error">Последняя ошибка публикации</param>
-    /// <returns>Новый экземпляр OutboxMessage</returns>
-    public static OutboxMessage Create(string type, string topic, string messageKey, string payload, DateTime createdAt, string? error)
-    {
-        return new OutboxMessage(type, topic, messageKey, payload, createdAt, error);
-    }
+    public static OutboxMessage Create(
+        string type,
+        string topic,
+        string messageKey,
+        string payload,
+        DateTime createdAt,
+        string? error) =>
+        new(
+            Guid.NewGuid(),
+            type,
+            topic,
+            messageKey,
+            payload,
+            createdAt,
+            null,
+            error);
+
+    /// <summary>
+    /// Восстанавливает объект из хранилища.
+    /// </summary>
+    public static OutboxMessage Restore(
+        Guid id,
+        string type,
+        string topic,
+        string messageKey,
+        string payload,
+        DateTime createdAt,
+        DateTime? processedAt,
+        string? error) =>
+        new(
+            id,
+            type,
+            topic,
+            messageKey,
+            payload,
+            createdAt,
+            processedAt,
+            error);
 }

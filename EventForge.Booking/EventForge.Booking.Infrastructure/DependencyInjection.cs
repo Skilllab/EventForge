@@ -4,13 +4,11 @@ using EventForge.Booking.Infrastructure.Common;
 using EventForge.Booking.Infrastructure.Context;
 using EventForge.Booking.Infrastructure.Repositories;
 using EventForge.Booking.Infrastructure.Services;
-using EventForge.Booking.Infrastructure.Services.External;
 using EventForge.LoggingDBInterceptor;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 
 namespace EventForge.Booking.Infrastructure;
@@ -31,7 +29,6 @@ public static class DependencyInjection
         });
 
         services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
-        services.Configure<EventsServiceOptions>(configuration.GetSection(nameof(EventsServiceOptions)));
         services.Configure<KafkaOptions>(configuration.GetSection(nameof(KafkaOptions)));
 
 
@@ -45,18 +42,7 @@ public static class DependencyInjection
         services.AddScoped<IOutboxRepository, OutboxRepository>();
 
         services.AddSingleton<IBookingConfirmedPublisher, KafkaBookingConfirmedPublisher>();
-
-        services.AddHttpContextAccessor();
-        services.AddTransient<AuthorizationHeaderForwardingHandler>();
-
-        services.AddHttpClient<IEventsGateway, EventsApiClient>((sp, client) =>
-            {
-                var options = sp.GetRequiredService<IOptions<EventsServiceOptions>>().Value;
-                client.BaseAddress = new Uri(options.BaseUrl);
-                client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-            })
-            .AddHttpMessageHandler<AuthorizationHeaderForwardingHandler>();
-
+       
         return services;
     }
 }

@@ -4,6 +4,7 @@ using Confluent.Kafka;
 
 using EventForge.Contract.Brokers;
 using EventForge.Events.Application.Interfaces;
+using EventForge.Events.Domain.Exceptions;
 using EventForge.Events.Infrastructure.Common;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -48,6 +49,7 @@ public class BookingConfirmedConsumer(
                 if (message == null)
                 {
                     logger.LogWarning("Получено пустое или невалидное сообщение BookingConfirmed");
+                    consumer.Commit(consumeResult);
                     continue;
                 }
 
@@ -64,7 +66,25 @@ public class BookingConfirmedConsumer(
                     continue;
                 }
 
-                var reserved = await eventService.TryReserveSeatAsync(message.EventId, stoppingToken);
+                bool reserved;
+
+
+                try
+                {
+                    reserved = await eventService.TryReserveSeatAsync(message.EventId, stoppingToken);
+                }
+                catch (NotFoundException ex)
+                {
+                    logger.LogWarning(ex,
+                        "Событие {EventId} не найдено для сообщения {MessageId}. Сообщение будет помечено обработанным.",
+                        message.EventId,
+                        message.MessageId);
+
+                    await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
+                    consumer.Commit(consumeResult);
+                    continue;
+                }
+
                 if (!reserved)
                 {
                     logger.LogWarning("Не удалось уменьшить места для EventId={EventId}. Нет свободных мест.", message.EventId);
@@ -73,7 +93,6 @@ public class BookingConfirmedConsumer(
                 }
 
                 await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
-
                 consumer.Commit(consumeResult);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -82,7 +101,6 @@ public class BookingConfirmedConsumer(
             }
             catch (Exception ex)
             {
-                // Не падаем на одном плохом сообщении.
                 logger.LogError(ex, "Ошибка при обработке сообщения BookingConfirmed");
             }
         }

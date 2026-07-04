@@ -18,8 +18,6 @@ namespace EventForge.Booking.Application.Services;
 /// </summary>
 public class BookingService(
     IBookingRepository bookingRepository,
-    IOutboxRepository outboxRepository,
-    IEventsGateway eventsGateway,
     IOptions<BookingOptions> bookingOptions,
     ILogger<BookingService> logger,
     TimeProvider timeProvider) : IBookingService
@@ -32,19 +30,6 @@ public class BookingService(
 
         logger.LogInformation("Создание нового бронирования для события: {Event}", eventId);
 
-        var existedEvent = await eventsGateway.GetEventAsync(eventId, ct);
-        if (existedEvent == null)
-        {
-            logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
-            throw new NotFoundException("Event", eventId.ToString());
-        }
-
-        if (existedEvent.StartAt < timeProvider.GetUtcNow())
-        {
-            logger.LogError("Событие уже началось и недоступно для бронирования. ID: {Id}", eventId);
-            throw new BookingPastEventException("Event", eventId.ToString());
-        }
-
         var activeBookingsCount = await bookingRepository.GetUserActiveBookingsCountAsync(userId, ct);
         if (activeBookingsCount >= _bookingOptions.MaxBookingCount)
         {
@@ -53,13 +38,6 @@ public class BookingService(
                 userId.ToString(),
                 $"Превышено количество допустимых бронирований. Допустимо: {_bookingOptions.MaxBookingCount}");
         }
-
-        //// Пока оставим REST вариант
-        //var reserved = await eventsGateway.TryReserveSeatAsync(eventId, ct);
-        //if (!reserved)
-        //{
-        //    throw new NoAvailableSeatsException("Event", eventId.ToString());
-        //}
 
         var newBooking = BookingModel.Create(
             eventId,
@@ -116,9 +94,6 @@ public class BookingService(
 
         await bookingRepository.UpdateAsync(userBooking, ct);
 
-        //// Пока оставляем так
-        //await eventsGateway.ReleaseSeatAsync(userBooking.EventId, ct);
-
         logger.LogInformation("Бронирование успешно отменено. ID: {Id}", bookingId);
         return true;
     }
@@ -138,53 +113,41 @@ public class BookingService(
 
         try
         {
-            var existedEvent = await eventsGateway.GetEventAsync(booking.EventId, ct);
-            if (existedEvent == null)
-            {
-                logger.LogWarning("Событие не найдено. ID: {Id}", booking.EventId);
-                booking.Reject(processingTime);
-                await bookingRepository.UpdateAsync(booking, ct);
-                return;
-            }
-
-            // Сохраняем подтверждение в БД.
-            booking.Confirm(processingTime);
-            await bookingRepository.UpdateAsync(booking, ct);
-
-            // Пишем интеграционное событие в Outbox.
-            var message = BookingConfirmed.Create(
+            var message = new BookingConfirmed(
                 Guid.NewGuid(),
                 booking.Id,
                 booking.EventId,
                 booking.UserId,
                 1,
-                processingTime
-            );
+                processingTime);
 
             var outbox = OutboxMessage.Create(
-            
-            type: nameof(BookingConfirmed),
-            topic: TopicNames.BookingConfirmed,
-            messageKey: booking.EventId.ToString(),
-            payload: JsonSerializer.Serialize(message),
-            createdAt: DateTime.UtcNow,
-            error: null
-            );
+                type: nameof(BookingConfirmed),
+                topic: TopicNames.BookingConfirmed,
+                messageKey: booking.EventId.ToString(),
+                payload: JsonSerializer.Serialize(message),
+                createdAt: processingTime,
+                error: null);
 
-            await outboxRepository.AddAsync(outbox, ct);
+            var saved = await bookingRepository.ConfirmAndAddOutboxAsync(
+                booking.Id,
+                processingTime,
+                outbox,
+                ct);
+
+            if (!saved)
+            {
+                logger.LogWarning(
+                    "Не удалось подтвердить бронирование {BookingId}. Возможно, оно уже было обработано.",
+                    booking.Id);
+                return;
+            }
 
             logger.LogInformation("Бронь {Id} подтверждена и записана в Outbox", booking.Id);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
-            booking.Reject(timeProvider.GetUtcNow().UtcDateTime);
-            await bookingRepository.UpdateAsync(booking, ct);
-
-            if (ex is not OperationCanceledException)
-            {
-                logger.LogError(ex, "Ошибка при обработке бронирования {ID}", booking.Id);
-            }
-
+            logger.LogError(ex, "Ошибка при обработке бронирования {Id}", booking.Id);
             throw;
         }
     }

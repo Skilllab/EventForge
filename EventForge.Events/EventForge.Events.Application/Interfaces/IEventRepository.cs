@@ -58,19 +58,19 @@ public interface IEventRepository
     /// <param name="ct">Токен отмены</param>
     Task<bool> DeleteAsync(Guid id, CancellationToken ct);
 
-    ///// <summary>
-    ///// Получение события по ID с блокировкой в контексте БД
-    ///// </summary>
-    ///// <param name="id">Идентификатор события</param>
-    ///// <param name="context">Контекст БД</param>
-    ///// <param name="ct">Токен отмены</param>
-    //Task<Event?> GetByIdWithLockInContextAsync(Guid id, ITransactionContext context, CancellationToken ct);
+    /// <summary>
+    /// Атомарно пытается уменьшить количество свободных мест на событии.
+    /// </summary>
+    /// <param name="eventId">Идентификатор события</param>
+    /// <param name="seatsCount">Количество мест для бронирования</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<bool> TryReserveSeatAsync(Guid eventId, int seatsCount, CancellationToken ct);
 
-    ///// <summary>
-    ///// Обновить событие в контексте. Метод не сохраняет изменения.
-    ///// </summary>
-    ///// <param name="event">Доменная модель события с новыми значениями</param>
-    ///// <param name="context">Контекст БД</param>
-    ///// <param name="ct">Токен отмены</param>
-    //Task UpdateInContextAsync(Event @event, ITransactionContext context, CancellationToken ct);
+    /// <summary>
+    /// Атомарно освобождает места на событии.
+    /// </summary>
+    /// <param name="eventId">Идентификатор события</param>
+    /// <param name="seatsCount">Количество мест для освобождения</param>
+    /// <param name="ct">Токен отмены</param>
+    Task ReleaseSeatAsync(Guid eventId, int seatsCount, CancellationToken ct);
 }

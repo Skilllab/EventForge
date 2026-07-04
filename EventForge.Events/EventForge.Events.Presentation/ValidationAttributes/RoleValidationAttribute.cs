@@ -4,6 +4,9 @@ using EventForge.Shared.Entities.Enums;
 
 namespace EventForge.Events.Presentation.ValidationAttributes;
 
+/// <summary>
+/// Атрибут валидации, который проверяет, что роль пользователя соответствует указанной роли.
+/// </summary>
 public class RoleValidationAttribute : ValidationAttribute
 {
     private static readonly HashSet<string> _validRoles =

@@ -4,6 +4,7 @@ using EventForge.Events.Application.Mapping;
 using EventForge.Events.Domain.Entities;
 using EventForge.Events.Domain.Exceptions;
 
+using Microsoft.Build.Framework;
 using Microsoft.Extensions.Logging;
 
 namespace EventForge.Events.Application.Services;
@@ -11,17 +12,17 @@ namespace EventForge.Events.Application.Services;
 /// <summary>
 /// Сервис обработки событий
 /// </summary>
-/// <param name="_repository">Репозиторий с событиями</param>
-/// <param name="_logger">Логгер</param>
+/// <param name="repository">Репозиторий с событиями</param>
+/// <param name="logger">Логгер</param>
 /// <param name="timeProvider">Провайдер управления временем и датой</param>
-public class EventService(IEventRepository _repository, ILogger<EventService> _logger, TimeProvider timeProvider) : IEventService
+public class EventService(IEventRepository repository, ILogger<EventService> logger, TimeProvider timeProvider) : IEventService
 {
     /// <inheritdoc/>
     public async Task<EventDTO> CreateEventAsync(CreateEventDto newEventDTO, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
-        _logger.LogInformation("Создание нового события: {Title}", newEventDTO.Title);
+        logger.LogInformation("Создание нового события: {Title}", newEventDTO.Title);
         var newEvent = Event.Create(
             newEventDTO.Title,
             newEventDTO.StartAt,
@@ -30,8 +31,8 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
             newEventDTO.Description
         );
 
-        await _repository.AddAsync(newEvent, ct);
-        _logger.LogInformation("Событие успешно создано. ID: {Id}", newEvent.Id);
+        await repository.AddAsync(newEvent, ct);
+        logger.LogInformation("Событие успешно создано. ID: {Id}", newEvent.Id);
         return newEvent.ToDto();
     }
 
@@ -40,12 +41,13 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
     {
         ct.ThrowIfCancellationRequested();
 
-        _logger.LogDebug("Попытка удаления события с ID: {Id}", eventId);
-        if (!await _repository.DeleteAsync(eventId, ct))
+        logger.LogDebug("Попытка удаления события с ID: {Id}", eventId);
+        if (!await repository.DeleteAsync(eventId, ct))
         {
             throw new NotFoundException(nameof(Event), eventId.ToString());
         }
-        _logger.LogInformation("Событие успешно удалено. ID: {Id} ", eventId);
+
+        logger.LogInformation("Событие успешно удалено. ID: {Id} ", eventId);
     }
 
     /// <inheritdoc/>
@@ -53,13 +55,10 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
     {
         ct.ThrowIfCancellationRequested();
 
-        // Получаем текущее время через провайдер (может пригодиться для логов или доп. логики)
         var now = timeProvider.GetUtcNow().UtcDateTime;
+        logger.LogInformation("Запрос списка событий в {Now}. Фильтр: {Filter}", now, filter.Title);
 
-        _logger.LogInformation("Запрос списка событий в {Now}. Фильтр: {Filter}", now, filter.Title);
-
-        var result = await _repository.GetPagedAsync(filter.Title, filter.From, filter.To, filter.Page, filter.PageSize, ct);
-
+        var result = await repository.GetPagedAsync(filter.Title, filter.From, filter.To, filter.Page, filter.PageSize, ct);
         var items = result.Items.Select(r => r.ToDto()).ToList();
 
         return new PaginatedResultDTO(result.TotalCount, items, filter.Page, filter.PageSize);
@@ -70,10 +69,10 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
     {
         ct.ThrowIfCancellationRequested();
 
-        var existedEvent = await _repository.GetByIdAsync(eventId, ct);
+        var existedEvent = await repository.GetByIdAsync(eventId, ct);
         if (existedEvent == null)
         {
-            _logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
+            logger.LogError("Событие не найдено при запросе. ID: {Id}", eventId);
             throw new NotFoundException(nameof(Event), eventId.ToString());
         }
 
@@ -85,11 +84,11 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
     {
         ct.ThrowIfCancellationRequested();
 
-        _logger.LogInformation("Обновление события {Id}", eventId);
-        var existedEvent = await _repository.GetByIdAsync(eventId, ct);
+        logger.LogInformation("Обновление события {Id}", eventId);
+        var existedEvent = await repository.GetByIdAsync(eventId, ct);
         if (existedEvent == null)
         {
-            _logger.LogError("Ошибка обновления: событие не существует. ID: {Id}", eventId);
+            logger.LogError("Ошибка обновления: событие не существует. ID: {Id}", eventId);
             throw new NotFoundException(nameof(Event), eventId.ToString(), "Событие с таким ID не найдено");
         }
 
@@ -99,42 +98,38 @@ public class EventService(IEventRepository _repository, ILogger<EventService> _l
             currentEvent.EndAt ?? existedEvent.EndAt,
             currentEvent.Description ?? existedEvent.Description);
 
-        await _repository.UpdateAsync(existedEvent, ct);
-        _logger.LogInformation("Событие успешно обновлено. ID: {Id}", eventId);
+        await repository.UpdateAsync(existedEvent, ct);
+        logger.LogInformation("Событие успешно обновлено. ID: {Id}", eventId);
     }
 
     public async Task<bool> TryReserveSeatAsync(Guid eventId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
-        var existedEvent = await _repository.GetByIdWithLockAsync(eventId, ct);
-        if (existedEvent == null)
-        {
-            throw new NotFoundException(nameof(Event), eventId.ToString());
-        }
-
-        var reserved = existedEvent.TryReserveSeats();
+        var reserved = await repository.TryReserveSeatAsync(eventId, 1, ct);
         if (!reserved)
         {
-            return false;
+            var existedEvent = await repository.GetByIdAsync(eventId, ct);
+            if (existedEvent == null)
+            {
+                throw new NotFoundException(nameof(Event), eventId.ToString());
+            }
         }
 
-        await _repository.UpdateAsync(existedEvent, ct);
-        return true;
+        return reserved;
     }
 
     public async Task ReleaseSeatAsync(Guid eventId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
 
-        var existedEvent = await _repository.GetByIdWithLockAsync(eventId, ct);
+        var existedEvent = await repository.GetByIdAsync(eventId, ct);
         if (existedEvent == null)
         {
             throw new NotFoundException(nameof(Event), eventId.ToString());
         }
 
-        existedEvent.ReleaseSeats();
-        await _repository.UpdateAsync(existedEvent, ct);
+        await repository.ReleaseSeatAsync(eventId, 1, ct);
     }
 
 
