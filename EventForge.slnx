@@ -23,6 +23,10 @@
     <Project Path="EventForge.Users/EventForge.Users.Infrastructure/EventForge.Users.Infrastructure.csproj" Id="b357e3f4-6cc8-4f3f-b581-1bab670220c4" />
     <Project Path="EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj" Id="3b53befc-b4d2-4276-8de9-b36f560666d4" />
   </Folder>
+  <Folder Name="/EventForge.Users/Tests/">
+    <Project Path="EventForge.Users/Tests/EventForge.Users.IntegrationTests/EventForge.Users.IntegrationTests.csproj" />
+    <Project Path="EventForge.Users/Tests/EventForge.Users.UnitTests/EventForge.Users.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="EventBookingService.E2ETests/EventBookingService.E2ETests.csproj" Id="d9bff800-35f5-43e6-8a91-2af58d426107" />
     <Project Path="tests/EventBookingService.IntegrationTests/EventBookingService.IntegrationTests.csproj" Id="38f184fb-edf2-42d3-a95c-df3b1875984f" />
