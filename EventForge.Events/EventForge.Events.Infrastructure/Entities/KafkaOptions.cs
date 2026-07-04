@@ -1,4 +1,4 @@
-namespace EventForge.Events.Infrastructure.Common;
+namespace EventForge.Events.Infrastructure.Entities;
 
 /// <summary>
 /// Настройки подключения к Kafka

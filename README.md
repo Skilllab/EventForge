@@ -24,7 +24,6 @@
 - [Миграции](#миграции)
 - [Тестирование](#тестирование)
 - [API примеры](#api-примеры)
-- [Структура репозитория](#структура-репозитория)
 
 ## О проекте
 
@@ -149,47 +148,6 @@ Kafka используется для межсервисного обмена с
 
 Для `Booking` важно, что публикация идёт через outbox, а для `Events` — что обработка идемпотентна.
 
-## Локальная dev-схема запуска
-
-Рекомендуемая схема для локальной разработки:
-
-```text
-PostgreSQL
-  ├─ database: users
-  ├─ database: events
-  └─ database: booking
-
-Kafka
-  ├─ topic: booking-confirmed
-  ├─ topic: booking-rejected
-  └─ topic: booking-cancelled
-
-Users API   -> JWT
-Events API  -> consume Kafka, manage seats
-Booking API -> create bookings, produce outbox messages
-```
-
-Практически удобно держать:
-
-- один локальный PostgreSQL instance с разными БД под сервисы
-- один Kafka broker для `Events` и `Booking`
-- три отдельно запущенных Web API проекта
-
-Минимум конфигурации, который нужен локально:
-
-- `Users`:
-  - `ConnectionStrings:DefaultConnection`
-  - `JwtSettings:*`
-- `Events`:
-  - `ConnectionStrings:DefaultConnection`
-  - `JwtSettings:*`
-  - `KafkaOptions:BootstrapServers`
-  - `KafkaOptions:ConsumerGroup`
-- `Booking`:
-  - `ConnectionStrings:DefaultConnection`
-  - `JwtSettings:*`
-  - `KafkaOptions:BootstrapServers`
-
 ## Запуск проекта
 
 ### Требования
@@ -197,14 +155,34 @@ Booking API -> create bookings, produce outbox messages
 - .NET 10 SDK
 - Docker Desktop
 - PostgreSQL 16+ либо контейнер PostgreSQL
-- Kafka broker для полного межсервисного сценария
+- Kafka broker для межсервисного сценария
 
-### Локальный запуск сервисов
+Предлагается 2 сценария запуска:
+
+1. Локально через Visual Studio или Rider (только сервисы)
+2. Через Docker Compose (все сервисы + инфраструктура)
+
+#### Сценарий 1: 
+
+- Запуск окружения
+
+```bash
+docker compose up -d zookeeper kafka akhq postgres_users postgres_events postgres_booking pgadmin
+```
+
+- Запуск через IDE (Visual Studio, Rider) с конфигурацией `Только сервисы` (три Web API проекта)
+или Локальный запуск сервисов
 
 ```bash
 dotnet run --project EventForge.Users/EventForge.Users.Presentation
 dotnet run --project EventForge.Events/EventForge.Events.Presentation
 dotnet run --project EventForge.Booking/EventForge.Booking.Presentation
+```
+
+#### Сценарий 2: 
+- Запуск через Docker Compose (все сервисы + инфраструктура)
+```bash 
+docker compose up -d
 ```
 
 ### Настройка подключения к БД
@@ -289,12 +267,6 @@ dotnet test EventForge.Booking/Tests/EventForge.Booking.IntegrationTests/EventFo
 
 Integration-тесты используют `Testcontainers.PostgreSql`, поэтому для них нужен запущенный Docker Desktop.
 
-### Что покрыто тестами
-
-- `Users`: `AuthService`, `PasswordHasher`, `JwtTokenGenerator`, `UserRepository`, миграции
-- `Events`: `EventService`, Kafka consumers, `EventRepository`, `ProcessedMessageRepository`, миграции
-- `Booking`: `BookingService`, Kafka/outbox background logic, `BookingRepository`, `OutboxRepository`, миграции
-
 ## API примеры
 
 ### Users API
@@ -366,41 +338,6 @@ curl 'http://localhost:5010/Bookings/<BOOKING_ID>' \
 ```bash
 curl -X DELETE 'http://localhost:5010/Bookings/<BOOKING_ID>' \
   -H 'Authorization: Bearer <JWT>'
-```
-
-## Структура репозитория
-
-```text
-EventForge.Booking/
-  EventForge.Booking.Application/
-  EventForge.Booking.Domain/
-  EventForge.Booking.Infrastructure/
-  EventForge.Booking.Presentation/
-  Tests/
-
-EventForge.Events/
-  EventForge.Events.Application/
-  EventForge.Events.Domain/
-  EventForge.Events.Infrastructure/
-  EventForge.Events.Presentation/
-  Tests/
-
-EventForge.Users/
-  EventForge.Users.Application/
-  EventForge.Users.Domain/
-  EventForge.Users.Infrastructure/
-  EventForge.Users.Presentation/
-  Tests/
-
-EventForge.Shared/
-  EventForge.Contract/
-  EventForge.Entities/
-  EventForge.ExceptionMiddleware/
-  EventForge.LoggingDBInterceptor/
-
-tests/
-  EventBookingService.UnitTests/
-  EventBookingService.IntegrationTests/
 ```
 
 ## Примечания

@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\EventForge.Shared\EventForge.Entities\EventForge.Shared.Entities.csproj" />
+    <ProjectReference Include="..\..\EventForge.Shared\EventForge.Entities\EventForge.Shared.csproj" />
     <ProjectReference Include="..\..\EventForge.Shared\EventForge.ExceptionMiddleware\EventForge.ExceptionMiddleware.csproj" />
     <ProjectReference Include="..\EventForge.Events.Application\EventForge.Events.Application.csproj" />
     <ProjectReference Include="..\EventForge.Events.Infrastructure\EventForge.Events.Infrastructure.csproj" />

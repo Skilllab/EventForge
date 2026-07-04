@@ -22,7 +22,6 @@ public interface IBookingRepository
     /// <param name="ct">Токен отмены</param>
     Task<BookingModel?> GetByIdAsync(Guid id, CancellationToken ct);
 
-
     /// <summary>
     /// Получение всех бронирований с фильтрацией
     /// </summary>
@@ -31,15 +30,7 @@ public interface IBookingRepository
     Task<List<BookingModel>> GetAllAsync(BookingStatus status, CancellationToken ct);
 
     /// <summary>
-    /// Обновление бронирования
-    /// </summary>
-    /// <param name="booking">Доменная модель бронирования</param>
-    /// <param name="ct">Токен отмены</param>
-    Task UpdateAsync(BookingModel booking, CancellationToken ct);
-
-
-    /// <summary>
-    /// Получение бронирования пользователя с блокировкой FOR UPDATE внутри транзакции
+    /// Получение бронирования пользователя
     /// </summary>
     /// <param name="userId">ID пользователя</param>
     /// <param name="ct">Токен отмены</param>
@@ -47,17 +38,16 @@ public interface IBookingRepository
     Task<int> GetUserActiveBookingsCountAsync(Guid userId, CancellationToken ct);
 
     /// <summary>
-    /// Атомарно подтверждает бронь и добавляет интеграционное событие в outbox.
+    /// Метод подтверждает бронь и добавляет интеграционное событие в outbox
     /// </summary>
     /// <param name="bookingId">ID бронирования</param>
     /// <param name="processedAt">Время обработки бронирования</param>
     /// <param name="outboxMessage">Сообщение для добавления в outbox</param>
     /// <param name="ct">Токен отмены</param>
     Task<bool> ConfirmAndAddOutboxAsync(Guid bookingId, DateTime processedAt, OutboxMessage outboxMessage, CancellationToken ct);
-
-
+    
     /// <summary>
-    /// Атомарно отменяет бронь и добавляет интеграционное событие в outbox.
+    /// Метод отменяет бронь и добавляет интеграционное событие в outbox
     /// </summary>
     /// <param name="bookingId">ID бронирования</param>
     /// <param name="userId">ID пользователя</param>
@@ -67,20 +57,11 @@ public interface IBookingRepository
     Task<bool> CancelAndAddOutboxAsync(Guid bookingId, Guid userId, DateTime processedAt, OutboxMessage outboxMessage, CancellationToken ct);
 
     /// <summary>
-    /// Атомарно отклоняет бронь и добавляет интеграционное событие в outbox.
+    /// Метод отклоняет бронь и добавляет интеграционное событие в outbox
     /// </summary>
     /// <param name="bookingId">ID бронирования</param>
     /// <param name="processedAt">Время обработки бронирования</param>
     /// <param name="outboxMessage">Сообщение для добавления в outbox</param>
     /// <param name="ct">Токен отмены</param>
     Task<bool> RejectAndAddOutboxAsync(Guid bookingId, DateTime processedAt, OutboxMessage outboxMessage, CancellationToken ct);
-
-
-    /// <summary>
-    /// Отклоняет бронь и добавляет интеграционное событие в outbox  
-    /// </summary>
-    /// <param name="outboxMessage">Сообщение для добавления в outbox</param>
-    /// <param name="ct">Токен отмены</param>
-    Task AddOutboxMessageAsync(OutboxMessage outboxMessage, CancellationToken ct);
-
 }

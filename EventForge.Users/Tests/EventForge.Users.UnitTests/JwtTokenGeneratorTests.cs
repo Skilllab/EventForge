@@ -1,6 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 
-using EventForge.Users.Infrastructure.Common;
+using EventForge.Settings.JWT;
 using EventForge.Users.Infrastructure.Services;
 
 using FluentAssertions;
@@ -26,6 +26,7 @@ public class JwtTokenGeneratorTests
             Issuer = "eventforge-users",
             Audience = "eventforge-clients",
             Lifetime = 2,
+            SchemeName = null,
         });
         var sut = new JwtTokenGenerator(options, fakeTimeProvider);
 

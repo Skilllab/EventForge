@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-using EventForge.Shared.Entities.Enums;
+using EventForge.Shared.Enums;
 
 namespace EventForge.Events.Presentation.ValidationAttributes;
 
@@ -12,6 +12,7 @@ public class RoleValidationAttribute : ValidationAttribute
     private static readonly HashSet<string> _validRoles =
         new HashSet<string>(Enum.GetNames(typeof(RoleType)), StringComparer.OrdinalIgnoreCase);
 
+    /// <inheritdoc />
     protected override ValidationResult IsValid(object value, ValidationContext validationContext)
     {
         if (value == null || !_validRoles.Contains(value.ToString()))

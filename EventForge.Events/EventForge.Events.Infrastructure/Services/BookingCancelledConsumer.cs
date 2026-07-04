@@ -5,7 +5,7 @@ using Confluent.Kafka;
 using EventForge.Contract.Brokers;
 using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Domain.Exceptions;
-using EventForge.Events.Infrastructure.Common;
+using EventForge.Events.Infrastructure.Entities;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,10 +14,6 @@ using Microsoft.Extensions.Options;
 
 namespace EventForge.Events.Infrastructure.Services;
 
-/// <summary>
-/// Consumer события BookingCancelled.
-/// Освобождает место в Events.
-/// </summary>
 public class BookingCancelledConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
@@ -26,9 +22,7 @@ public class BookingCancelledConsumer(
     public async Task HandleMessageAsync(BookingCancelled? message, CancellationToken stoppingToken)
     {
         if (message == null)
-        {
             return;
-        }
 
         await using var scope = scopeFactory.CreateAsyncScope();
 
@@ -36,9 +30,7 @@ public class BookingCancelledConsumer(
         var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
 
         if (await processedRepository.ExistsAsync(message.MessageId, stoppingToken))
-        {
             return;
-        }
 
         try
         {
@@ -73,9 +65,7 @@ public class BookingCancelledConsumer(
             {
                 var consumeResult = consumer.Consume(stoppingToken);
                 if (consumeResult?.Message?.Value == null)
-                {
                     continue;
-                }
 
                 var message = JsonSerializer.Deserialize<BookingCancelled>(consumeResult.Message.Value);
                 await HandleMessageAsync(message, stoppingToken);

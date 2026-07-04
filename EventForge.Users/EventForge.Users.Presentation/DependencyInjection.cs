@@ -1,9 +1,10 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Text;
 
 using EventForge.ExceptionMiddleware;
+using EventForge.Settings.JWT;
+using EventForge.Shared.Constants;
 using EventForge.Users.Domain.Exceptions;
-using EventForge.Users.Infrastructure.Common;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
@@ -31,13 +32,6 @@ public static class DependencyInjection
         var jwtOptions = configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
         var schemeName = jwtOptions?.SchemeName ?? JwtBearerDefaults.AuthenticationScheme;
 
-        if (jwtOptions is null || string.IsNullOrWhiteSpace(jwtOptions.Secret))
-        {
-            throw new InvalidOperationException(
-                "JwtSettings section is missing or Secret is empty in configuration. " +
-                "Ensure appsettings.{Environment}.json contains the JwtSettings section with Secret, Issuer, and Audience.");
-        }
-
         services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = schemeName;
@@ -50,12 +44,12 @@ public static class DependencyInjection
                     RoleClaimType = "role",
                     NameClaimType = "sub",
                     ValidateIssuer = true,
-                    ValidIssuer = jwtOptions.Issuer,
+                    ValidIssuer = jwtOptions?.Issuer,
                     ValidateAudience = true,
-                    ValidAudience = jwtOptions.Audience,
+                    ValidAudience = jwtOptions?.Audience,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.Secret)),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions?.Secret ?? string.Empty)),
                     ClockSkew = TimeSpan.FromMinutes(5),
                 };
 

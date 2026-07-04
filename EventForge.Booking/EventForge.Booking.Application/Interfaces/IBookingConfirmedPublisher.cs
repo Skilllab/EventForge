@@ -8,12 +8,11 @@ namespace EventForge.Booking.Application.Interfaces;
 public interface IBookingConfirmedPublisher
 {
     /// <summary>
-    /// Публикует типизированное событие
-    /// </summary>
-    Task PublishAsync(BookingConfirmed message, CancellationToken ct);
-
-    /// <summary>
     /// Публикует сериализованный payload
     /// </summary>
+    /// <param name="topic">Топик для публикации</param>
+    /// <param name="key">Ключ сообщения</param>
+    /// <param name="payload">Сериализованный payload</param>
+    /// <param name="ct">Токен отмены</param>
     Task PublishRawAsync(string topic, string key, string payload, CancellationToken ct);
 }

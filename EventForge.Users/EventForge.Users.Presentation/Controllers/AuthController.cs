@@ -28,9 +28,7 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
         logger.LogDebug("Обработка запроса POST {methodName}. Регистрация нового пользователя: {login}", nameof(Register), userRequest.Login);
 
         if (await authService.RegisterUserAsync(userRequest.Login, userRequest.Password, userRequest.Role))
-        {
             return NoContent();
-        }
 
         return BadRequest(new { message = "Ошибка регистрации пользователя" });
     }
@@ -47,9 +45,7 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
 
         var token = await authService.LoginUserAsync(request.Login, request.Password);
         if (token is null)
-        {
             return NotFound(new { message = "Неверный логин или пароль." });
-        }
 
         return Ok(new { Token = token });
     }

@@ -5,7 +5,7 @@ using Confluent.Kafka;
 using EventForge.Contract.Brokers;
 using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Domain.Exceptions;
-using EventForge.Events.Infrastructure.Common;
+using EventForge.Events.Infrastructure.Entities;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -14,10 +14,6 @@ using Microsoft.Extensions.Options;
 
 namespace EventForge.Events.Infrastructure.Services;
 
-/// <summary>
-/// Kafka consumer события BookingConfirmed.
-/// Обработка идемпотентна по MessageId.
-/// </summary>
 public class BookingConfirmedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
@@ -86,9 +82,7 @@ public class BookingConfirmedConsumer(
             {
                 var consumeResult = consumer.Consume(stoppingToken);
                 if (consumeResult?.Message?.Value == null)
-                {
                     continue;
-                }
 
                 var message = JsonSerializer.Deserialize<BookingConfirmed>(consumeResult.Message.Value);
                 await HandleMessageAsync(message, stoppingToken);

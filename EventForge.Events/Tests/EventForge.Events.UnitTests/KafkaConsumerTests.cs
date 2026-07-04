@@ -1,10 +1,8 @@
 using EventForge.Contract.Brokers;
 using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Domain.Exceptions;
-using EventForge.Events.Infrastructure.Common;
+using EventForge.Events.Infrastructure.Entities;
 using EventForge.Events.Infrastructure.Services;
-
-using FluentAssertions;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -104,7 +102,7 @@ public class KafkaConsumerTests
     {
         var services = new ServiceCollection();
         var processedRepositoryMock = new Mock<IProcessedMessageRepository>();
-        var message = BookingRejected.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
+        var message = new BookingRejected(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
 
         processedRepositoryMock
             .Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>()))
@@ -128,7 +126,7 @@ public class KafkaConsumerTests
         var services = new ServiceCollection();
         var processedRepositoryMock = new Mock<IProcessedMessageRepository>();
         var eventServiceMock = new Mock<IEventService>();
-        var message = BookingCancelled.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
+        var message =  new BookingCancelled(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
 
         processedRepositoryMock
             .Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>()))
@@ -157,7 +155,7 @@ public class KafkaConsumerTests
         var services = new ServiceCollection();
         var processedRepositoryMock = new Mock<IProcessedMessageRepository>();
         var eventServiceMock = new Mock<IEventService>();
-        var message = BookingCancelled.Create(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
+        var message =  new BookingCancelled(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
 
         processedRepositoryMock
             .Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>()))

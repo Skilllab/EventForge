@@ -6,7 +6,7 @@ namespace EventForge.Booking.Application.DTO;
 /// <param name="ID">Идентификатор бронирования</param>
 /// <param name="EventID">Идентификатор события, по которому создано бронирование</param>
 /// <param name="Status">Статус бронирования</param>
-public record BookingInfoDTO(
+public sealed record BookingInfoDTO(
     Guid ID,
     Guid EventID,
     string Status

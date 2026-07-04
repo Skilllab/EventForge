@@ -16,7 +16,7 @@ public class BookingBackgroundService(
 {
 
     //Задержка при обработке событий
-    private const int delayForRepeatInSeconds = 5;
+    private const int DelayForRepeatInSeconds = 5;
 
     /// <inheritdoc/>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -39,7 +39,7 @@ public class BookingBackgroundService(
                 logger.LogError(ex, "Ошибка при обработке бронирований");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(delayForRepeatInSeconds), timeProvider, stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(DelayForRepeatInSeconds), timeProvider, stoppingToken);
         }
     }
 

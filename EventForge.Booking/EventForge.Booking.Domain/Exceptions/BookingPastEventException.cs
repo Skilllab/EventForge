@@ -1,3 +1,5 @@
+using EventForge.Shared.Exceptions;
+
 namespace EventForge.Booking.Domain.Exceptions;
 
 /// <summary>

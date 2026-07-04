@@ -1,4 +1,4 @@
-namespace EventForge.Booking.Domain.Exceptions;
+namespace EventForge.Shared.Exceptions;
 
 /// <summary>
 /// Базовый класс для кастом исключений

@@ -4,28 +4,22 @@ using Microsoft.Extensions.Logging;
 
 namespace EventForge.ExceptionMiddleware;
 
-// В общей библиотеке
-public class GlobalExceptionHandlingMiddleware
+/// <summary>
+/// Middleware для глобальной обработки исключений в ASP.NET Core приложении
+/// </summary>
+public class GlobalExceptionHandlingMiddleware(
+    RequestDelegate next,
+    ILogger<GlobalExceptionHandlingMiddleware> logger,
+    IOptions<ExceptionHandlingOptions> options)
 {
-    private readonly RequestDelegate _next;
-    private readonly ILogger _logger;
-    private readonly ExceptionHandlingOptions _options;
-
-    public GlobalExceptionHandlingMiddleware(
-        RequestDelegate next,
-        ILogger<GlobalExceptionHandlingMiddleware> logger,
-        IOptions<ExceptionHandlingOptions> options)
-    {
-        _next = next;
-        _logger = logger;
-        _options = options.Value;
-    }
+    private readonly ILogger _logger = logger;
+    private readonly ExceptionHandlingOptions _options = options.Value;
 
     public async Task InvokeAsync(HttpContext httpContext)
     {
         try
         {
-            await _next(httpContext);
+            await next(httpContext);
         }
         catch (Exception ex)
         {

@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 
 using EventForge.Events.Application.Interfaces;
-using EventForge.Events.Infrastructure.Common;
 using EventForge.Events.Presentation.DTO;
 using EventForge.Events.Presentation.Mapping;
-using EventForge.Shared.Entities.Enums;
+using EventForge.Shared.Constants;
+using EventForge.Shared.Enums;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -26,6 +26,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// Получить список всех событий
     /// </summary>
     /// <param name="filterRequest">Фильтры для поиска событий</param>
+    /// <param name="ct">Токен отмены</param>
     [AllowAnonymous]
     [HttpGet]
     [Tags("API для событий")]
@@ -41,6 +42,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// Получить событие по id
     /// </summary>
     /// <param name="eventId">Идентификатор события</param>
+    /// <param name="ct">Токен отмены</param>
     [AllowAnonymous]
     [HttpGet("{eventId:guid}")]
     [Tags("API для событий")]
@@ -56,6 +58,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// Создать новое событие
     /// </summary>
     /// <param name="request">Данные для создания события</param>
+    /// <param name="ct">Токен отмены</param>
     [HttpPost]
     [Authorize(Roles = nameof(RoleType.Admin))]
     [Tags("API для событий")]
@@ -72,6 +75,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// </summary>
     /// <param name="eventId">Идентификатор события</param>
     /// <param name="request">Данные для обновления события</param>
+    /// <param name="ct">Токен отмены</param>
     [Authorize(Roles = nameof(RoleType.Admin))]
     [HttpPut("{eventId:guid}")]
     [Tags("API для событий")]
@@ -88,6 +92,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// Удалить событие
     /// </summary>
     /// <param name="eventId">Идентификатор события</param>
+    /// <param name="ct">Токен отмены</param>
     [Authorize(Roles = nameof(RoleType.Admin))]
     [HttpDelete("{eventId:guid}")]
     [Tags("API для событий")]

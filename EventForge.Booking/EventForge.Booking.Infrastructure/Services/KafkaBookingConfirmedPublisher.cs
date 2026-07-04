@@ -1,10 +1,7 @@
-using System.Text.Json;
-
 using Confluent.Kafka;
 
 using EventForge.Booking.Application.Interfaces;
-using EventForge.Booking.Infrastructure.Common;
-using EventForge.Contract.Brokers;
+using EventForge.Booking.Infrastructure.Entities;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -33,20 +30,13 @@ public sealed class KafkaBookingConfirmedPublisher : IBookingConfirmedPublisher,
         _producer = new ProducerBuilder<string, string>(config).Build();
     }
 
+    //Для тестовых целей, чтобы проверить, что событие отправляется в кафку
     public KafkaBookingConfirmedPublisher(
         IProducer<string, string> producer,
         ILogger<KafkaBookingConfirmedPublisher> logger)
     {
         _producer = producer;
         _logger = logger;
-    }
-
-    //<inheritdoc />
-    public async Task PublishAsync(BookingConfirmed message, CancellationToken ct)
-    {
-        // Ключ = EventId, чтобы сообщения по одному событию шли последовательно.
-        var payload = JsonSerializer.Serialize(message);
-        await PublishRawAsync(TopicNames.BookingConfirmed, message.EventId.ToString(), payload, ct);
     }
 
     //<inheritdoc />

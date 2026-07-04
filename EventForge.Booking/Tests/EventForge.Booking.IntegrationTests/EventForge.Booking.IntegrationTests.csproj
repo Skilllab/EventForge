@@ -24,7 +24,7 @@
     <ProjectReference Include="..\..\EventForge.Booking.Domain\EventForge.Booking.Domain.csproj" />
     <ProjectReference Include="..\..\EventForge.Booking.Infrastructure\EventForge.Booking.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\EventForge.Shared\EventForge.Contract\EventForge.Contract.csproj" />
-    <ProjectReference Include="..\..\..\EventForge.Shared\EventForge.Entities\EventForge.Shared.Entities.csproj" />
+    <ProjectReference Include="..\..\..\EventForge.Shared\EventForge.Entities\EventForge.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

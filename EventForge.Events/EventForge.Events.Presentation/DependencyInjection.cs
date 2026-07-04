@@ -2,8 +2,9 @@ using System.Reflection;
 using System.Text;
 
 using EventForge.Events.Domain.Exceptions;
-using EventForge.Events.Infrastructure.Common;
 using EventForge.ExceptionMiddleware;
+using EventForge.Settings.JWT;
+using EventForge.Shared.Constants;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;

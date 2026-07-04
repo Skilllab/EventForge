@@ -1,27 +1,18 @@
 namespace EventForge.Contract.Brokers;
 
 /// <summary>
-/// Контракт события отклоненного бронирования
+/// Контракт события отклоненного бронирования.
 /// </summary>
-public sealed class BookingRejected
-{
-    public Guid MessageId { get; private set; }
-    public Guid BookingId { get; private set; }
-    public Guid EventId { get; private set; }
-    public Guid UserId { get; private set; }
-    public int SeatsCount { get; private set; }
-    public DateTime RejectedAt { get; private set; }
-
-    private BookingRejected(Guid messageId, Guid bookingId, Guid eventId, Guid userId, int seatsCount, DateTime rejectedAt)
-    {
-        MessageId = messageId;
-        BookingId = bookingId;
-        EventId = eventId;
-        UserId = userId;
-        SeatsCount = seatsCount;
-        RejectedAt = rejectedAt;
-    }
-
-    public static BookingRejected Create(Guid messageId, Guid bookingId, Guid eventId, Guid userId, int seatsCount, DateTime rejectedAt) =>
-        new(messageId, bookingId, eventId, userId, seatsCount, rejectedAt);
-}
+/// <param name="MessageId">Идентификатор сообщения.</param>
+/// <param name="BookingId">Идентификатор бронирования.</param>
+/// <param name="EventId">Идентификатор события (мероприятия).</param>
+/// <param name="UserId">Идентификатор пользователя.</param>
+/// <param name="SeatsCount">Количество отклоненных мест.</param>
+/// <param name="RejectedAt">Дата и время отклонения бронирования.</param>
+public sealed record BookingRejected(
+    Guid MessageId,
+    Guid BookingId,
+    Guid EventId,
+    Guid UserId,
+    int SeatsCount,
+    DateTime RejectedAt);

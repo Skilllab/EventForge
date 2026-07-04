@@ -8,13 +8,6 @@ namespace EventForge.Booking.Application.Interfaces;
 public interface IOutboxRepository
 {
     /// <summary>
-    /// Добавить outbox-сообщение
-    /// </summary>
-    /// <param name="message">Сообщение для добавления</param>
-    /// <param name="ct">Токен отмены</param>
-    Task AddAsync(OutboxMessage message, CancellationToken ct);
-    
-    /// <summary>
     /// Получить группу необработанных outbox-сообщений
     /// </summary>
     /// <param name="batchSize">Размер группы</param>

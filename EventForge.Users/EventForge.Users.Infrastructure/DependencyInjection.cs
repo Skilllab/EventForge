@@ -1,6 +1,6 @@
 using EventForge.LoggingDBInterceptor;
+using EventForge.Settings.JWT;
 using EventForge.Users.Application.Interfaces;
-using EventForge.Users.Infrastructure.Common;
 using EventForge.Users.Infrastructure.Context;
 using EventForge.Users.Infrastructure.Repositories;
 using EventForge.Users.Infrastructure.Services;
@@ -26,7 +26,6 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<LoggingInterceptor>();
-
 
         services.AddDbContextFactory<UsersDbContext>(options =>
         {

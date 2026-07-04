@@ -18,9 +18,7 @@ public class PasswordHasher : IPasswordHasher
     public string HashPassword(string password)
     {
         if (string.IsNullOrWhiteSpace(password))
-        {
             throw new ArgumentException("Пароль не может быть пустым", nameof(password));
-        }
 
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
         return Convert.ToHexString(bytes);
@@ -35,14 +33,10 @@ public class PasswordHasher : IPasswordHasher
     public bool VerifyPassword(string password, string hash)
     {
         if (string.IsNullOrWhiteSpace(password))
-        {
             throw new ArgumentException("Пароль не может быть пустым", nameof(password));
-        }
 
         if (string.IsNullOrWhiteSpace(hash))
-        {
             throw new ArgumentException("Хеш не может быть пустым", nameof(hash));
-        }
 
         var computedHash = HashPassword(password);
         var b1 = Encoding.UTF8.GetBytes(computedHash);

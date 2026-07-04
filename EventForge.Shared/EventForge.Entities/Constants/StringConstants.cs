@@ -1,4 +1,4 @@
-namespace EventForge.Users.Infrastructure.Common;
+namespace EventForge.Shared.Constants;
 
 public static class StringConstants
 {

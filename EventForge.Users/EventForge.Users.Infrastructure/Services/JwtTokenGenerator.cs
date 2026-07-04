@@ -2,8 +2,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
+using EventForge.Settings.JWT;
 using EventForge.Users.Application.Interfaces;
-using EventForge.Users.Infrastructure.Common;
 
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;

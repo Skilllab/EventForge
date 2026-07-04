@@ -5,6 +5,10 @@
     <Project Path="EventForge.Booking/EventForge.Booking.Infrastructure/EventForge.Booking.Infrastructure.csproj" Id="ac1e7980-c211-476c-978c-ff582c804ee1" />
     <Project Path="EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj" Id="1d501d97-7440-4e2c-b917-9abb8fb8e86a" />
   </Folder>
+  <Folder Name="/EventForge.Booking/Tests/">
+    <Project Path="EventForge.Booking/Tests/EventForge.Booking.IntegrationTests/EventForge.Booking.IntegrationTests.csproj" />
+    <Project Path="EventForge.Booking/Tests/EventForge.Booking.UnitTests/EventForge.Booking.UnitTests.csproj" />
+  </Folder>
   <Folder Name="/EventForge.Events/">
     <Project Path="EventForge.Events/EventForge.Events.Application/EventForge.Events.Application.csproj" Id="1df918e9-b8fb-4ff8-a65b-85594b11f569" />
     <Project Path="EventForge.Events/EventForge.Events.Domain/EventForge.Events.Domain.csproj" Id="1c5d6adf-5a44-433b-a199-ec5d5c132196" />
@@ -17,9 +21,10 @@
   </Folder>
   <Folder Name="/EventForge.Shared/">
     <Project Path="EventForge.Shared/EventForge.Contract/EventForge.Contract.csproj" Id="cd90d111-bd6c-4db9-97e3-ba7c9e310523" />
-    <Project Path="EventForge.Shared/EventForge.Entities/EventForge.Shared.Entities.csproj" />
+    <Project Path="EventForge.Shared/EventForge.Entities/EventForge.Shared.csproj" />
     <Project Path="EventForge.Shared/EventForge.ExceptionMiddleware/EventForge.ExceptionMiddleware.csproj" Id="99f14210-c2a1-4fbf-9e8a-77e22b342e43" />
     <Project Path="EventForge.Shared/EventForge.LoggingDBInterceptor/EventForge.LoggingDBInterceptor.csproj" Id="633c4d51-9249-474f-b5e0-8f6b20bd6a14" />
+    <Project Path="EventForge.Shared/EventForge.Settings/EventForge.Settings.csproj" Id="29e9ef9c-bf61-40da-952b-93e1f6d7960c" />
   </Folder>
   <Folder Name="/EventForge.Users/">
     <Project Path="EventForge.Users/EventForge.Users.Application/EventForge.Users.Application.csproj" Id="46567de2-8fb4-4ce4-a7af-39e246a5ce32" />

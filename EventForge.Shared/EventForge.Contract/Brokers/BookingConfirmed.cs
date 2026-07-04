@@ -1,5 +1,3 @@
-using System;
-
 namespace EventForge.Contract.Brokers;
 
 /// <summary>

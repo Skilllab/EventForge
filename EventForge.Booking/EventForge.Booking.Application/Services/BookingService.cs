@@ -6,7 +6,7 @@ using EventForge.Booking.Application.Interfaces;
 using EventForge.Booking.Domain.Entities;
 using EventForge.Booking.Domain.Exceptions;
 using EventForge.Contract.Brokers;
-using EventForge.Shared.Entities.Enums;
+using EventForge.Shared.Enums;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -68,9 +68,7 @@ public class BookingService(
 
         var userBooking = await bookingRepository.GetByIdAsync(bookingId, ct);
         if (userBooking == null)
-        {
             throw new NotFoundException(nameof(BookingModel), bookingId.ToString());
-        }
 
         if (userBooking.UserId != userId && userRole != RoleType.Admin)
         {
@@ -81,18 +79,14 @@ public class BookingService(
         }
 
         if (userBooking.Status == BookingStatus.Cancelled)
-        {
             throw new InvalidOperationException($"Бронирование '{bookingId}' уже было отменено");
-        }
 
         if (userBooking.Status == BookingStatus.Rejected)
-        {
             throw new InvalidOperationException($"Невозможно отменить уже отклонённое бронирование '{bookingId}'");
-        }
 
         var cancelledAt = timeProvider.GetUtcNow().UtcDateTime;
 
-        var cancelledMessage = BookingCancelled.Create(
+        var cancelledMessage = new BookingCancelled(
             Guid.NewGuid(),
             userBooking.Id,
             userBooking.EventId,
@@ -116,9 +110,7 @@ public class BookingService(
             ct);
 
         if (!saved)
-        {
             throw new InvalidOperationException($"Не удалось отменить бронирование '{bookingId}'");
-        }
 
         logger.LogInformation("Бронирование успешно отменено. ID: {Id}", bookingId);
         return true;
@@ -139,7 +131,6 @@ public class BookingService(
 
         try
         {
-            // По текущей модели бронь подтверждается.
             var confirmedMessage = new BookingConfirmed(
                 Guid.NewGuid(),
                 booking.Id,
@@ -178,7 +169,7 @@ public class BookingService(
 
             var rejectedAt = timeProvider.GetUtcNow().UtcDateTime;
 
-            var rejectedMessage = BookingRejected.Create(
+            var rejectedMessage = new BookingRejected(
                 Guid.NewGuid(),
                 booking.Id,
                 booking.EventId,
@@ -200,10 +191,8 @@ public class BookingService(
                 rejectedOutbox,
                 ct);
 
-            if (rejected)
-            {
+            if (rejected) 
                 logger.LogInformation("Бронь {Id} отклонена и записана в Outbox", booking.Id);
-            }
 
             throw;
         }

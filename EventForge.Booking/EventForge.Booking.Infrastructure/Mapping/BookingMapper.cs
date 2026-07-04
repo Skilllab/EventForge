@@ -15,7 +15,6 @@ public static class BookingMapper
     {
         var domain = BookingModel.Create(entity.EventId, entity.UserId, entity.CreatedAt);
 
-        //Восстанавливаем состояние, которое закрыто для изменений извне
         var type = typeof(BookingModel);
         type.GetProperty(nameof(BookingModel.Id))?.SetValue(domain, entity.Id);
         type.GetProperty(nameof(BookingModel.UserId))?.SetValue(domain, entity.UserId);

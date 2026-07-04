@@ -1,9 +1,10 @@
 using EventForge.Events.Application.Interfaces;
-using EventForge.Events.Infrastructure.Common;
 using EventForge.Events.Infrastructure.Context;
+using EventForge.Events.Infrastructure.Entities;
 using EventForge.Events.Infrastructure.Repositories;
 using EventForge.Events.Infrastructure.Services;
 using EventForge.LoggingDBInterceptor;
+using EventForge.Settings.JWT;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

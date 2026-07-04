@@ -2,7 +2,7 @@ using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 
 using EventForge.Contract.Brokers;
-using EventForge.Events.Infrastructure.Common;
+using EventForge.Events.Infrastructure.Entities;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

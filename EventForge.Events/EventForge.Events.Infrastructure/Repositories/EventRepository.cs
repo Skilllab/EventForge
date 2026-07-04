@@ -26,17 +26,6 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
     }
 
     ///<inheritdoc/>
-    public async Task<Event?> GetByIdWithLockAsync(Guid id, CancellationToken ct)
-    {
-        await using var context = await factory.CreateDbContextAsync(ct);
-        var entity = await context.Events
-            .FromSqlInterpolated($"SELECT * FROM \"Events\".\"Events\" WHERE \"id\" = {id} FOR UPDATE")
-            .FirstOrDefaultAsync(ct);
-
-        return entity?.ToDomain();
-    }
-
-    ///<inheritdoc/>
     public async Task<PagedResult<Event>> GetPagedAsync(
         string? title,
         DateTime? startAt,
@@ -137,14 +126,10 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
 
         var entity = await context.Events.FirstOrDefaultAsync(e => e.Id == eventId, ct);
         if (entity == null)
-        {
             return false;
-        }
 
         if (seatsCount <= 0 || entity.AvailableSeats < seatsCount)
-        {
             return false;
-        }
 
         entity.AvailableSeats -= seatsCount;
         await context.SaveChangesAsync(ct);
@@ -159,14 +144,10 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
 
         var entity = await context.Events.FirstOrDefaultAsync(e => e.Id == eventId, ct);
         if (entity == null)
-        {
             return;
-        }
 
         if (seatsCount <= 0)
-        {
             return;
-        }
 
         entity.AvailableSeats = Math.Min(entity.TotalSeats, entity.AvailableSeats + seatsCount);
         await context.SaveChangesAsync(ct);

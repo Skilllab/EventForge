@@ -15,13 +15,6 @@ public interface IEventRepository
     Task<Event?> GetByIdAsync(Guid id, CancellationToken ct);
 
     /// <summary>
-    /// Получение события по ID с блокировкой строки (FOR UPDATE) для использования в транзакциях
-    /// </summary>
-    /// <param name="id">Идентификатор события</param>
-    /// <param name="ct">Токен отмены</param>
-    Task<Event?> GetByIdWithLockAsync(Guid id, CancellationToken ct);
-
-    /// <summary>
     /// Получить выборку с событиями
     /// </summary>
     /// <param name="title">Поиск с учетом наименования</param>

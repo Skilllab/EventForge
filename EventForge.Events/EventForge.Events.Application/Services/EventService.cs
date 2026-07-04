@@ -4,7 +4,6 @@ using EventForge.Events.Application.Mapping;
 using EventForge.Events.Domain.Entities;
 using EventForge.Events.Domain.Exceptions;
 
-using Microsoft.Build.Framework;
 using Microsoft.Extensions.Logging;
 
 namespace EventForge.Events.Application.Services;
@@ -12,9 +11,6 @@ namespace EventForge.Events.Application.Services;
 /// <summary>
 /// Сервис обработки событий
 /// </summary>
-/// <param name="repository">Репозиторий с событиями</param>
-/// <param name="logger">Логгер</param>
-/// <param name="timeProvider">Провайдер управления временем и датой</param>
 public class EventService(IEventRepository repository, ILogger<EventService> logger, TimeProvider timeProvider) : IEventService
 {
     /// <inheritdoc/>

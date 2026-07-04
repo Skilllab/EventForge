@@ -8,9 +8,8 @@ using Microsoft.EntityFrameworkCore;
 namespace EventForge.Booking.Infrastructure.Repositories;
 
 /// <summary>
-/// Репозиторий бля бронирования
+/// Репозиторий для бронирования
 /// </summary>
-/// <param name="factory"></param>
 public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IBookingRepository
 {
     ///<inheritdoc/>
@@ -46,6 +45,7 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         return entities.Select(e => e.ToDomain()).ToList();
     }
 
+    ///<inheritdoc/>
     public async Task<int> GetUserActiveBookingsCountAsync(Guid userId, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -54,21 +54,6 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
             b => b.UserId == userId &&
                  (b.Status == nameof(BookingStatus.Pending) || b.Status == nameof(BookingStatus.Confirmed)),
             ct);
-    }
-
-    //<inheritdoc/>
-    public async Task UpdateAsync(BookingModel booking, CancellationToken ct)
-    {
-        await using var context = await factory.CreateDbContextAsync(ct);
-
-        var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == booking.Id, ct);
-        if (entity == null)
-        {
-            return;
-        }
-
-        booking.UpdateEntity(entity);
-        await context.SaveChangesAsync(ct);
     }
 
     ///<inheritdoc/>
@@ -82,17 +67,14 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
 
         var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
         if (entity == null)
-        {
             return false;
-        }
 
         if (entity.Status != nameof(BookingStatus.Pending))
-        {
             return false;
-        }
 
-        entity.Status = nameof(BookingStatus.Confirmed);
-        entity.ProcessedAt = processedAt;
+        var booking = entity.ToDomain();
+        booking.Confirm(processedAt);
+        booking.UpdateEntity(entity);
 
         await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
         await context.SaveChangesAsync(ct);
@@ -112,22 +94,17 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
 
         var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
         if (entity == null)
-        {
             return false;
-        }
 
         if (entity.UserId != userId)
-        {
             return false;
-        }
 
         if (entity.Status == nameof(BookingStatus.Cancelled) || entity.Status == nameof(BookingStatus.Rejected))
-        {
             return false;
-        }
 
-        entity.Status = nameof(BookingStatus.Cancelled);
-        entity.ProcessedAt = processedAt;
+        var booking = entity.ToDomain();
+        booking.Cancel(processedAt);
+        booking.UpdateEntity(entity);
 
         await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
         await context.SaveChangesAsync(ct);
@@ -146,31 +123,18 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
 
         var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
         if (entity == null)
-        {
             return false;
-        }
 
         if (entity.Status != nameof(BookingStatus.Pending))
-        {
             return false;
-        }
 
-        entity.Status = nameof(BookingStatus.Rejected);
-        entity.ProcessedAt = processedAt;
+        var booking = entity.ToDomain();
+        booking.Reject(processedAt);
+        booking.UpdateEntity(entity);
 
         await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
         await context.SaveChangesAsync(ct);
 
         return true;
-    }
-
-
-
-    ///<inheritdoc/>
-    public async Task AddOutboxMessageAsync(OutboxMessage outboxMessage, CancellationToken ct)
-    {
-        await using var context = await factory.CreateDbContextAsync(ct);
-        await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
-        await context.SaveChangesAsync(ct);
     }
 }

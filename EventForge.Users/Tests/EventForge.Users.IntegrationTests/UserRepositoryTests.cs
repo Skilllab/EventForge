@@ -1,4 +1,4 @@
-using EventForge.Shared.Entities.Enums;
+using EventForge.Shared.Enums;
 using EventForge.Users.Domain.Entities;
 using EventForge.Users.Infrastructure.Entities;
 using EventForge.Users.Infrastructure.Repositories;
@@ -20,43 +20,6 @@ public class UserRepositoryTests : BaseRepositoryTest
             PasswordHash = user.PasswordHash,
             Role = user.Role,
         };
-    }
-
-    [Fact]
-    public async Task GetByIdAsync_Should_Return_User_When_User_Exists()
-    {
-        // Arrange
-        await ResetDatabaseAsync();
-        await using var context = await CreateContext();
-        var user = User.Create("Тестировщик", "hashed_password", RoleType.User);
-
-        context.Users.Add(CreateUserEntity(user));
-        await context.SaveChangesAsync();
-
-        var repository = new UserRepository(Factory);
-
-        // Act
-        var result = await repository.GetByIdAsync(user.Id);
-
-        // Assert
-        result.Should().NotBeNull();
-        result!.Id.Should().Be(user.Id);
-        result.Login.Should().Be("Тестировщик");
-        result.Role.Should().Be(RoleType.User);
-    }
-
-    [Fact]
-    public async Task GetByIdAsync_Should_Return_Null_When_User_Does_Not_Exist()
-    {
-        // Arrange
-        await ResetDatabaseAsync();
-        var repository = new UserRepository(Factory);
-
-        // Act
-        var result = await repository.GetByIdAsync(Guid.NewGuid());
-        
-        // Assert   
-        result.Should().BeNull();
     }
 
     [Fact]

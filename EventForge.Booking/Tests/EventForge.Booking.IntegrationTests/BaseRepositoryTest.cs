@@ -36,10 +36,7 @@ public abstract class BaseRepositoryTest : IAsyncLifetime
 
     public async ValueTask DisposeAsync() => await DbContainer.DisposeAsync();
 
-    protected async Task<BookingDbContext> CreateContext()
-    {
-        return await Factory.CreateDbContextAsync();
-    }
+    protected async Task<BookingDbContext> CreateContext() => await Factory.CreateDbContextAsync();
 
     protected async Task ResetDatabaseAsync()
     {

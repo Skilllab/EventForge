@@ -1,4 +1,4 @@
-using EventForge.Shared.Entities.Enums;
+using EventForge.Shared.Enums;
 using EventForge.Users.Application.Interfaces;
 using EventForge.Users.Domain.Entities;
 
@@ -21,14 +21,10 @@ public class AuthService(
         var enumRole = RoleType.User;
 
         if (!string.IsNullOrEmpty(role) && Enum.TryParse<RoleType>(role, true, out var parsedRole))
-        {
             enumRole = parsedRole;
-        }
 
         if (await userRepository.ExistsAsync(login))
-        {
             return false;
-        }
 
         var hash = passwordHasher.HashPassword(password);
         var user = User.Create(login, hash, enumRole);
@@ -42,9 +38,7 @@ public class AuthService(
     {
         var user = await userRepository.GetByLoginAsync(login);
         if (user is null)
-        {
             return null;
-        }
 
         var isPasswordValid = passwordHasher.VerifyPassword(password, user.PasswordHash);
         return !isPasswordValid

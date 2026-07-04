@@ -1,4 +1,4 @@
-namespace EventForge.Booking.Infrastructure.Common;
+namespace EventForge.Booking.Infrastructure.Entities;
 
 /// <summary>
 /// Настройки подключения к Kafka

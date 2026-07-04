@@ -14,15 +14,6 @@ namespace EventForge.Users.Infrastructure.Repositories;
 public class UserRepository(IDbContextFactory<UsersDbContext> factory) : IUserRepository
 {
     /// <inheritdoc />
-    public async Task<User?> GetByIdAsync(Guid id)
-    {
-        await using var context = await factory.CreateDbContextAsync();
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == id);
-
-        return user?.ToDomain();
-    }
-
-    /// <inheritdoc />
     public async Task<User?> GetByLoginAsync(string login)
     {
         await using var context = await factory.CreateDbContextAsync();

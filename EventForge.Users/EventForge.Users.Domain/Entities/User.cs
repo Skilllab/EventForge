@@ -1,4 +1,4 @@
-using EventForge.Shared.Entities.Enums;
+using EventForge.Shared.Enums;
 using EventForge.Users.Domain.Exceptions;
 
 namespace EventForge.Users.Domain.Entities;
@@ -71,13 +71,9 @@ public class User
     private static void Validate(string login, string passwordHash)
     {
         if (string.IsNullOrWhiteSpace(login))
-        {
             throw new ValidationCustomException(nameof(User), Guid.Empty.ToString(), "Логин пользователя не может быть пустым.");
-        }
 
         if (string.IsNullOrWhiteSpace(passwordHash))
-        {
             throw new ValidationCustomException(nameof(User), Guid.Empty.ToString(), "Пароль пользователя не может быть пустым.");
-        }
     }
 }

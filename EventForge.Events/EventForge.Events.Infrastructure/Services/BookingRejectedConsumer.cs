@@ -4,7 +4,7 @@ using Confluent.Kafka;
 
 using EventForge.Contract.Brokers;
 using EventForge.Events.Application.Interfaces;
-using EventForge.Events.Infrastructure.Common;
+using EventForge.Events.Infrastructure.Entities;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -13,11 +13,6 @@ using Microsoft.Extensions.Options;
 
 namespace EventForge.Events.Infrastructure.Services;
 
-/// <summary>
-/// Consumer события BookingRejected.
-/// Сейчас используется для аналитики и фиксации факта обработки.
-/// Места не освобождает, так как по текущей модели они уменьшаются только на Confirmed.
-/// </summary>
 public class BookingRejectedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
