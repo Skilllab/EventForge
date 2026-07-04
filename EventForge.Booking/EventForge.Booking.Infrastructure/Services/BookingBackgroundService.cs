@@ -14,6 +14,8 @@ public class BookingBackgroundService(
     ILogger<BookingBackgroundService> logger, TimeProvider timeProvider)
     : BackgroundService
 {
+    // Размер пакета сообщений для обработки за один раз
+    private const int BatchSize = 50;
 
     //Задержка при обработке событий
     private const int delayForRepeatInSeconds = 5;
@@ -29,17 +31,30 @@ public class BookingBackgroundService(
             try
             {
                 await using var scope = scopeFactory.CreateAsyncScope();
-                var bookingService = scope.ServiceProvider.GetRequiredService<IBookingService>();
-                await bookingService.UpdateBookingAsync(stoppingToken);
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                break;
+                var outboxRepository = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
+                var publisher = scope.ServiceProvider.GetRequiredService<IBookingConfirmedPublisher>();
+
+                var messages = await outboxRepository.GetPendingAsync(BatchSize, stoppingToken);
+
+                foreach (var message in messages)
+                {
+                    try
+                    {
+                        await publisher.PublishRawAsync(message.Topic, message.MessageKey, message.Payload, stoppingToken);
+                        await outboxRepository.MarkProcessedAsync(message.Id, stoppingToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        await outboxRepository.MarkFailedAsync(message.Id, ex.Message, stoppingToken);
+                        logger.LogError(ex, "Ошибка публикации outbox сообщения {MessageId}", message.Id);
+                    }
+                }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Ошибка при обработке бронирований");
+                logger.LogError(ex, "Ошибка фоновой публикации outbox");
             }
+
             await Task.Delay(TimeSpan.FromSeconds(delayForRepeatInSeconds), timeProvider, stoppingToken);
         }
     }
