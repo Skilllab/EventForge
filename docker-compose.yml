@@ -82,20 +82,7 @@ services:
   users_api:
     build:
       context: .
-      dockerfile_inline: |
-        FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-        WORKDIR /src
-        COPY . .
-        RUN dotnet restore "EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj"
-        RUN dotnet publish "EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj" -c Debug -o /app/publish /p:UseAppHost=false
-
-        FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-        WORKDIR /app
-        EXPOSE 8080
-        ENV ASPNETCORE_URLS=http://+:8080
-        ENV ASPNETCORE_ENVIRONMENT=Docker
-        COPY --from=build /app/publish .
-        ENTRYPOINT ["dotnet", "EventForge.Users.Presentation.dll"]
+      dockerfile: EventForge.Users/dockerfile
     container_name: eventforge_users_api
     restart: unless-stopped
     environment:
@@ -130,20 +117,7 @@ services:
   events_api:
     build:
       context: .
-      dockerfile_inline: |
-        FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-        WORKDIR /src
-        COPY . .
-        RUN dotnet restore "EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj"
-        RUN dotnet publish "EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj" -c Debug -o /app/publish /p:UseAppHost=false
-
-        FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-        WORKDIR /app
-        EXPOSE 8080
-        ENV ASPNETCORE_URLS=http://+:8080
-        ENV ASPNETCORE_ENVIRONMENT=Docker
-        COPY --from=build /app/publish .
-        ENTRYPOINT ["dotnet", "EventForge.Events.Presentation.dll"]
+      dockerfile: EventForge.Events/Dockerfile
     container_name: eventforge_events_api
     restart: unless-stopped
     environment:
@@ -182,20 +156,7 @@ services:
   booking_api:
     build:
       context: .
-      dockerfile_inline: |
-        FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-        WORKDIR /src
-        COPY . .
-        RUN dotnet restore "EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj"
-        RUN dotnet publish "EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj" -c Debug -o /app/publish /p:UseAppHost=false
-
-        FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-        WORKDIR /app
-        EXPOSE 8080
-        ENV ASPNETCORE_URLS=http://+:8080
-        ENV ASPNETCORE_ENVIRONMENT=Docker
-        COPY --from=build /app/publish .
-        ENTRYPOINT ["dotnet", "EventForge.Booking.Presentation.dll"]
+      dockerfile: EventForge.Booking/Dockerfile
     container_name: eventforge_booking_api
     restart: unless-stopped
     environment:

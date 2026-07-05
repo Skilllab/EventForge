@@ -1,0 +1,28 @@
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Копируем все проекты
+COPY . .
+
+# Восстанавливаем зависимости для Booking.Presentation
+RUN dotnet restore "EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj"
+
+# Публикуем Booking.Presentation
+RUN dotnet publish "EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj" \
+    -c Debug \
+    -o /app/publish \
+    /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+WORKDIR /app
+
+# Копируем собранное приложение
+COPY --from=build /app/publish .
+
+# Настройки окружения
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Docker
+
+EXPOSE 8080
+
+ENTRYPOINT ["dotnet", "EventForge.Booking.Presentation.dll"]
