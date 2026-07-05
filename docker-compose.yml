@@ -1,39 +1,182 @@
 services:
-  # 1. База данных PostgreSQL
-  postgres_db:
+  # ===========================================================================
+  # ZOOKEEPER
+  # ===========================================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: eventforge_zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 2181 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ===========================================================================
+  # KAFKA
+  # ===========================================================================      
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: eventforge-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      # Внешний listener для подключения с хоста (например, из dotnet run локально).
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # Два listener'а: INTERNAL — для сервисов внутри сети Docker, EXTERNAL — для хоста.
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+  
+  akhq:
+    image: tchiotludo/akhq:0.25.0
+    container_name: eventforge_akhq
+    ports:
+      - "8080:8080"
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka:
+              properties:
+                bootstrap.servers: "kafka:29092"
+    depends_on:
+      kafka:
+        condition: service_healthy
+        
+  # ===========================================================================
+  # USERS DB
+  # ===========================================================================
+  postgres_users:
     image: postgres:16-alpine
-    container_name: my_postgres
-    restart: always
+    container_name: my_postgres_users
+    restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_DB: ${USERS_DB}
     ports:
-      - "${DB_PORT}:5432"
+      - "${USERS_PORT}:5432"
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - pg_users_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${USERS_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
-  # # 2. Ваше ASP.NET Core приложение
-  # web_api:
-    # image: my_asp_app_image:latest  # Имя вашего Docker-образа приложения
-    # build:
-      # context: .
-      # dockerfile: Dockerfile        # Путь к вашему Dockerfile
-    # restart: always
-    # ports:
-      # - "8080:8080"                  # Стандартный порт для .NET 8 / .NET 9
-    # environment:
-      # - ASPNETCORE_ENVIRONMENT=Production
-      # # Магия .NET: двойное подчеркивание заменит двоеточие из appsettings.json
-      # - ConnectionStrings__DefaultConnection=${CONNECTION_STRING}
-    # depends_on:
-      # - postgres_db
+  users_api:
+    build:
+      context: .
+      dockerfile: EventForge.Users/dockerfile
+    container_name: eventforge_users_api
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__DefaultConnection: ${USERS_CONNECTION_STRING}
+    ports:
+      - "5008:8080"
+    depends_on:
+      postgres_users:
+        condition: service_healthy
 
-  # 3. Панель pgAdmin
+  # ===========================================================================
+  # EVENTS DB
+  # ===========================================================================
+  postgres_events:
+    image: postgres:16-alpine
+    container_name: my_postgres_events
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${EVENTS_DB}
+    ports:
+      - "${EVENTS_PORT}:5432"
+    volumes:
+      - pg_events_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${EVENTS_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  events_api:
+    build:
+      context: .
+      dockerfile: EventForge.Events/Dockerfile
+    container_name: eventforge_events_api
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__DefaultConnection: ${EVENTS_CONNECTION_STRING}
+      KafkaOptions__BootstrapServers: kafka:29092
+      KafkaOptions__ConsumerGroup: eventforge-events
+    ports:
+      - "5009:8080"
+    depends_on:
+      postgres_events:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  # ===========================================================================
+  # BOOKING DB
+  # ===========================================================================
+  postgres_booking:
+    image: postgres:16-alpine
+    container_name: my_postgres_booking
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${BOOKING_DB}
+    ports:
+      - "${BOOKING_PORT}:5432"
+    volumes:
+      - pg_booking_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${BOOKING_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  booking_api:
+    build:
+      context: .
+      dockerfile: EventForge.Booking/Dockerfile
+    container_name: eventforge_booking_api
+    restart: unless-stopped
+    environment:
+      ConnectionStrings__DefaultConnection: ${BOOKING_CONNECTION_STRING}
+      KafkaOptions__BootstrapServers: kafka:29092
+    ports:
+      - "5010:8080"
+    depends_on:
+      postgres_booking:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  # ===========================================================================
+  # PGADMIN
+  # ===========================================================================
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: my_pgadmin
-    restart: always
+    restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
@@ -41,9 +184,15 @@ services:
       - "8020:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json
+      - ./pgadmin/pgpass:/pgpassfile:ro
     depends_on:
-      - postgres_db
-
+      - postgres_users
+      - postgres_events
+      - postgres_booking
+      
 volumes:
-  pg_data:
+  pg_users_data:
+  pg_events_data:
+  pg_booking_data:
   pgadmin_data:
