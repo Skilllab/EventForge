@@ -13,13 +13,11 @@
 ## Содержание
 
 - [О проекте](#о-проекте)
-- [Quick Start](#quick-start)
 - [Архитектура решения](#архитектура-решения)
 - [Сервисы](#сервисы)
 - [Технологии](#технологии)
 - [Аутентификация и роли](#аутентификация-и-роли)
 - [Kafka и асинхронные процессы](#kafka-и-асинхронные-процессы)
-- [Локальная dev-схема запуска](#локальная-dev-схема-запуска)
 - [Запуск проекта](#запуск-проекта)
 - [Миграции](#миграции)
 - [Тестирование](#тестирование)
@@ -154,63 +152,188 @@ Kafka используется для межсервисного обмена с
 
 - .NET 10 SDK
 - Docker Desktop
-- PostgreSQL 16+ либо контейнер PostgreSQL
-- Kafka broker для межсервисного сценария
 
-Предлагается 2 сценария запуска:
+### Запуск через Docker Compose
 
-1. Локально через Visual Studio или Rider (только сервисы)
-2. Через Docker Compose (все сервисы + инфраструктура)
+Проект запускается через `docker-compose.yml`.
+Для каждого микросервиса используется отдельный `Dockerfile`:
 
-#### Сценарий 1: 
+- `EventForge.Users/dockerfile`
+- `EventForge.Events/dockerfile`
+- `EventForge.Booking/dockerfile`
 
-- Запуск окружения
+`docker-compose` поднимает:
 
-```bash
-docker compose up -d zookeeper kafka akhq postgres_users postgres_events postgres_booking pgadmin
+- `zookeeper`
+- `kafka`
+- `akhq`
+- `postgres_users`
+- `postgres_events`
+- `postgres_booking`
+- `users_api`
+- `events_api`
+- `booking_api`
+- `pgadmin`
+
+Перед запуском нужно создать `.env` файл в корне проекта рядом с `docker-compose.yml`.
+
+
+### Пример `.env`
+
+```env
+# Базовые секреты
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_PORT=5432
+
+# Настройки для Users
+USERS_DB=eventforge_users_dev
+USERS_HOST=postgres_users
+USERS_PORT=5435
+
+# Настройки для Events
+EVENTS_DB=eventforge_events_dev
+EVENTS_HOST=postgres_events
+EVENTS_PORT=5436
+
+# Настройки для Booking
+BOOKING_DB=eventforge_booking_dev
+BOOKING_HOST=postgres_booking
+BOOKING_PORT=5437
+
+# Строки подключения к БД (формат .NET Npgsql)
+USERS_CONNECTION_STRING=Host=${USERS_HOST};Port=${DB_PORT};Database=${USERS_DB};Username=${DB_USER};Password=${DB_PASSWORD}
+EVENTS_CONNECTION_STRING=Host=${EVENTS_HOST};Port=${DB_PORT};Database=${EVENTS_DB};Username=${DB_USER};Password=${DB_PASSWORD}
+BOOKING_CONNECTION_STRING=Host=${BOOKING_HOST};Port=${DB_PORT};Database=${BOOKING_DB};Username=${DB_USER};Password=${DB_PASSWORD}
+
+# Настройки Kafka
+KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+
+# Настройки pgAdmin
+PGADMIN_EMAIL=admin@admin.com
+PGADMIN_PASSWORD=admin_password_987
+
 ```
 
-- Запуск через IDE (Visual Studio, Rider) с конфигурацией `Только сервисы` (три Web API проекта)
-или Локальный запуск сервисов
+### Как заполнять `.env`
+
+#### Базы данных
+
+- `DB_USER` — пользователь PostgreSQL для всех контейнеров БД
+- `DB_PASSWORD` — пароль PostgreSQL
+- `USERS_DB` — имя БД сервиса `Users`
+- `EVENTS_DB` — имя БД сервиса `Events`
+- `BOOKING_DB` — имя БД сервиса `Booking`
+
+#### Порты PostgreSQL на хосте
+
+- `USERS_PORT` — внешний порт контейнера `postgres_users`
+- `EVENTS_PORT` — внешний порт контейнера `postgres_events`
+- `BOOKING_PORT` — внешний порт контейнера `postgres_booking`
+
+Пример:
+- `5433` → `postgres_users`
+- `5434` → `postgres_events`
+- `5435` → `postgres_booking`
+
+Внутри docker-сети сами контейнеры PostgreSQL по-прежнему слушают стандартный порт `5432`.
+
+#### Строки подключения сервисов
+
+- `USERS_CONNECTION_STRING` — строка подключения для `users_api`
+- `EVENTS_CONNECTION_STRING` — строка подключения для `events_api`
+- `BOOKING_CONNECTION_STRING` — строка подключения для `booking_api`
+
+Важно:
+- в compose используется имя контейнера БД как host
+- поэтому внутри connection string нужно указывать:
+  - `postgres_users`
+  - `postgres_events`
+  - `postgres_booking`
+- порт внутри сети Docker — `5432`
+
+Пример:
+`Host=postgres_users;Port=5432;Database=eventforge_users;Username=postgres;Password=postgres`
+
+#### PgAdmin
+
+- `PGADMIN_EMAIL` — логин для входа в PgAdmin
+- `PGADMIN_PASSWORD` — пароль для входа в PgAdmin
+
+### Команды запуска
+
+Сборка и запуск всех сервисов в фоновом режиме:
 
 ```bash
-dotnet run --project EventForge.Users/EventForge.Users.Presentation
-dotnet run --project EventForge.Events/EventForge.Events.Presentation
-dotnet run --project EventForge.Booking/EventForge.Booking.Presentation
+docker-compose up -d
 ```
 
-#### Сценарий 2: 
-- Запуск через Docker Compose (все сервисы + инфраструктура)
-```bash 
-docker compose up -d
-```
-
-### Настройка подключения к БД
-
-Для каждого сервиса можно использовать `appsettings.Development.json`, user secrets или переменные окружения.
-
-Пример для Users:
+Запуск только `Users API` с зависимостями:
 
 ```bash
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5432;Database=eventforge_users;Username=postgres;Password=postgres" --project EventForge.Users/EventForge.Users.Presentation
+docker-compose up -d users_api
+```
+
+Сборка образов без запуска:
+
+```bash
+docker-compose build
+```
+
+Остановка и удаление контейнеров, тома при этом сохраняются:
+
+```bash
+docker-compose down
+```
+
+### Что происходит при старте
+
+При запуске:
+
+- каждый API-сервис собирается из своего `Dockerfile`
+- сервисы запускаются в окружении `Docker`
+- при старте автоматически применяются EF Core миграции
+- `Booking` и `Events` подключаются к Kafka внутри docker-сети через `kafka:29092`
+- Swagger доступен в окружении `Development` и `Docker`
+
+### Доступные порты
+
+После запуска будут доступны:
+
+- `Users API` — `http://localhost:5008`
+- `Events API` — `http://localhost:5009`
+- `Booking API` — `http://localhost:5010`
+- `AKHQ` — `http://localhost:8080`
+- `PgAdmin` — `http://localhost:8020`
+
+### Настройка вне Docker
+
+Для локального запуска без compose можно использовать `appsettings.Development.json`, user secrets или переменные окружения.
+
+Пример для `Users`:
+
+```bash
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Port=5433;Database=eventforge_users;Username=postgres;Password=postgres" --project EventForge.Users/EventForge.Users.Presentation
 ```
 
 Аналогично настраиваются `EventForge.Events.Presentation` и `EventForge.Booking.Presentation`.
 
-### Настройка Kafka
+### Настройка Kafka вне Docker
 
 В `appsettings*.json` сервисов `Booking` и `Events` используется секция `KafkaOptions`.
 
 Пример:
 
 ```json
-{
-  "KafkaOptions": {
-    "BootstrapServers": "localhost:9092",
-    "ConsumerGroup": "eventforge-events"
-  }
+{ 
+    "KafkaOptions":
+    {
+        "BootstrapServers": "localhost:9092",
+        "ConsumerGroup": "eventforge-events" 
+    }
 }
 ```
+
 
 ## Миграции
 
