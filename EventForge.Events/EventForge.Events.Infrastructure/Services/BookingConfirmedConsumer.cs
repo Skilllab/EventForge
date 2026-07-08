@@ -58,6 +58,7 @@ public class BookingConfirmedConsumer(
         if (!reserved)
         {
             logger.LogWarning("Не удалось уменьшить места для EventId={EventId}. Нет свободных мест.", message.EventId);
+            await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
             return;
         }
 
