@@ -57,28 +57,41 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
-        
+    
   # ===========================================================================
-  # USERS DB
+  # POSTGRESQL (ЕДИНЫЙ ЭКЗЕМПЛЯР ДЛЯ ВСЕХ БАЗ)
   # ===========================================================================
-  postgres_users:
+  postgres:
     image: postgres:16-alpine
-    container_name: my_postgres_users
+    container_name: eventforge_postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${USERS_DB}
+      EVENTS_DATABASE: ${EVENTS_DB}
+      BOOKING_DATABASE: ${BOOKING_DB}
     ports:
-      - "${USERS_PORT}:5432"
+      - "5432:5432"
     volumes:
-      - pg_users_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mkdir -p /docker-entrypoint-initdb.d
+        echo "CREATE DATABASE \"$EVENTS_DATABASE\";" > /docker-entrypoint-initdb.d/01-events.sql
+        echo "CREATE DATABASE \"$BOOKING_DATABASE\";" > /docker-entrypoint-initdb.d/02-booking.sql
+        exec /usr/local/bin/docker-entrypoint.sh postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${USERS_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
-
+      
+  # ===========================================================================
+  # USERS DB
+  # ===========================================================================
   users_api:
     build:
       context: .
@@ -90,30 +103,12 @@ services:
     ports:
       - "5008:8080"
     depends_on:
-      postgres_users:
+      postgres:
         condition: service_healthy
 
   # ===========================================================================
   # EVENTS DB
   # ===========================================================================
-  postgres_events:
-    image: postgres:16-alpine
-    container_name: my_postgres_events
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${EVENTS_DB}
-    ports:
-      - "${EVENTS_PORT}:5432"
-    volumes:
-      - pg_events_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${EVENTS_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   events_api:
     build:
       context: .
@@ -127,7 +122,7 @@ services:
     ports:
       - "5009:8080"
     depends_on:
-      postgres_events:
+      postgres:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -135,24 +130,6 @@ services:
   # ===========================================================================
   # BOOKING DB
   # ===========================================================================
-  postgres_booking:
-    image: postgres:16-alpine
-    container_name: my_postgres_booking
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${BOOKING_DB}
-    ports:
-      - "${BOOKING_PORT}:5432"
-    volumes:
-      - pg_booking_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${BOOKING_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   booking_api:
     build:
       context: .
@@ -165,7 +142,7 @@ services:
     ports:
       - "5010:8080"
     depends_on:
-      postgres_booking:
+      postgres:
         condition: service_healthy
       kafka:
         condition: service_healthy
@@ -180,19 +157,18 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+      PGADMIN_CONFIG_ALLOW_SAVE_PASSWORD: "True"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
     ports:
       - "8020:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
       - ./pgadmin/servers.json:/pgadmin4/servers.json
-      - ./pgadmin/pgpass:/pgpassfile:ro
+      - ./pgadmin/pgpass:/var/lib/pgadmin/.pgpass
     depends_on:
-      - postgres_users
-      - postgres_events
-      - postgres_booking
+      - postgres
       
 volumes:
-  pg_users_data:
-  pg_events_data:
-  pg_booking_data:
+  postgres_data:
   pgadmin_data:

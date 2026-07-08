@@ -1,40 +1,14 @@
 {
   "Servers": {
     "1": {
-      "Name": "Users DB",
+      "Name": "EventForge Microservices",
       "Group": "EventForge",
-      "Host": "postgres_users",
+      "Host": "postgres",
       "Port": 5432,
       "MaintenanceDB": "eventforge_users_dev",
       "Username": "postgres",
-      "SSLMode": "prefer"
-    },
-    "2": {
-      "Name": "Events DB",
-      "Group": "EventForge",
-      "Host": "postgres_events",
-      "Port": 5432,
-      "MaintenanceDB": "eventforge_events_dev",
-      "Username": "postgres",
-      "SSLMode": "prefer"
-    },
-    "3": {
-      "Name": "Booking DB",
-      "Group": "EventForge",
-      "Host": "postgres_booking",
-      "Port": 5432,
-      "MaintenanceDB": "eventforge_booking_dev",
-      "Username": "postgres",
-      "SSLMode": "prefer"
-    },
-    "4": {
-      "Name": "Monolith DB",
-      "Group": "EventForge",
-      "Host": "postgres_db",
-      "Port": 5432,
-      "MaintenanceDB": "eventapi",
-      "Username": "postgres",
-      "SSLMode": "prefer"
+      "SSLMode": "prefer",
+      "PassFile": "/var/lib/pgadmin/.pgpass"
     }
   }
 }

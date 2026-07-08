@@ -1,4 +1,1 @@
-postgres_users:5432:eventforge_users_dev:postgres:postgres
-postgres_events:5432:eventforge_events_dev:postgres:postgres
-postgres_booking:5432:eventforge_booking_dev:postgres:postgres
-postgres_db:5432:eventapi:postgres:postgres
+postgres:5432:*:postgres:postgres
