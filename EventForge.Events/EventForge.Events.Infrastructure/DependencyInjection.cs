@@ -38,10 +38,10 @@ public static class DependencyInjection
 
         services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
 
-        services.AddHostedService<KafkaTopicInitializer>();
+        //services.AddHostedService<KafkaTopicInitializer>();
         services.AddHostedService<BookingRequestedConsumer>();
         services.AddHostedService<BookingCancelledConsumer>();
-        services.AddHostedService<BookingRejectedConsumer>();
+        //services.AddHostedService<BookingRejectedConsumer>();
 
         // Фоновая публикация сообщений из outbox.
         services.AddHostedService<OutboxPublisherBackgroundService>();

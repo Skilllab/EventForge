@@ -59,6 +59,33 @@ services:
         condition: service_healthy
     
   # ===========================================================================
+  # KAFKA INIT TOPICS
+  # ===========================================================================
+  kafka-init-topics:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: eventforge_kafka_init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    entrypoint: [ '/bin/sh', '-c' ]
+    environment:
+      KAFKA_BOOTSTRAP_SERVER: kafka:29092
+      KAFKA_TOPICS: >
+        booking-confirmed
+        booking-rejected
+        booking-cancelled
+        booking-not-approved
+        booking-requested
+    command: >
+      "
+      echo 'Creating Kafka topics...';
+      for topic in $$KAFKA_TOPICS; do
+        kafka-topics --bootstrap-server $$KAFKA_BOOTSTRAP_SERVER --create --if-not-exists --topic $$topic --partitions 1 --replication-factor 1;
+      done;
+      echo 'All topics checked/created successfully!';
+      "
+      
+  # ===========================================================================
   # POSTGRESQL (ЕДИНЫЙ ЭКЗЕМПЛЯР ДЛЯ ВСЕХ БАЗ)
   # ===========================================================================
   postgres:
@@ -72,7 +99,7 @@ services:
       EVENTS_DATABASE: ${EVENTS_DB}
       BOOKING_DATABASE: ${BOOKING_DB}
     ports:
-      - "5432:5432"
+      - "5437:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     entrypoint:
@@ -80,8 +107,8 @@ services:
       - -c
       - |
         mkdir -p /docker-entrypoint-initdb.d
-        echo "CREATE DATABASE \"$EVENTS_DATABASE\";" > /docker-entrypoint-initdb.d/01-events.sql
-        echo "CREATE DATABASE \"$BOOKING_DATABASE\";" > /docker-entrypoint-initdb.d/02-booking.sql
+        echo "CREATE DATABASE \"$$EVENTS_DATABASE\";" > /docker-entrypoint-initdb.d/01-events.sql
+        echo "CREATE DATABASE \"$$BOOKING_DATABASE\";" > /docker-entrypoint-initdb.d/02-booking.sql
         exec /usr/local/bin/docker-entrypoint.sh postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${USERS_DB}"]
