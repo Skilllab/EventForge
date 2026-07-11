@@ -7,12 +7,11 @@ namespace EventForge.Contract.Brokers;
 /// <param name="BookingId">Идентификатор бронирования.</param>
 /// <param name="EventId">Идентификатор события (мероприятия).</param>
 /// <param name="UserId">Идентификатор пользователя.</param>
-/// <param name="SeatsCount">Количество отклоненных мест.</param>
 /// <param name="RejectedAt">Дата и время отклонения бронирования.</param>
+/// <param name="Reason">Причина отклонения</param>
 public sealed record BookingRejected(
     Guid MessageId,
     Guid BookingId,
     Guid EventId,
     Guid UserId,
-    int SeatsCount,
-    DateTime RejectedAt);
+    DateTime RejectedAt, string Reason);

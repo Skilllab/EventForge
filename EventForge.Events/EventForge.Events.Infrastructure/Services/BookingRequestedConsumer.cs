@@ -3,9 +3,9 @@ using System.Text.Json;
 using Confluent.Kafka;
 
 using EventForge.Contract.Brokers;
+using EventForge.Contract.Enums;
 using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Domain.Entities;
-using EventForge.Events.Domain.Exceptions;
 using EventForge.Events.Infrastructure.Entities;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -52,7 +52,7 @@ public class BookingRequestedConsumer(
             // Стало:
             var rejectedNotFound = new BookingRejected(
                 Guid.NewGuid(), message.BookingId, message.EventId,
-                message.UserId, message.SeatsCount, now);
+                message.UserId, now, $"Событие {message.EventId} не найдено для сообщения {message.MessageId}");
 
             outbox = OutboxMessage.Create(
                 nameof(BookingRejected), TopicNames.BookingRejected,
@@ -67,13 +67,12 @@ public class BookingRequestedConsumer(
 
         if (eventEntity.StartAt <= now)
         {
-            // Событие уже началось — создаём BookingRejected
-            var rejected = new BookingRejected(
+            var rejected = new BookingNotApproved(
                 Guid.NewGuid(), message.BookingId, message.EventId,
-                message.UserId, message.SeatsCount, now);
+                message.UserId, now, BookingNotApprovedReason.EventStarted);
 
             outbox = OutboxMessage.Create(
-                nameof(BookingRejected), TopicNames.BookingRejected,
+                nameof(BookingNotApproved), TopicNames.BookingNotApproved,
                 message.EventId.ToString(), JsonSerializer.Serialize(rejected), now, null);
 
             await eventRepository.AddOutboxAsync(outbox, stoppingToken);
@@ -81,7 +80,6 @@ public class BookingRequestedConsumer(
             return;
         }
 
-        // Всё ок — пробуем списать + outbox с BookingConfirmed
         var confirmed = new BookingConfirmed(
             Guid.NewGuid(), message.BookingId, message.EventId,
             message.UserId, message.SeatsCount, now);
@@ -98,16 +96,16 @@ public class BookingRequestedConsumer(
             // Нет мест — BookingRejected
             logger.LogWarning("Не удалось зарезервировать места для EventId={EventId}", message.EventId);
 
-            var rejected = new BookingRejected(
+            var rejected = new BookingNotApproved(
                 Guid.NewGuid(), message.BookingId, message.EventId,
-                message.UserId, message.SeatsCount, now);
+                message.UserId, now, BookingNotApprovedReason.NoSeats);
 
             outbox = OutboxMessage.Create(
-                nameof(BookingRejected), TopicNames.BookingRejected,
+                nameof(BookingNotApproved), TopicNames.BookingNotApproved,
                 message.EventId.ToString(), JsonSerializer.Serialize(rejected), now, null);
 
             await eventRepository.AddOutboxAsync(outbox, stoppingToken);
-            await processedRepository.AddAsync(message.MessageId, nameof(BookingRejected), stoppingToken);
+            await processedRepository.AddAsync(message.MessageId, nameof(BookingNotApproved), stoppingToken);
             return;
         }
 

@@ -1,46 +1,40 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 using EventForge.Events.Domain.Entities;
 using EventForge.Events.Infrastructure.Entities;
 
-namespace EventForge.Events.Infrastructure.Mappers
+namespace EventForge.Events.Infrastructure.Mappers;
+
+/// <summary>
+/// Маппер между доменной моделью и сущностью базы данных
+/// </summary>
+public static class MessageMapper
 {
     /// <summary>
-    /// Маппер между доменной моделью и сущностью базы данных
+    /// Из сущности БД в доменную модель
     /// </summary>
-    public static class MessageMapper
-    {
-        /// <summary>
-        /// Из сущности БД в доменную модель
-        /// </summary>
-        public static OutboxMessage ToDomain(this OutboxMessageEntity entity) =>
-            OutboxMessage.Restore(
-                entity.Id,
-                entity.Type,
-                entity.Topic,
-                entity.MessageKey,
-                entity.Payload,
-                entity.CreatedAt,
-                entity.ProcessedAt,
-                entity.Error);
+    public static OutboxMessage ToDomain(this OutboxMessageEntity entity) =>
+        OutboxMessage.Restore(
+            entity.Id,
+            entity.Type,
+            entity.Topic,
+            entity.MessageKey,
+            entity.Payload,
+            entity.CreatedAt,
+            entity.ProcessedAt,
+            entity.Error);
 
-        /// <summary>
-        /// Из домена в сущность БД
-        /// </summary>
-        public static OutboxMessageEntity ToEntity(this OutboxMessage domain) =>
-            new()
-            {
-                Id = domain.Id,
-                Type = domain.Type,
-                Topic = domain.Topic,
-                MessageKey = domain.MessageKey,
-                Payload = domain.Payload,
-                CreatedAt = domain.CreatedAt,
-                ProcessedAt = domain.ProcessedAt,
-                Error = domain.Error
-            };
-    }
-
+    /// <summary>
+    /// Из домена в сущность БД
+    /// </summary>
+    public static OutboxMessageEntity ToEntity(this OutboxMessage domain) =>
+        new()
+        {
+            Id = domain.Id,
+            Type = domain.Type,
+            Topic = domain.Topic,
+            MessageKey = domain.MessageKey,
+            Payload = domain.Payload,
+            CreatedAt = domain.CreatedAt,
+            ProcessedAt = domain.ProcessedAt,
+            Error = domain.Error
+        };
 }

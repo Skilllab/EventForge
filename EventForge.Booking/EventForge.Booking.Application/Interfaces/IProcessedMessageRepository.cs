@@ -1,28 +1,23 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+namespace EventForge.Booking.Application.Interfaces;
 
-namespace EventForge.Booking.Application.Interfaces
+/// <summary>
+/// Репозиторий хранения факта обработки входящих сообщений
+/// (паттерн Idempotent Consumer).
+/// </summary>
+public interface IProcessedMessageRepository
 {
     /// <summary>
-    /// Репозиторий хранения факта обработки входящих сообщений
-    /// (паттерн Idempotent Consumer).
+    /// Проверяет, было ли сообщение с указанным идентификатором уже обработано.
     /// </summary>
-    public interface IProcessedMessageRepository
-    {
-        /// <summary>
-        /// Проверяет, было ли сообщение с указанным идентификатором уже обработано.
-        /// </summary>
-        /// <param name="id">Идентификатор сообщения (MessageId из контракта).</param>
-        /// <param name="ct">Токен отмены.</param>
-        Task<bool> ExistsAsync(Guid id, CancellationToken ct);
+    /// <param name="id">Идентификатор сообщения (MessageId из контракта).</param>
+    /// <param name="ct">Токен отмены.</param>
+    Task<bool> ExistsAsync(Guid id, CancellationToken ct);
 
-        /// <summary>
-        /// Добавляет запись об обработанном сообщении.
-        /// </summary>
-        /// <param name="id">Идентификатор сообщения.</param>
-        /// <param name="messageType">Тип сообщения (например, BookingConfirmed).</param>
-        /// <param name="ct">Токен отмены.</param>
-        Task AddAsync(Guid id, string messageType, CancellationToken ct);
-    }
+    /// <summary>
+    /// Добавляет запись об обработанном сообщении.
+    /// </summary>
+    /// <param name="id">Идентификатор сообщения.</param>
+    /// <param name="messageType">Тип сообщения (например, BookingConfirmed).</param>
+    /// <param name="ct">Токен отмены.</param>
+    Task AddAsync(Guid id, string messageType, CancellationToken ct);
 }

@@ -46,12 +46,10 @@ public static class DependencyInjection
         // Фоновая публикация сообщений из outbox
         services.AddHostedService<OutboxPublisherBackgroundService>();
 
-        // Инициализация топиков Kafka
-        //services.AddHostedService<KafkaTopicInitializer>();
-
         // Consumer-ы входящих сообщений
         services.AddHostedService<BookingConfirmedConsumer>();
         services.AddHostedService<BookingRejectedConsumer>();
+        services.AddHostedService<BookingNotApprovedConsumer>();
 
         return services;
     }

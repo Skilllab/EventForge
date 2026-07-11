@@ -14,39 +14,34 @@ using Microsoft.Extensions.Options;
 
 namespace EventForge.Booking.Infrastructure.Services;
 
-/// <summary>
-/// Consumer, который получает BookingConfirmed из Kafka
-/// и переводит бронь из Pending → Confirmed.
-/// </summary>
-public class BookingConfirmedConsumer(
+public class BookingNotApprovedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
-    ILogger<BookingConfirmedConsumer> logger) : BackgroundService
+    ILogger<BookingRejectedConsumer> logger) : BackgroundService
 {
     /// <summary>
-    /// Обрабатывает одно сообщение BookingConfirmed:
+    /// Обрабатывает одно сообщение BookingRejected:
     /// 1. Проверка на дубликат (Idempotent Consumer).
     /// 2. Поиск брони по ID.
-    /// 3. Перевод из Pending в Confirmed.
+    /// 3. Перевод из Pending в Rejected.
     /// </summary>
     private async Task HandleMessageAsync(
-        BookingConfirmed? message, CancellationToken ct)
+        BookingNotApproved? message, CancellationToken ct)
     {
         if (message == null)
         {
             logger.LogWarning(
-                "Получено пустое или невалидное сообщение BookingConfirmed");
+                "Получено пустое или невалидное сообщение BookingRejected");
             return;
         }
 
-        // Создаём scope, т.к. Consumer — Singleton, а репозитории — Scoped
         await using var scope = scopeFactory.CreateAsyncScope();
         var processedRepository = scope.ServiceProvider
             .GetRequiredService<IProcessedMessageRepository>();
         var bookingRepository = scope.ServiceProvider
             .GetRequiredService<IBookingRepository>();
 
-        // ── Idempotent Consumer: проверка на повторную обработку ──
+        // ── Idempotent Consumer ──
         if (await processedRepository.ExistsAsync(message.MessageId, ct))
         {
             logger.LogInformation(
@@ -55,7 +50,7 @@ public class BookingConfirmedConsumer(
             return;
         }
 
-        // ── Поиск брони по ID ──
+        // ── Поиск брони ──
         var booking = await bookingRepository.GetByIdAsync(
             message.BookingId, ct);
 
@@ -65,49 +60,43 @@ public class BookingConfirmedConsumer(
                 "Бронь {BookingId} не найдена для сообщения {MessageId}",
                 message.BookingId, message.MessageId);
 
-            // Всё равно помечаем сообщение обработанным,
-            // чтобы не зациклиться на «битых» данных
             await processedRepository.AddAsync(
-                message.MessageId, nameof(BookingConfirmed), ct);
+                message.MessageId, nameof(BookingNotApproved), ct);
             return;
         }
 
-        // ── Проверка текущего статуса (защита от повторного confirm) ──
+        // ── Проверка статуса ──
         if (booking.Status != BookingStatus.Pending)
         {
             logger.LogInformation(
-                "Бронь {BookingId} уже в статусе {Status}, пропускаем подтверждение",
+                "Бронь {BookingId} уже в статусе {Status}, пропускаем отклонение",
                 message.BookingId, booking.Status);
 
-            // Помечаем сообщение обработанным — оно свою работу уже сделало
             await processedRepository.AddAsync(
-                message.MessageId, nameof(BookingConfirmed), ct);
+                message.MessageId, nameof(BookingNotApproved), ct);
             return;
         }
 
-        // ── Подтверждаем бронь ──
-        var confirmed = await bookingRepository.ConfirmBookingAsync(
-            message.BookingId, message.ConfirmedAt, ct);
+        // ── Отклоняем бронь ──
+        var rejected = await bookingRepository.RejectBookingAsync(
+            message.BookingId, message.RejectedAt, ct);
 
-        if (!confirmed)
+        if (!rejected)
         {
             logger.LogWarning(
-                "Не удалось подтвердить бронь {BookingId}. " +
-                "Возможно, статус изменился между проверкой и сохранением.",
+                "Не удалось отклонить бронь {BookingId}",
                 message.BookingId);
 
-            // Помечаем обработанным — повторная попытка не поможет
             await processedRepository.AddAsync(
-                message.MessageId, nameof(BookingConfirmed), ct);
+                message.MessageId, nameof(BookingNotApproved), ct);
             return;
         }
 
-        // ── Фиксируем факт обработки ──
         await processedRepository.AddAsync(
-            message.MessageId, nameof(BookingConfirmed), ct);
+            message.MessageId, nameof(BookingNotApproved), ct);
 
         logger.LogInformation(
-            "Бронь {BookingId} успешно подтверждена. MessageId={MessageId}",
+            "Бронь {BookingId} отклонена. MessageId={MessageId}",
             message.BookingId, message.MessageId);
     }
 
@@ -121,7 +110,7 @@ public class BookingConfirmedConsumer(
         };
 
         using var consumer = new ConsumerBuilder<string, string>(config).Build();
-        consumer.Subscribe(TopicNames.BookingConfirmed);
+        consumer.Subscribe(TopicNames.BookingNotApproved);
 
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -131,7 +120,7 @@ public class BookingConfirmedConsumer(
                 if (consumeResult?.Message?.Value == null)
                     continue;
 
-                var message = JsonSerializer.Deserialize<BookingConfirmed>(
+                var message = JsonSerializer.Deserialize<BookingNotApproved>(
                     consumeResult.Message.Value);
 
                 await HandleMessageAsync(message, stoppingToken);
@@ -145,7 +134,7 @@ public class BookingConfirmedConsumer(
             catch (Exception ex)
             {
                 logger.LogError(ex,
-                    "Ошибка при обработке сообщения BookingConfirmed");
+                    "Ошибка при обработке сообщения BookingNotApproved");
             }
         }
     }
