@@ -18,7 +18,6 @@ namespace EventForge.Events.Infrastructure.Services;
 public class BookingRequestedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
-    IEventRepository eventRepository,
     ILogger<BookingRequestedConsumer> logger) : BackgroundService
 {
     public async Task HandleMessageAsync(BookingRequested? message, CancellationToken stoppingToken)
@@ -29,10 +28,10 @@ public class BookingRequestedConsumer(
             return;
         }
 
-        // Scope только для ProcessedMessageRepository (дедупликация)
         await using var scope = scopeFactory.CreateAsyncScope();
-        var processedRepository = scope.ServiceProvider
-            .GetRequiredService<IProcessedMessageRepository>();
+        var processedRepository = scope.ServiceProvider.GetRequiredService<IProcessedMessageRepository>();
+        var eventRepository = scope.ServiceProvider.GetRequiredService<IEventRepository>();
+
 
         if (await processedRepository.ExistsAsync(message.MessageId, stoppingToken))
         {
