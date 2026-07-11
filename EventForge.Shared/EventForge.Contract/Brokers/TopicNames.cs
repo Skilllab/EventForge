@@ -19,4 +19,14 @@ public static class TopicNames
     /// Топик отмененных бронирований
     /// </summary>
     public const string BookingCancelled = "booking-cancelled";
+
+    /// <summary>
+    /// Топик отклоненных бронирований из-за отсутствия мест
+    /// </summary>
+    public const string BookingNotApproved = "booking-not-approved";
+
+    /// <summary>
+    /// Топик запросов на бронирование
+    /// </summary>
+    public const string BookingRequested = "booking-requested";
 }

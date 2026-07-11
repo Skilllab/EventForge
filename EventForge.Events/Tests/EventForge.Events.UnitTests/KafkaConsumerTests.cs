@@ -33,10 +33,10 @@ public class KafkaConsumerTests
         services.AddSingleton(eventServiceMock.Object);
         await using var provider = services.BuildServiceProvider();
         var scopeFactory = provider.GetRequiredService<IServiceScopeFactory>();
-        using var consumer = new BookingConfirmedConsumer(
+        using var consumer = new BookingRequestedConsumer(
             scopeFactory,
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "events-tests" }),
-            Mock.Of<ILogger<BookingConfirmedConsumer>>());
+            Mock.Of<ILogger<BookingRequestedConsumer>>());
 
         await consumer.HandleMessageAsync(message, CancellationToken.None);
 
@@ -58,10 +58,10 @@ public class KafkaConsumerTests
         services.AddSingleton(processedRepositoryMock.Object);
         services.AddSingleton(eventServiceMock.Object);
         await using var provider = services.BuildServiceProvider();
-        using var consumer = new BookingConfirmedConsumer(
+        using var consumer = new BookingRequestedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "events-tests" }),
-            Mock.Of<ILogger<BookingConfirmedConsumer>>());
+            Mock.Of<ILogger<BookingRequestedConsumer>>());
 
         await consumer.HandleMessageAsync(message, CancellationToken.None);
 
@@ -87,10 +87,10 @@ public class KafkaConsumerTests
         services.AddSingleton(processedRepositoryMock.Object);
         services.AddSingleton(eventServiceMock.Object);
         await using var provider = services.BuildServiceProvider();
-        using var consumer = new BookingConfirmedConsumer(
+        using var consumer = new BookingRequestedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "events-tests" }),
-            Mock.Of<ILogger<BookingConfirmedConsumer>>());
+            Mock.Of<ILogger<BookingRequestedConsumer>>());
 
         await consumer.HandleMessageAsync(message, CancellationToken.None);
 
@@ -187,10 +187,10 @@ public class KafkaConsumerTests
         services.AddSingleton(processedRepositoryMock.Object);
         services.AddSingleton(eventServiceMock.Object);
         await using var provider = services.BuildServiceProvider();
-        using var consumer = new BookingConfirmedConsumer(
+        using var consumer = new BookingRequestedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "events-tests" }),
-            Mock.Of<ILogger<BookingConfirmedConsumer>>());
+            Mock.Of<ILogger<BookingRequestedConsumer>>());
 
         await consumer.HandleMessageAsync(null, CancellationToken.None);
 

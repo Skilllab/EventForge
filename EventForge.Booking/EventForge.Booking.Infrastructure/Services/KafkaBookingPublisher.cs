@@ -11,14 +11,14 @@ namespace EventForge.Booking.Infrastructure.Services;
 /// <summary>
 /// Kafka publisher события BookingConfirmed
 /// </summary>
-public sealed class KafkaBookingConfirmedPublisher : IBookingConfirmedPublisher, IDisposable
+public sealed class KafkaBookingPublisher : IBookingPublisher, IDisposable
 {
     private readonly IProducer<string, string> _producer;
-    private readonly ILogger<KafkaBookingConfirmedPublisher> _logger;
+    private readonly ILogger<KafkaBookingPublisher> _logger;
 
-    public KafkaBookingConfirmedPublisher(
+    public KafkaBookingPublisher(
         IOptions<KafkaOptions> options,
-        ILogger<KafkaBookingConfirmedPublisher> logger)
+        ILogger<KafkaBookingPublisher> logger)
     {
         _logger = logger;
 
@@ -31,9 +31,9 @@ public sealed class KafkaBookingConfirmedPublisher : IBookingConfirmedPublisher,
     }
 
     //Для тестовых целей, чтобы проверить, что событие отправляется в кафку
-    public KafkaBookingConfirmedPublisher(
+    public KafkaBookingPublisher(
         IProducer<string, string> producer,
-        ILogger<KafkaBookingConfirmedPublisher> logger)
+        ILogger<KafkaBookingPublisher> logger)
     {
         _producer = producer;
         _logger = logger;

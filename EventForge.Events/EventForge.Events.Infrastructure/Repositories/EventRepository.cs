@@ -153,4 +153,43 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         await context.SaveChangesAsync(ct);
     }
 
+    //<inheritdoc/>
+    public async Task<bool> TryReserveSeatAndAddOutboxAsync(Guid eventId, int seatsCount, OutboxMessage outboxMessage, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entity = await context.Events.FirstOrDefaultAsync(e => e.Id == eventId, ct);
+        if (entity == null || seatsCount <= 0 || entity.AvailableSeats < seatsCount)
+            return false;
+
+        entity.AvailableSeats -= seatsCount;
+
+        // Преобразуем доменную модель outbox в entity и добавляем
+        var outboxEntity = outboxMessage.ToEntity(); // нужен маппер
+        await context.OutboxMessages.AddAsync(outboxEntity, ct);
+
+        await context.SaveChangesAsync(ct);
+        return true;
+    }
+    /// <inheritdoc/>
+    public async Task AddOutboxAsync(OutboxMessage outboxMessage, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var outboxEntity = new OutboxMessageEntity
+        {
+            Id = outboxMessage.Id,
+            Type = outboxMessage.Type,
+            Topic = outboxMessage.Topic,
+            MessageKey = outboxMessage.MessageKey,
+            Payload = outboxMessage.Payload,
+            CreatedAt = outboxMessage.CreatedAt,
+            ProcessedAt = null,
+            Error = null
+        };
+        await context.OutboxMessages.AddAsync(outboxEntity, ct);
+        await context.SaveChangesAsync(ct);
+    }
+
+
 }

@@ -44,8 +44,24 @@ public class BookingService(
             userId,
             timeProvider.GetUtcNow().UtcDateTime);
 
-        await bookingRepository.AddAsync(newBooking, ct);
+        
+        var createdMessage = new BookingRequested(
+            Guid.NewGuid(),
+            newBooking.Id,
+            newBooking.EventId,
+            newBooking.UserId,
+            1,
+            newBooking.CreatedAt);
 
+        var createdOutbox = OutboxMessage.Create(
+            type: nameof(BookingRequested),
+            topic: TopicNames.BookingRequested,
+            messageKey: eventId.ToString(),
+            payload: JsonSerializer.Serialize(createdMessage),
+            createdAt: newBooking.CreatedAt,
+            error: null);
+
+        await bookingRepository.CreateAndAddOutboxAsync(newBooking, createdOutbox, ct);
         logger.LogInformation("Бронирование успешно создано. ID: {Id}", newBooking.Id);
         return MapToDTO(newBooking);
     }
@@ -114,88 +130,6 @@ public class BookingService(
 
         logger.LogInformation("Бронирование успешно отменено. ID: {Id}", bookingId);
         return true;
-    }
-
-    public async Task UpdateBookingAsync(CancellationToken ct)
-    {
-        ct.ThrowIfCancellationRequested();
-
-        var pendingBookings = await bookingRepository.GetAllAsync(BookingStatus.Pending, ct);
-        var tasks = pendingBookings.Select(booking => ProcessBookingAsync(booking, ct));
-        await Task.WhenAll(tasks);
-    }
-
-    private async Task ProcessBookingAsync(BookingModel booking, CancellationToken ct)
-    {
-        var processingTime = timeProvider.GetUtcNow().UtcDateTime;
-
-        try
-        {
-            var confirmedMessage = new BookingConfirmed(
-                Guid.NewGuid(),
-                booking.Id,
-                booking.EventId,
-                booking.UserId,
-                1,
-                processingTime);
-
-            var confirmedOutbox = OutboxMessage.Create(
-                type: nameof(BookingConfirmed),
-                topic: TopicNames.BookingConfirmed,
-                messageKey: booking.EventId.ToString(),
-                payload: JsonSerializer.Serialize(confirmedMessage),
-                createdAt: processingTime,
-                error: null);
-
-            var saved = await bookingRepository.ConfirmAndAddOutboxAsync(
-                booking.Id,
-                processingTime,
-                confirmedOutbox,
-                ct);
-
-            if (!saved)
-            {
-                logger.LogWarning(
-                    "Не удалось подтвердить бронирование {BookingId}. Возможно, оно уже было обработано.",
-                    booking.Id);
-                return;
-            }
-
-            logger.LogInformation("Бронь {Id} подтверждена и записана в Outbox", booking.Id);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            logger.LogError(ex, "Ошибка при обработке бронирования {Id}", booking.Id);
-
-            var rejectedAt = timeProvider.GetUtcNow().UtcDateTime;
-
-            var rejectedMessage = new BookingRejected(
-                Guid.NewGuid(),
-                booking.Id,
-                booking.EventId,
-                booking.UserId,
-                1,
-                rejectedAt);
-
-            var rejectedOutbox = OutboxMessage.Create(
-                type: nameof(BookingRejected),
-                topic: TopicNames.BookingRejected,
-                messageKey: booking.EventId.ToString(),
-                payload: JsonSerializer.Serialize(rejectedMessage),
-                createdAt: rejectedAt,
-                error: null);
-
-            var rejected = await bookingRepository.RejectAndAddOutboxAsync(
-                booking.Id,
-                rejectedAt,
-                rejectedOutbox,
-                ct);
-
-            if (rejected) 
-                logger.LogInformation("Бронь {Id} отклонена и записана в Outbox", booking.Id);
-
-            throw;
-        }
     }
 
     private static BookingInfoDTO MapToDTO(BookingModel booking) =>

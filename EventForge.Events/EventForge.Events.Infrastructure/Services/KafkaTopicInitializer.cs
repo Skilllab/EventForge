@@ -32,7 +32,7 @@ public class KafkaTopicInitializer(
             [
                 new TopicSpecification
                 {
-                    Name = TopicNames.BookingConfirmed,
+                    Name = TopicNames.BookingRequested,
                     NumPartitions = 1,
                     ReplicationFactor = 1
                 },

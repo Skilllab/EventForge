@@ -34,11 +34,17 @@ public static class DependencyInjection
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IProcessedMessageRepository, ProcessedMessageRepository>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
+
+        services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
 
         services.AddHostedService<KafkaTopicInitializer>();
-        services.AddHostedService<BookingConfirmedConsumer>();
+        services.AddHostedService<BookingRequestedConsumer>();
         services.AddHostedService<BookingCancelledConsumer>();
         services.AddHostedService<BookingRejectedConsumer>();
+
+        // Фоновая публикация сообщений из outbox.
+        services.AddHostedService<OutboxPublisherBackgroundService>();
 
         return services;
     }

@@ -20,8 +20,8 @@ public class BackgroundAndKafkaTests
     {
         // Arrange
         var producerMock = new Mock<IProducer<string, string>>();
-        var loggerMock = new Mock<ILogger<KafkaBookingConfirmedPublisher>>();
-        using var publisher = new KafkaBookingConfirmedPublisher(producerMock.Object, loggerMock.Object);
+        var loggerMock = new Mock<ILogger<KafkaBookingPublisher>>();
+        using var publisher = new KafkaBookingPublisher(producerMock.Object, loggerMock.Object);
 
         const string topic = TopicNames.BookingConfirmed;
         const string key = "event-key";

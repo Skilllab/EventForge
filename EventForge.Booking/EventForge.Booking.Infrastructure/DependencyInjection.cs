@@ -25,23 +25,34 @@ public static class DependencyInjection
 
         services.AddDbContextFactory<BookingDbContext>(options =>
         {
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+            options.UseNpgsql(
+                configuration.GetConnectionString("DefaultConnection"));
         });
 
-        services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
-        services.Configure<KafkaOptions>(configuration.GetSection(nameof(KafkaOptions)));
+        services.Configure<JwtSettings>(
+            configuration.GetSection(nameof(JwtSettings)));
+        services.Configure<KafkaOptions>(
+            configuration.GetSection(nameof(KafkaOptions)));
 
-        // Фоновая обработка pending бронирований.
-        services.AddHostedService<BookingBackgroundService>();
-
-        // Фоновая публикация сообщений из outbox.
-        services.AddHostedService<OutboxPublisherBackgroundService>();
-
+        // Репозитории (Scoped, т.к. используют DbContext)
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
+        services.AddScoped<IProcessedMessageRepository,
+            ProcessedMessageRepository>();
 
-        services.AddSingleton<IBookingConfirmedPublisher, KafkaBookingConfirmedPublisher>();
-       
+        // Kafka publisher (Singleton — продюсер переиспользуется)
+        services.AddSingleton<IBookingPublisher, KafkaBookingPublisher>();
+
+        // Фоновая публикация сообщений из outbox
+        services.AddHostedService<OutboxPublisherBackgroundService>();
+
+        // Инициализация топиков Kafka
+        services.AddHostedService<KafkaTopicInitializer>();
+
+        // Consumer-ы входящих сообщений
+        services.AddHostedService<BookingConfirmedConsumer>();
+        services.AddHostedService<BookingRejectedConsumer>();
+
         return services;
     }
 }

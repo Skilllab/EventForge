@@ -19,6 +19,11 @@ public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options)
     /// </summary>
     public DbSet<OutboxMessageEntity> OutboxMessages => Set<OutboxMessageEntity>();
 
+    /// <summary>
+    /// Таблица обработанных сообщений (Idempotent Consumer).
+    /// </summary>
+    public DbSet<ProcessedMessageEntity> ProcessedMessages => Set<ProcessedMessageEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("Booking");

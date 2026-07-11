@@ -83,6 +83,21 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
     }
 
     ///<inheritdoc/>
+    public async Task<bool> CreateAndAddOutboxAsync(
+        BookingModel booking,
+        OutboxMessage outboxMessage,
+        CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        await context.AddAsync(booking.ToEntity(), ct);
+        await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
+        await context.SaveChangesAsync(ct);
+
+        return true;
+    }
+
+    ///<inheritdoc/>
     public async Task<bool> CancelAndAddOutboxAsync(
         Guid bookingId,
         Guid userId,
@@ -135,6 +150,50 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
         await context.SaveChangesAsync(ct);
 
+        return true;
+    }
+
+
+    public async Task<bool> ConfirmBookingAsync(
+        Guid bookingId, DateTime processedAt, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
+        if (entity == null)
+            return false;
+
+        if (entity.Status != nameof(BookingStatus.Pending))
+            return false;
+
+        // Переводим статус через доменную модель
+        var booking = entity.ToDomain();
+        booking.Confirm(processedAt);
+        booking.UpdateEntity(entity);
+
+        await context.SaveChangesAsync(ct);
+        return true;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> RejectBookingAsync(
+        Guid bookingId, DateTime processedAt, CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
+        if (entity == null)
+            return false;
+
+        if (entity.Status != nameof(BookingStatus.Pending))
+            return false;
+
+        // Переводим статус через доменную модель
+        var booking = entity.ToDomain();
+        booking.Reject(processedAt);
+        booking.UpdateEntity(entity);
+
+        await context.SaveChangesAsync(ct);
         return true;
     }
 }

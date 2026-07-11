@@ -38,7 +38,7 @@ public class OutboxPublisherBackgroundService(
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var outboxRepository = scope.ServiceProvider.GetRequiredService<IOutboxRepository>();
-        var publisher = scope.ServiceProvider.GetRequiredService<IBookingConfirmedPublisher>();
+        var publisher = scope.ServiceProvider.GetRequiredService<IBookingPublisher>();
 
         var messages = await outboxRepository.GetPendingAsync(BatchSize, stoppingToken);
 

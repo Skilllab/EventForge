@@ -5,7 +5,7 @@ namespace EventForge.Booking.Application.Interfaces;
 /// <summary>
 /// Контракт публикации события подтвержденной брони.
 /// </summary>
-public interface IBookingConfirmedPublisher
+public interface IBookingPublisher
 {
     /// <summary>
     /// Публикует сериализованный payload

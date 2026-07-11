@@ -9,4 +9,9 @@ public class KafkaOptions
     /// Адрес Kafka bootstrap servers
     /// </summary>
     public string BootstrapServers { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Имя consumer group
+    /// </summary>
+    public string ConsumerGroup { get; set; } = string.Empty;
 }

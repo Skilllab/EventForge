@@ -66,4 +66,28 @@ public interface IEventRepository
     /// <param name="seatsCount">Количество мест для освобождения</param>
     /// <param name="ct">Токен отмены</param>
     Task ReleaseSeatAsync(Guid eventId, int seatsCount, CancellationToken ct);
+
+
+    /// <summary>
+    /// Атомарно резервирует места и добавляет outbox-сообщение.
+    /// </summary>
+    /// <param name="eventId">ID события</param>
+    /// <param name="seatsCount">Количество мест</param>
+    /// <param name="outboxMessage">Сообщение для outbox</param>
+    /// <param name="ct">Токен отмены</param>
+    Task<bool> TryReserveSeatAndAddOutboxAsync(
+        Guid eventId, int seatsCount, OutboxMessage outboxMessage, CancellationToken ct);
+
+
+    /// <summary>
+    /// Добавляет outbox-сообщение БЕЗ списания мест.
+    /// Используется в сценариях, где места списывать не нужно:
+    /// — событие не найдено (нечего списывать)
+    /// — событие уже началось (бронь недействительна)
+    /// — места кончились после неудачной попытки списания
+    /// Во всех этих случаях пишем BookingRejected в outbox.
+    /// </summary>
+    /// <param name="outboxMessage">Сообщение для outbox</param>
+    /// <param name="ct">Токен отмены</param>
+    Task AddOutboxAsync(OutboxMessage outboxMessage, CancellationToken ct);
 }
