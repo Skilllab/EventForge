@@ -31,4 +31,13 @@ public interface IBookingService
     /// <param name="userRole">Роль пользователя</param>
     /// <param name="ct">Токен отмены</param>
     Task<bool> CancelBooking(Guid bookingId, Guid userId, RoleType userRole, CancellationToken ct);
+
+    /// <summary>
+    /// Получение всех бронирований для пользователя с учетом его роли
+    /// </summary>
+    /// <param name="userId">ID пользователя</param>
+    /// <param name="roleType">Роль пользователя</param>
+    /// <param name="ct">Токен отмены</param>
+    /// <returns>Список бронирований</returns>
+    Task<List<BookingInfoDTO>>GetAllBooking(Guid userId, RoleType  roleType, CancellationToken ct);
 }

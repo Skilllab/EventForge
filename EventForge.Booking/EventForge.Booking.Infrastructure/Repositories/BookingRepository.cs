@@ -13,14 +13,6 @@ namespace EventForge.Booking.Infrastructure.Repositories;
 public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IBookingRepository
 {
     ///<inheritdoc/>
-    public async Task AddAsync(BookingModel booking, CancellationToken ct)
-    {
-        await using var context = await factory.CreateDbContextAsync(ct);
-        await context.AddAsync(booking.ToEntity(), ct);
-        await context.SaveChangesAsync(ct);
-    }
-
-    ///<inheritdoc/>
     public async Task<BookingModel?> GetByIdAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -46,6 +38,18 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
     }
 
     ///<inheritdoc/>
+    public async Task<List<BookingModel>> GetAllAsync(CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
+
+        var entities = await context.Bookings
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        return entities.Select(e => e.ToDomain()).ToList();
+    }
+
+    ///<inheritdoc/>
     public async Task<int> GetUserActiveBookingsCountAsync(Guid userId, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -54,32 +58,6 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
             b => b.UserId == userId &&
                  (b.Status == nameof(BookingStatus.Pending) || b.Status == nameof(BookingStatus.Confirmed)),
             ct);
-    }
-
-    ///<inheritdoc/>
-    public async Task<bool> ConfirmAndAddOutboxAsync(
-        Guid bookingId,
-        DateTime processedAt,
-        OutboxMessage outboxMessage,
-        CancellationToken ct)
-    {
-        await using var context = await factory.CreateDbContextAsync(ct);
-
-        var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
-        if (entity == null)
-            return false;
-
-        if (entity.Status != nameof(BookingStatus.Pending))
-            return false;
-
-        var booking = entity.ToDomain();
-        booking.Confirm(processedAt);
-        booking.UpdateEntity(entity);
-
-        await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
-        await context.SaveChangesAsync(ct);
-
-        return true;
     }
 
     ///<inheritdoc/>
@@ -126,33 +104,7 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
 
         return true;
     }
-
-    ///<inheritdoc/>
-    public async Task<bool> RejectAndAddOutboxAsync(
-        Guid bookingId,
-        DateTime processedAt,
-        OutboxMessage outboxMessage,
-        CancellationToken ct)
-    {
-        await using var context = await factory.CreateDbContextAsync(ct);
-
-        var entity = await context.Bookings.FirstOrDefaultAsync(b => b.Id == bookingId, ct);
-        if (entity == null)
-            return false;
-
-        if (entity.Status != nameof(BookingStatus.Pending))
-            return false;
-
-        var booking = entity.ToDomain();
-        booking.Reject(processedAt);
-        booking.UpdateEntity(entity);
-
-        await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
-        await context.SaveChangesAsync(ct);
-
-        return true;
-    }
-
+   
 
     public async Task<bool> ConfirmBookingAsync(
         Guid bookingId, DateTime processedAt, CancellationToken ct)

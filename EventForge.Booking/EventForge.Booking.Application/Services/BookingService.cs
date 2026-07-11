@@ -44,7 +44,7 @@ public class BookingService(
             userId,
             timeProvider.GetUtcNow().UtcDateTime);
 
-        
+
         var createdMessage = new BookingRequested(
             Guid.NewGuid(),
             newBooking.Id,
@@ -130,6 +130,25 @@ public class BookingService(
 
         logger.LogInformation("Бронирование успешно отменено. ID: {Id}", bookingId);
         return true;
+    }
+
+    public async Task<List<BookingInfoDTO>> GetAllBooking(Guid userId, RoleType roleType, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+
+        logger.LogInformation("Получение всех бронирований для пользователя: {userId} с ролью: {roleType}", userId, roleType);
+
+
+        if (roleType != RoleType.Admin)
+        {
+            throw new InsufficientPermissionsException(
+                nameof(BookingModel),
+                "У пользователя недостаточно прав для просмотра списка бронирвоаний");
+        }
+
+        var bookings = await bookingRepository.GetAllAsync(ct);
+        bookings = bookings.Where(b => b.UserId == userId).ToList();
+        return bookings.Select(MapToDTO).ToList();
     }
 
     private static BookingInfoDTO MapToDTO(BookingModel booking) =>

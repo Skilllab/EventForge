@@ -54,6 +54,29 @@ public class BookingsController(IBookingService bookingService, ILogger<Bookings
     }
 
     /// <summary>
+    /// Получить список бронирований
+    /// </summary>
+    /// <param name="ct">Токен отмены</param>
+    [HttpGet]
+    [Tags("API для бронирования")]
+    public async Task<IActionResult> GetAllBooking(CancellationToken ct)
+    {
+        logger.LogDebug("Обработка запроса GET {methodName}. Получение всех бронирований", nameof(GetBooking));
+
+        var userIdClaim = User.FindFirst(JwtRegisteredClaimNames.Sub);
+        var roleClaim = User.FindFirst("role");
+
+        if (string.IsNullOrEmpty(userIdClaim?.Value) || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return Unauthorized("Не удалось определить идентификатор пользователя.");
+
+        if (string.IsNullOrWhiteSpace(roleClaim?.Value) || !Enum.TryParse<RoleType>(roleClaim.Value, true, out var userRole))
+            return Unauthorized("Не удалось определить роль пользователя.");
+
+        var bookingInfo = await bookingService.GetAllBooking(userId, userRole, ct);
+        return Ok(bookingInfo);
+    }
+
+    /// <summary>
     /// Удалить бронирование
     /// </summary>
     /// <param name="bookingId">Идентификатор бронирования</param>
