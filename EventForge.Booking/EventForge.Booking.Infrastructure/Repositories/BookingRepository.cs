@@ -12,7 +12,6 @@ namespace EventForge.Booking.Infrastructure.Repositories;
 /// </summary>
 public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IBookingRepository
 {
-    ///<inheritdoc/>
     public async Task<BookingModel?> GetByIdAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -24,20 +23,6 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         return entity?.ToDomain();
     }
 
-    ///<inheritdoc/>
-    public async Task<List<BookingModel>> GetAllAsync(BookingStatus status, CancellationToken ct)
-    {
-        await using var context = await factory.CreateDbContextAsync(ct);
-
-        var entities = await context.Bookings
-            .AsNoTracking()
-            .Where(b => b.Status == status.ToString())
-            .ToListAsync(ct);
-
-        return entities.Select(e => e.ToDomain()).ToList();
-    }
-
-    ///<inheritdoc/>
     public async Task<List<BookingModel>> GetAllAsync(CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -49,7 +34,6 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         return entities.Select(e => e.ToDomain()).ToList();
     }
 
-    ///<inheritdoc/>
     public async Task<int> GetUserActiveBookingsCountAsync(Guid userId, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -60,7 +44,6 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
             ct);
     }
 
-    ///<inheritdoc/>
     public async Task<bool> CreateAndAddOutboxAsync(
         BookingModel booking,
         OutboxMessage outboxMessage,
@@ -75,7 +58,6 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         return true;
     }
 
-    ///<inheritdoc/>
     public async Task<bool> CancelAndAddOutboxAsync(
         Guid bookingId,
         Guid userId,
@@ -105,7 +87,6 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         return true;
     }
    
-
     public async Task<bool> ConfirmBookingAsync(
         Guid bookingId, DateTime processedAt, CancellationToken ct)
     {
@@ -118,7 +99,6 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         if (entity.Status != nameof(BookingStatus.Pending))
             return false;
 
-        // Переводим статус через доменную модель
         var booking = entity.ToDomain();
         booking.Confirm(processedAt);
         booking.UpdateEntity(entity);
@@ -127,7 +107,6 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         return true;
     }
 
-    /// <inheritdoc/>
     public async Task<bool> RejectBookingAsync(
         Guid bookingId, DateTime processedAt, CancellationToken ct)
     {
@@ -140,7 +119,6 @@ public class BookingRepository(IDbContextFactory<BookingDbContext> factory) : IB
         if (entity.Status != nameof(BookingStatus.Pending))
             return false;
 
-        // Переводим статус через доменную модель
         var booking = entity.ToDomain();
         booking.Reject(processedAt);
         booking.UpdateEntity(entity);

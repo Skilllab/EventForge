@@ -16,19 +16,13 @@ namespace EventForge.Booking.Infrastructure.Services;
 
 /// <summary>
 /// Consumer, который получает BookingRejected из Kafka
-/// и переводит бронь из Pending → Rejected.
 /// </summary>
 public class BookingRejectedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
     ILogger<BookingRejectedConsumer> logger) : BackgroundService
 {
-    /// <summary>
-    /// Обрабатывает одно сообщение BookingRejected:
-    /// 1. Проверка на дубликат (Idempotent Consumer).
-    /// 2. Поиск брони по ID.
-    /// 3. Перевод из Pending в Rejected.
-    /// </summary>
+
     private async Task HandleMessageAsync(
         BookingRejected? message, CancellationToken ct)
     {
@@ -45,7 +39,6 @@ public class BookingRejectedConsumer(
         var bookingRepository = scope.ServiceProvider
             .GetRequiredService<IBookingRepository>();
 
-        // ── Idempotent Consumer ──
         if (await processedRepository.ExistsAsync(message.MessageId, ct))
         {
             logger.LogInformation(
@@ -54,7 +47,6 @@ public class BookingRejectedConsumer(
             return;
         }
 
-        // ── Поиск брони ──
         var booking = await bookingRepository.GetByIdAsync(
             message.BookingId, ct);
 
@@ -69,7 +61,6 @@ public class BookingRejectedConsumer(
             return;
         }
 
-        // ── Проверка статуса ──
         if (booking.Status != BookingStatus.Pending)
         {
             logger.LogInformation(
@@ -81,7 +72,6 @@ public class BookingRejectedConsumer(
             return;
         }
 
-        // ── Отклоняем бронь ──
         var rejected = await bookingRepository.RejectBookingAsync(
             message.BookingId, message.RejectedAt, ct);
 

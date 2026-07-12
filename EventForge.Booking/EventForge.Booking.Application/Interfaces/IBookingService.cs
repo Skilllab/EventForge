@@ -9,7 +9,7 @@ namespace EventForge.Booking.Application.Interfaces;
 public interface IBookingService
 {
     /// <summary>
-    /// Создание брони для указанного события
+    /// Создание бронирования для указанного события
     /// </summary>
     /// <param name="eventId">ID события</param>
     /// <param name="userId">ID пользователя</param>
@@ -17,7 +17,7 @@ public interface IBookingService
     Task<BookingInfoDTO> CreateBookingAsync(Guid eventId, Guid userId, CancellationToken ct);
 
     /// <summary>
-    /// Получение брони по идентификатору
+    /// Получение бронирования по идентификатору
     /// </summary>
     /// <param name="bookingId">ID бронирования</param>
     /// <param name="ct">Токен отмены</param>

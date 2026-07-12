@@ -6,11 +6,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace EventForge.Events.Infrastructure.EntityConfigurations;
 
 /// <summary>
-/// Конфигурация EF для события.
+/// Конфигурация EF для события
 /// </summary>
 public class EventConfiguration : IEntityTypeConfiguration<EventEntity>
 {
-    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<EventEntity> builder)
     {
         builder.ToTable("Events");

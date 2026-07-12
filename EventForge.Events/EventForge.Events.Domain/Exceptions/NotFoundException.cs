@@ -7,11 +7,9 @@ namespace EventForge.Events.Domain.Exceptions;
 /// </summary>
 public class NotFoundException : DomainException
 {
-    /// <inheritdoc />
     public NotFoundException(string entityName, string entityId)
         : base($"Элемент {entityName} c ID: '{entityId}' не найден.", entityName, entityId) { }
 
-    /// <inheritdoc />
     public NotFoundException(string entityName, string entityId, string message)
         : base(message, entityName, entityId) { }
 }

@@ -16,19 +16,13 @@ namespace EventForge.Booking.Infrastructure.Services;
 
 /// <summary>
 /// Consumer, который получает BookingConfirmed из Kafka
-/// и переводит бронь из Pending → Confirmed.
 /// </summary>
 public class BookingConfirmedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
     ILogger<BookingConfirmedConsumer> logger) : BackgroundService
 {
-    /// <summary>
-    /// Обрабатывает одно сообщение BookingConfirmed:
-    /// 1. Проверка на дубликат (Idempotent Consumer).
-    /// 2. Поиск брони по ID.
-    /// 3. Перевод из Pending в Confirmed.
-    /// </summary>
+
     private async Task HandleMessageAsync(
         BookingConfirmed? message, CancellationToken ct)
     {
@@ -39,14 +33,10 @@ public class BookingConfirmedConsumer(
             return;
         }
 
-        // Создаём scope, т.к. Consumer — Singleton, а репозитории — Scoped
         await using var scope = scopeFactory.CreateAsyncScope();
-        var processedRepository = scope.ServiceProvider
-            .GetRequiredService<IProcessedMessageRepository>();
-        var bookingRepository = scope.ServiceProvider
-            .GetRequiredService<IBookingRepository>();
+        var processedRepository = scope.ServiceProvider.GetRequiredService<IProcessedMessageRepository>();
+        var bookingRepository = scope.ServiceProvider.GetRequiredService<IBookingRepository>();
 
-        // ── Idempotent Consumer: проверка на повторную обработку ──
         if (await processedRepository.ExistsAsync(message.MessageId, ct))
         {
             logger.LogInformation(
@@ -55,7 +45,6 @@ public class BookingConfirmedConsumer(
             return;
         }
 
-        // ── Поиск брони по ID ──
         var booking = await bookingRepository.GetByIdAsync(
             message.BookingId, ct);
 
@@ -72,7 +61,6 @@ public class BookingConfirmedConsumer(
             return;
         }
 
-        // ── Проверка текущего статуса (защита от повторного confirm) ──
         if (booking.Status != BookingStatus.Pending)
         {
             logger.LogInformation(
@@ -85,7 +73,6 @@ public class BookingConfirmedConsumer(
             return;
         }
 
-        // ── Подтверждаем бронь ──
         var confirmed = await bookingRepository.ConfirmBookingAsync(
             message.BookingId, message.ConfirmedAt, ct);
 
@@ -96,13 +83,11 @@ public class BookingConfirmedConsumer(
                 "Возможно, статус изменился между проверкой и сохранением.",
                 message.BookingId);
 
-            // Помечаем обработанным — повторная попытка не поможет
             await processedRepository.AddAsync(
                 message.MessageId, nameof(BookingConfirmed), ct);
             return;
         }
 
-        // ── Фиксируем факт обработки ──
         await processedRepository.AddAsync(
             message.MessageId, nameof(BookingConfirmed), ct);
 

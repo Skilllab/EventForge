@@ -5,7 +5,7 @@ using EventForge.Shared.Enums;
 namespace EventForge.Events.Presentation.ValidationAttributes;
 
 /// <summary>
-/// Атрибут валидации, который проверяет, что роль пользователя соответствует указанной роли.
+/// Атрибут валидации, который проверяет, что роль пользователя соответствует указанной роли
 /// </summary>
 public class RoleValidationAttribute : ValidationAttribute
 {

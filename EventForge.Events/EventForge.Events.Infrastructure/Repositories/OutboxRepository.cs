@@ -12,7 +12,6 @@ namespace EventForge.Events.Infrastructure.Repositories;
 /// </summary>
 public class OutboxRepository(IDbContextFactory<EventsDbContext> factory) : IOutboxRepository
 {
-    //<inheritdoc/>
     public async Task<List<OutboxMessage>> GetPendingAsync(int batchSize, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -25,7 +24,6 @@ public class OutboxRepository(IDbContextFactory<EventsDbContext> factory) : IOut
             .ToListAsync(ct);
     }
 
-    //<inheritdoc/>
     public async Task MarkProcessedAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -40,7 +38,6 @@ public class OutboxRepository(IDbContextFactory<EventsDbContext> factory) : IOut
         await context.SaveChangesAsync(ct);
     }
 
-    //<inheritdoc/>
     public async Task MarkFailedAsync(Guid id, string error, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);

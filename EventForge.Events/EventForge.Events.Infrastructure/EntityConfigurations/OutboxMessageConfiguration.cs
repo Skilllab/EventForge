@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace EventForge.Events.Infrastructure.EntityConfigurations;
 
 /// <summary>
-/// EF-конфигурация таблицы outbox.
+/// EF-конфигурация таблицы outbox
 /// </summary>
 public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessageEntity>
 {

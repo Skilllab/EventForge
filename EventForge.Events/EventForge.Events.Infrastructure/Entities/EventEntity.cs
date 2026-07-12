@@ -1,42 +1,42 @@
 namespace EventForge.Events.Infrastructure.Entities;
 
 /// <summary>
-/// EF-сущность события.
+/// EF-сущность события
 /// </summary>
 public class EventEntity
 {
     /// <summary>
-    /// Идентификатор события.
+    /// Идентификатор события
     /// </summary>
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Название события.
+    /// Название события
     /// </summary>
     public required string Title { get; set; }
 
     /// <summary>
-    /// Описание события.
+    /// Описание события
     /// </summary>
     public string? Description { get; set; }
 
     /// <summary>
-    /// Дата начала.
+    /// Дата начала
     /// </summary>
     public DateTime StartAt { get; set; }
 
     /// <summary>
-    /// Дата окончания.
+    /// Дата окончания
     /// </summary>
     public DateTime EndAt { get; set; }
 
     /// <summary>
-    /// Общее количество мест.
+    /// Общее количество мест
     /// </summary>
     public int TotalSeats { get; set; }
 
     /// <summary>
-    /// Количество свободных мест.
+    /// Количество свободных мест
     /// </summary>
     public int AvailableSeats { get; set; }
 }

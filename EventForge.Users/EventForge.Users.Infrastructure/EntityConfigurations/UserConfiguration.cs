@@ -6,11 +6,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace EventForge.Users.Infrastructure.EntityConfigurations;
 
 /// <summary>
-/// Конфигурация EF Core для сущности пользователя.
+/// Конфигурация EF Core для сущности пользователя
 /// </summary>
 public class UserConfiguration : IEntityTypeConfiguration<UserEntity>
 {
-    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<UserEntity> builder)
     {
         builder.ToTable("Users");

@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace EventForge.Contract.Enums;
 
 /// <summary>
@@ -6,17 +8,14 @@ namespace EventForge.Contract.Enums;
 public enum  BookingNotApprovedReason
 {
     /// <summary>
-    /// Событие не найдено
-    /// </summary>
-    EventNotFound = 0,
-
-    /// <summary>
     /// Событие уже началось
     /// </summary>
-    EventStarted = 1,
+    [Description("Событие уже началось")]
+    EventStarted = 0,
 
     /// <summary>
     /// Нет доступных мест
     /// </summary>
-    NoSeats = 2,
+    [Description("Нет доступных мест")]
+    NoSeats = 1,
 }

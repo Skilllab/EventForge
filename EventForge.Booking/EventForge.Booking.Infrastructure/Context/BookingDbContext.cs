@@ -10,17 +10,17 @@ namespace EventForge.Booking.Infrastructure.Context;
 public sealed class BookingDbContext(DbContextOptions<BookingDbContext> options) : DbContext(options)
 {
     /// <summary>
-    /// Таблица бронирований.
+    /// Таблица бронирований
     /// </summary>
     public DbSet<BookingEntity> Bookings => Set<BookingEntity>();
 
     /// <summary>
-    /// Таблица outbox-сообщений.
+    /// Таблица outbox-сообщений
     /// </summary>
     public DbSet<OutboxMessageEntity> OutboxMessages => Set<OutboxMessageEntity>();
 
     /// <summary>
-    /// Таблица обработанных сообщений (Idempotent Consumer).
+    /// Таблица обработанных сообщений
     /// </summary>
     public DbSet<ProcessedMessageEntity> ProcessedMessages => Set<ProcessedMessageEntity>();
 

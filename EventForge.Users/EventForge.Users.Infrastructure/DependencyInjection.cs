@@ -13,16 +13,10 @@ using Microsoft.Extensions.Options;
 namespace EventForge.Users.Infrastructure;
 
 /// <summary>
-/// Класс расширения для регистрации сервисов Infrastructure-слоя.
+/// Класс расширения для регистрации сервисов Infrastructure-слоя
 /// </summary>
 public static class DependencyInjection
 {
-    /// <summary>
-    /// Регистрирует зависимости Infrastructure-слоя.
-    /// </summary>
-    /// <param name="services">Коллекция сервисов приложения.</param>
-    /// <param name="configuration">Конфигурация приложения.</param>
-    /// <returns>Обновленная коллекция сервисов.</returns>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<LoggingInterceptor>();

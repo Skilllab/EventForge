@@ -5,17 +5,16 @@ using Microsoft.EntityFrameworkCore;
 namespace EventForge.Users.Infrastructure.Context;
 
 /// <summary>
-/// Контекст базы данных Users-сервиса.
+/// Контекст базы данных Users-сервиса
 /// </summary>
-/// <param name="options">Параметры конфигурации DbContext.</param>
+/// <param name="options">Параметры конфигурации DbContext</param>
 public sealed class UsersDbContext(DbContextOptions<UsersDbContext> options) : DbContext(options)
 {
     /// <summary>
-    /// Пользователи.
+    /// Пользователи
     /// </summary>
     public DbSet<UserEntity> Users => Set<UserEntity>();
 
-    /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("Users");

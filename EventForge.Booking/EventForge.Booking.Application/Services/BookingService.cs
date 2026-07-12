@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 namespace EventForge.Booking.Application.Services;
 
 /// <summary>
-/// Сервис для работы с бронированием.
+/// Сервис для работы с бронированием
 /// </summary>
 public class BookingService(
     IBookingRepository bookingRepository,

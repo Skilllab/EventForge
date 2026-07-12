@@ -7,10 +7,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace EventForge.Users.Presentation.Controllers;
 
 /// <summary>
-/// Контроллер для аутентификации пользователей.
+/// Контроллер для аутентификации пользователей
 /// </summary>
-/// <param name="authService">Сервис аутентификации.</param>
-/// <param name="logger">Логгер.</param>
+/// <param name="authService">Сервис аутентификации</param>
+/// <param name="logger">Логгер</param>
 [AllowAnonymous]
 [ApiController]
 [Route("auth")]
@@ -18,10 +18,9 @@ namespace EventForge.Users.Presentation.Controllers;
 public class AuthController(IAuthService authService, ILogger<AuthController> logger) : ControllerBase
 {
     /// <summary>
-    /// Регистрация нового пользователя.
+    /// Регистрация нового пользователя
     /// </summary>
-    /// <param name="userRequest">Данные пользователя для регистрации.</param>
-    /// <returns>Результат регистрации.</returns>
+    /// <param name="userRequest">Данные пользователя для регистрации</param>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] CreateUserRequest userRequest)
     {
@@ -34,10 +33,9 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     }
 
     /// <summary>
-    /// Аутентификация пользователя и получение JWT-токена.
+    /// Аутентификация пользователя и получение JWT-токена
     /// </summary>
-    /// <param name="request">Данные для аутентификации пользователя.</param>
-    /// <returns>JWT-токен.</returns>
+    /// <param name="request">Данные для аутентификации пользователя</param>
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDataRequest request)
     {

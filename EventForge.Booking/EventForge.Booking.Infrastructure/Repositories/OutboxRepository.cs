@@ -8,11 +8,10 @@ using Microsoft.EntityFrameworkCore;
 namespace EventForge.Booking.Infrastructure.Repositories;
 
 /// <summary>
-/// Репозиторий outbox-сообщений.
+/// Репозиторий outbox-сообщений
 /// </summary>
 public class OutboxRepository(IDbContextFactory<BookingDbContext> factory) : IOutboxRepository
 {
-    //<inheritdoc/>
     public async Task<List<OutboxMessage>> GetPendingAsync(int batchSize, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -25,7 +24,6 @@ public class OutboxRepository(IDbContextFactory<BookingDbContext> factory) : IOu
             .ToListAsync(ct);
     }
 
-    //<inheritdoc/>
     public async Task MarkProcessedAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -40,7 +38,6 @@ public class OutboxRepository(IDbContextFactory<BookingDbContext> factory) : IOu
         await context.SaveChangesAsync(ct);
     }
 
-    //<inheritdoc/>
     public async Task MarkFailedAsync(Guid id, string error, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);

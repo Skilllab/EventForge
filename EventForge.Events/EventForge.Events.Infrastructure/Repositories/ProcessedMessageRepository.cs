@@ -11,14 +11,12 @@ namespace EventForge.Events.Infrastructure.Repositories;
 /// </summary>
 public class ProcessedMessageRepository(IDbContextFactory<EventsDbContext> factory) : IProcessedMessageRepository
 {
-    /// <inheritdoc />
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
         return await context.ProcessedMessages.AnyAsync(x => x.Id == id, ct);
     }
 
-    /// <inheritdoc />
     public async Task AddAsync(Guid id, string messageType, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);

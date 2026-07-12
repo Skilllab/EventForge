@@ -14,16 +14,15 @@ using Microsoft.OpenApi;
 namespace EventForge.Booking.Presentation;
 
 /// <summary>
-/// Класс расширения для регистрации сервисов Presentation-слоя.
+/// Класс расширения для регистрации сервисов Presentation-слоя
 /// </summary>
 public static class DependencyInjection
 {
     /// <summary>
-    /// Регистрирует зависимости Presentation-слоя.
+    /// Регистрирует зависимости Presentation-слоя
     /// </summary>
-    /// <param name="services">Коллекция сервисов приложения.</param>
-    /// <param name="configuration">Конфигурация приложения.</param>
-    /// <returns>Обновленная коллекция сервисов.</returns>
+    /// <param name="services">Коллекция сервисов приложения</param>
+    /// <param name="configuration">Конфигурация приложения</param>
     public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddControllers();
@@ -150,18 +149,6 @@ public static class DependencyInjection
                 _ => (StatusCodes.Status500InternalServerError, new ProblemDetails { Detail = exception.Message })
             };
         });
-
-        // Добавляем CORS-политику
-        services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy.AllowAnyOrigin()    // Разрешить запросы с любого URL (включая все ваши порты Swagger)
-                    .AllowAnyHeader()    // Разрешить любые заголовки (включая Authorization с JWT)
-                    .AllowAnyMethod();   // Разрешить любые методы (GET, POST и т.д.)
-            });
-        });
-
 
         return services;
     }

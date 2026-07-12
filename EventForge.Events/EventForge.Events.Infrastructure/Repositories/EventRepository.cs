@@ -14,7 +14,6 @@ namespace EventForge.Events.Infrastructure.Repositories;
 /// <param name="factory"></param>
 public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEventRepository
 {
-    ///<inheritdoc/>
     public async Task<Event?> GetByIdAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -25,7 +24,6 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         return entity?.ToDomain();
     }
 
-    ///<inheritdoc/>
     public async Task<PagedResult<Event>> GetPagedAsync(
         string? title,
         DateTime? startAt,
@@ -40,12 +38,10 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
 
         await using var context = await factory.CreateDbContextAsync(ct);
 
-        // 1. Создаем базовый запрос с фильтром
         var query = context.Events.AsNoTracking();
 
         query = CreateQuery(context, query, startAt, endAt, title);
 
-        // Общее количество записей по фильтру
         var totalCount = await query.CountAsync(ct);
 
         var entities = await query
@@ -93,7 +89,6 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         return query;
     }
 
-    ///<inheritdoc/>
     public async Task AddAsync(Event @event, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -102,7 +97,6 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         await context.SaveChangesAsync(ct);
     }
 
-    ///<inheritdoc/>
     public async Task UpdateAsync(Event @event, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -111,7 +105,6 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         await context.SaveChangesAsync(ct);
     }
 
-    ///<inheritdoc/>
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -119,25 +112,6 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         return affected > 0;
     }
 
-    ///<inheritdoc/>
-    public async Task<bool> TryReserveSeatAsync(Guid eventId, int seatsCount, CancellationToken ct)
-    {
-        await using var context = await factory.CreateDbContextAsync(ct);
-
-        var entity = await context.Events.FirstOrDefaultAsync(e => e.Id == eventId, ct);
-        if (entity == null)
-            return false;
-
-        if (seatsCount <= 0 || entity.AvailableSeats < seatsCount)
-            return false;
-
-        entity.AvailableSeats -= seatsCount;
-        await context.SaveChangesAsync(ct);
-
-        return true;
-    }
-
-    ///<inheritdoc/>
     public async Task ReleaseSeatAsync(Guid eventId, int seatsCount, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -153,7 +127,6 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         await context.SaveChangesAsync(ct);
     }
 
-    //<inheritdoc/>
     public async Task<bool> TryReserveSeatAndAddOutboxAsync(Guid eventId, int seatsCount, OutboxMessage outboxMessage, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
@@ -171,7 +144,7 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         await context.SaveChangesAsync(ct);
         return true;
     }
-    /// <inheritdoc/>
+
     public async Task AddOutboxAsync(OutboxMessage outboxMessage, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);

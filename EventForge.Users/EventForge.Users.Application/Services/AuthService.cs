@@ -5,17 +5,16 @@ using EventForge.Users.Domain.Entities;
 namespace EventForge.Users.Application.Services;
 
 /// <summary>
-/// Сервис регистрации и входа пользователей.
+/// Сервис регистрации и входа пользователей
 /// </summary>
-/// <param name="userRepository">Репозиторий пользователей.</param>
-/// <param name="passwordHasher">Компонент хэширования паролей.</param>
-/// <param name="tokenGenerator">Компонент генерации JWT-токенов.</param>
+/// <param name="userRepository">Репозиторий пользователей</param>
+/// <param name="passwordHasher">Компонент хэширования паролей</param>
+/// <param name="tokenGenerator">Компонент генерации JWT-токенов</param>
 public class AuthService(
     IUserRepository userRepository,
     IPasswordHasher passwordHasher,
     IJwtTokenGenerator tokenGenerator) : IAuthService
 {
-    /// <inheritdoc />
     public async Task<bool> RegisterUserAsync(string login, string password, string? role)
     {
         var enumRole = RoleType.User;
@@ -33,7 +32,6 @@ public class AuthService(
         return true;
     }
 
-    /// <inheritdoc />
     public async Task<string?> LoginUserAsync(string login, string password)
     {
         var user = await userRepository.GetByLoginAsync(login);

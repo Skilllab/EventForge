@@ -13,7 +13,6 @@ namespace EventForge.Events.Application.Services;
 /// </summary>
 public class EventService(IEventRepository repository, ILogger<EventService> logger, TimeProvider timeProvider) : IEventService
 {
-    /// <inheritdoc/>
     public async Task<EventDTO> CreateEventAsync(CreateEventDto newEventDTO, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -32,7 +31,6 @@ public class EventService(IEventRepository repository, ILogger<EventService> log
         return newEvent.ToDto();
     }
 
-    /// <inheritdoc/>
     public async Task CancelEventAsync(Guid eventId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -46,7 +44,6 @@ public class EventService(IEventRepository repository, ILogger<EventService> log
         logger.LogInformation("Событие успешно удалено. ID: {Id} ", eventId);
     }
 
-    /// <inheritdoc/>
     public async Task<PaginatedResultDTO> GetEventsAsync(EventsFilterDTO filter, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -60,7 +57,7 @@ public class EventService(IEventRepository repository, ILogger<EventService> log
         return new PaginatedResultDTO(result.TotalCount, items, filter.Page, filter.PageSize);
     }
 
-    /// <inheritdoc/>
+
     public async Task<EventDTO> GetEventAsync(Guid eventId, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -75,7 +72,6 @@ public class EventService(IEventRepository repository, ILogger<EventService> log
         return existedEvent.ToDto();
     }
 
-    /// <inheritdoc/>
     public async Task ChangeEventAsync(Guid eventId, UpdateEventDto currentEvent, CancellationToken ct)
     {
         ct.ThrowIfCancellationRequested();
@@ -97,23 +93,7 @@ public class EventService(IEventRepository repository, ILogger<EventService> log
         await repository.UpdateAsync(existedEvent, ct);
         logger.LogInformation("Событие успешно обновлено. ID: {Id}", eventId);
     }
-
-    public async Task<bool> TryReserveSeatAsync(Guid eventId, CancellationToken ct)
-    {
-        ct.ThrowIfCancellationRequested();
-
-        var reserved = await repository.TryReserveSeatAsync(eventId, 1, ct);
-        if (!reserved)
-        {
-            var existedEvent = await repository.GetByIdAsync(eventId, ct);
-            if (existedEvent == null)
-            {
-                throw new NotFoundException(nameof(Event), eventId.ToString());
-            }
-        }
-
-        return reserved;
-    }
+   
 
     public async Task ReleaseSeatAsync(Guid eventId, CancellationToken ct)
     {

@@ -7,12 +7,12 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EventForge.Events.Application;
 
 /// <summary>
-/// Регистрация зависимостей слоя Application.
+/// Регистрация зависимостей слоя Application
 /// </summary>
 public static class DependencyInjection
 {
     /// <summary>
-    /// Регистрирует зависимости слоя Application.
+    /// Регистрирует зависимости слоя Application
     /// </summary>
     public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {

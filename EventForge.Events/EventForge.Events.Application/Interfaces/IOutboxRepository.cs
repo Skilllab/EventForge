@@ -24,9 +24,8 @@ public interface IOutboxRepository
     /// <summary>
     /// Пометить outbox-сообщение как ошибочное
     /// </summary>
-    /// <param name="id"></param>
-    /// <param name="error"></param>
-    /// <param name="ct"></param>
-    /// <returns></returns>
+    /// <param name="id">Идентификатор сообщения</param>
+    /// <param name="error">Описание ошибки</param>
+    /// <param name="ct">Токен отмены</param>
     Task MarkFailedAsync(Guid id, string error, CancellationToken ct);
 }

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace EventForge.Events.Infrastructure.Services;
 
 /// <summary>
-/// Фоновый сервис, который читает outbox и публикует сообщения в Kafka.
+/// Фоновый сервис, который читает outbox и публикует сообщения в Kafka
 /// </summary>
 public class OutboxPublisherBackgroundService(
     IServiceScopeFactory scopeFactory,

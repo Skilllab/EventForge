@@ -34,11 +34,9 @@ public static class DependencyInjection
         services.Configure<KafkaOptions>(
             configuration.GetSection(nameof(KafkaOptions)));
 
-        // Репозитории (Scoped, т.к. используют DbContext)
         services.AddScoped<IBookingRepository, BookingRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
-        services.AddScoped<IProcessedMessageRepository,
-            ProcessedMessageRepository>();
+        services.AddScoped<IProcessedMessageRepository, ProcessedMessageRepository>();
 
         // Kafka publisher (Singleton — продюсер переиспользуется)
         services.AddSingleton<IBookingPublisher, KafkaBookingPublisher>();

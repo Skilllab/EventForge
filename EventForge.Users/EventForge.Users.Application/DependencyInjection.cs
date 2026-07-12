@@ -7,16 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EventForge.Users.Application;
 
 /// <summary>
-/// Класс расширения для регистрации сервисов Application-слоя.
+/// Класс расширения для регистрации сервисов Application-слоя
 /// </summary>
 public static class DependencyInjection
 {
-    /// <summary>
-    /// Регистрирует зависимости Application-слоя.
-    /// </summary>
-    /// <param name="services">Коллекция сервисов приложения.</param>
-    /// <param name="configuration">Конфигурация приложения.</param>
-    /// <returns>Обновленная коллекция сервисов.</returns>
     public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddScoped<IAuthService, AuthService>();

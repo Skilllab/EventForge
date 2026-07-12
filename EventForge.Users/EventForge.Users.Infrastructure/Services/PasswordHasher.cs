@@ -6,15 +6,14 @@ using EventForge.Users.Application.Interfaces;
 namespace EventForge.Users.Infrastructure.Services;
 
 /// <summary>
-/// Компонент для хеширования паролей и проверки соответствия.
+/// Компонент для хеширования паролей и проверки соответствия
 /// </summary>
 public class PasswordHasher : IPasswordHasher
 {
     /// <summary>
-    /// Хеширует пароль с использованием SHA-256.
+    /// Хеширует пароль с использованием SHA-256
     /// </summary>
-    /// <param name="password">Исходный пароль.</param>
-    /// <returns>Хеш пароля в виде строки HEX.</returns>
+    /// <param name="password">Исходный пароль</param>
     public string HashPassword(string password)
     {
         if (string.IsNullOrWhiteSpace(password))
@@ -25,11 +24,10 @@ public class PasswordHasher : IPasswordHasher
     }
 
     /// <summary>
-    /// Проверяет соответствие пароля хешу.
+    /// Проверяет соответствие пароля хешу
     /// </summary>
-    /// <param name="password">Пароль для проверки.</param>
-    /// <param name="hash">Сохраненный хеш.</param>
-    /// <returns>True, если пароль соответствует хешу.</returns>
+    /// <param name="password">Пароль для проверки</param>
+    /// <param name="hash">Сохраненный хеш</param>
     public bool VerifyPassword(string password, string hash)
     {
         if (string.IsNullOrWhiteSpace(password))

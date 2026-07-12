@@ -6,11 +6,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace EventForge.Booking.Infrastructure.EntityConfigurations;
 
 /// <summary>
-/// EF-конфигурация таблицы обработанных сообщений.
+/// EF-конфигурация таблицы обработанных сообщений
 /// </summary>
 public class ProcessedMessageConfiguration : IEntityTypeConfiguration<ProcessedMessageEntity>
 {
-    /// <inheritdoc />
     public void Configure(EntityTypeBuilder<ProcessedMessageEntity> builder)
     {
         builder.ToTable("ProcessedMessages");

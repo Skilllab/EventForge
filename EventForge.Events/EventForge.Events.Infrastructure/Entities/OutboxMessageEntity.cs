@@ -1,7 +1,7 @@
 namespace EventForge.Events.Infrastructure.Entities;
 
 /// <summary>
-/// Запись outbox для гарантированной последующей публикации сообщения.
+/// Запись outbox для гарантированной последующей публикации сообщения
 /// </summary>
 public class OutboxMessageEntity
 {

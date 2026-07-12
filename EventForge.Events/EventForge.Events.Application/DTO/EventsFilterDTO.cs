@@ -75,25 +75,21 @@ public class EventsFilterDTO
         int page = 1,
         int pageSize = 10)
     {
-        // 1. Проверка длины строки Title
         if (title is not null && title.Length > 100)
         {
             throw new ArgumentException("Название для поиска слишком длинное", nameof(title));
         }
 
-        // 2. Проверка номера страницы Page
         if (page < 1)
         {
             throw new ArgumentException("Номер страницы должен быть больше 0", nameof(page));
         }
 
-        // 3. Проверка размера страницы PageSize
         if (pageSize is < 1 or > 100)
         {
             throw new ArgumentException("Размер страницы должен быть от 1 до 100 элементов", nameof(pageSize));
         }
 
-        // 4. Проверка корректности дат From и To
         if (from.HasValue && to.HasValue && to < from)
         {
             throw new ArgumentException("Дата завершения не может быть раньше даты начала", nameof(to));

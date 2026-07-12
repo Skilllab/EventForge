@@ -39,7 +39,6 @@ public sealed class KafkaEventPublisher : IEventPublisher, IDisposable
         _logger = logger;
     }
 
-    //<inheritdoc />
     public async Task PublishRawAsync(string topic, string key, string payload, CancellationToken ct)
     {
         await _producer.ProduceAsync(

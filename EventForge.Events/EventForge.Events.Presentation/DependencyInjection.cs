@@ -14,15 +14,10 @@ using Microsoft.OpenApi;
 namespace EventForge.Events.Presentation;
 
 /// <summary>
-/// Класс для работы по билдеру
+/// Регистрация зависимостей слоя Presentation
 /// </summary>
 public static class DependencyInjection
 {
-    /// <summary>
-    /// Метод добавления контроллеров, эндпоинтов и сваггера
-    /// </summary>
-    /// <param name="services">Системная коллекция сервисов</param>
-    /// <param name="configuration">Конфигурация приложения</param>
     public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddControllers();

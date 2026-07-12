@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace EventForge.Events.Infrastructure.EntityConfigurations;
 
 /// <summary>
-/// EF-конфигурация таблицы обработанных сообщений.
+/// EF-конфигурация таблицы обработанных сообщений
 /// </summary>
 public class ProcessedMessageConfiguration : IEntityTypeConfiguration<ProcessedMessageEntity>
 {

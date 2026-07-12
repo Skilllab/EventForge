@@ -13,13 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EventForge.Events.Infrastructure;
 
 /// <summary>
-/// Регистрация зависимостей слоя Infrastructure.
+/// Регистрация зависимостей слоя Infrastructure
 /// </summary>
 public static class DependencyInjection
 {
-    /// <summary>
-    /// Регистрирует зависимости слоя Infrastructure.
-    /// </summary>
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<LoggingInterceptor>();
@@ -38,12 +35,9 @@ public static class DependencyInjection
 
         services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
 
-        //services.AddHostedService<KafkaTopicInitializer>();
         services.AddHostedService<BookingRequestedConsumer>();
         services.AddHostedService<BookingCancelledConsumer>();
-        //services.AddHostedService<BookingRejectedConsumer>();
 
-        // Фоновая публикация сообщений из outbox.
         services.AddHostedService<OutboxPublisherBackgroundService>();
 
         return services;

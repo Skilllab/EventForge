@@ -39,11 +39,9 @@ public class BookingRequestedConsumer(
             return;
         }
 
-        // Пытаемся атомарно списать места и записать outbox
         var now = DateTime.UtcNow;
         OutboxMessage outbox;
 
-        // Сначала проверяем существование события
         var eventEntity = await eventRepository.GetByIdAsync(message.EventId, stoppingToken);
         if (eventEntity == null)
         {
@@ -93,7 +91,6 @@ public class BookingRequestedConsumer(
 
         if (!reserved)
         {
-            // Нет мест — BookingRejected
             logger.LogWarning("Не удалось зарезервировать места для EventId={EventId}", message.EventId);
 
             var rejected = new BookingNotApproved(

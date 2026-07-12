@@ -14,16 +14,10 @@ using Microsoft.OpenApi;
 namespace EventForge.Users.Presentation;
 
 /// <summary>
-/// Класс расширения для регистрации сервисов Presentation-слоя.
+/// Класс расширения для регистрации сервисов Presentation-слоя
 /// </summary>
 public static class DependencyInjection
 {
-    /// <summary>
-    /// Регистрирует зависимости Presentation-слоя.
-    /// </summary>
-    /// <param name="services">Коллекция сервисов приложения.</param>
-    /// <param name="configuration">Конфигурация приложения.</param>
-    /// <returns>Обновленная коллекция сервисов.</returns>
     public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddControllers();

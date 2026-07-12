@@ -5,12 +5,12 @@ using Microsoft.EntityFrameworkCore;
 namespace EventForge.Events.Infrastructure.Context;
 
 /// <summary>
-/// DbContext сервиса событий.
+/// DbContext сервиса событий
 /// </summary>
 public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options) : DbContext(options)
 {
     /// <summary>
-    /// Таблица событий.
+    /// Таблица событий
     /// </summary>
     public DbSet<EventEntity> Events => Set<EventEntity>();
 
@@ -20,7 +20,7 @@ public sealed class EventsDbContext(DbContextOptions<EventsDbContext> options) :
     public DbSet<ProcessedMessageEntity> ProcessedMessages => Set<ProcessedMessageEntity>();
 
     /// <summary>
-    /// Таблица outbox-сообщений.
+    /// Таблица outbox-сообщений
     /// </summary>
     public DbSet<OutboxMessageEntity> OutboxMessages => Set<OutboxMessageEntity>();
 

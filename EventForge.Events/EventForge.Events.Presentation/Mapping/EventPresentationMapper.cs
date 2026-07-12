@@ -4,12 +4,12 @@ using EventForge.Events.Presentation.DTO;
 namespace EventForge.Events.Presentation.Mapping;
 
 /// <summary>
-/// Маппер для преобразования моделей между слоями Presentation и Application.
+/// Маппер для преобразования моделей между слоями Presentation и Application
 /// </summary>
 public static class EventPresentationMapper
 {
     /// <summary>
-    /// Преобразует входной запрос создания события (Presentation) в DTO бизнес-логики (Application).
+    /// Преобразует входной запрос создания события (Presentation) в DTO бизнес-логики (Application)
     /// </summary>
     /// <param name="request">Запрос создания события из запроса.</param>
     public static CreateEventDto ToAppDto(this CreateEventRequest request) =>
@@ -22,7 +22,7 @@ public static class EventPresentationMapper
         );
 
     /// <summary>
-    /// Преобразует выходной DTO бизнес-логики (Application) в ответ клиенту (Presentation).
+    /// Преобразует выходной DTO бизнес-логики (Application) в ответ клиенту (Presentation)
     /// </summary>
     /// <param name="dto">DTO события из слоя Application.</param>
     public static EventResponse ToWebDto(this EventDTO dto) =>
@@ -38,7 +38,7 @@ public static class EventPresentationMapper
         );
 
     /// <summary>
-    /// Преобразует входной запрос обновления события (Presentation) в DTO бизнес-логики (Application).
+    /// Преобразует входной запрос обновления события (Presentation) в DTO бизнес-логики (Application)
     /// </summary>
     /// <param name="request">Запрос обновления события</param>
     public static UpdateEventDto ToAppDto(this UpdateEventRequest request) =>
@@ -51,7 +51,7 @@ public static class EventPresentationMapper
         );
 
     /// <summary>
-    /// Преобразует входной запрос фильтрации (Presentation) в DTO бизнес-логики (Application).
+    /// Преобразует входной запрос фильтрации (Presentation) в DTO бизнес-логики (Application)
     /// </summary>
     /// <param name="request">Запрос фильтрации</param>
     public static EventsFilterDTO ToAppDto(this EventsFilterRequest request) =>
@@ -66,7 +66,7 @@ public static class EventPresentationMapper
 
 
     /// <summary>
-    /// Преобразует выходной DTO бизнес-логики (Application) в ответ клиенту (Presentation).
+    /// Преобразует выходной DTO бизнес-логики (Application) в ответ клиенту (Presentation)
     /// </summary>
     /// <param name="dto">DTO поиска с пагинацией</param>
     public static PaginatedResultResponse ToWebDto(this PaginatedResultDTO dto) =>

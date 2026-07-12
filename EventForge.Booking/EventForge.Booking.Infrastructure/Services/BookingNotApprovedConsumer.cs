@@ -19,12 +19,7 @@ public class BookingNotApprovedConsumer(
     IOptions<KafkaOptions> kafkaOptions,
     ILogger<BookingRejectedConsumer> logger) : BackgroundService
 {
-    /// <summary>
-    /// Обрабатывает одно сообщение BookingRejected:
-    /// 1. Проверка на дубликат (Idempotent Consumer).
-    /// 2. Поиск брони по ID.
-    /// 3. Перевод из Pending в Rejected.
-    /// </summary>
+    
     private async Task HandleMessageAsync(
         BookingNotApproved? message, CancellationToken ct)
     {
@@ -41,7 +36,6 @@ public class BookingNotApprovedConsumer(
         var bookingRepository = scope.ServiceProvider
             .GetRequiredService<IBookingRepository>();
 
-        // ── Idempotent Consumer ──
         if (await processedRepository.ExistsAsync(message.MessageId, ct))
         {
             logger.LogInformation(
@@ -50,7 +44,6 @@ public class BookingNotApprovedConsumer(
             return;
         }
 
-        // ── Поиск брони ──
         var booking = await bookingRepository.GetByIdAsync(
             message.BookingId, ct);
 
@@ -65,7 +58,6 @@ public class BookingNotApprovedConsumer(
             return;
         }
 
-        // ── Проверка статуса ──
         if (booking.Status != BookingStatus.Pending)
         {
             logger.LogInformation(
@@ -77,7 +69,6 @@ public class BookingNotApprovedConsumer(
             return;
         }
 
-        // ── Отклоняем бронь ──
         var rejected = await bookingRepository.RejectBookingAsync(
             message.BookingId, message.RejectedAt, ct);
 

@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace EventForge.Booking.Application;
 
 /// <summary>
-/// Регистрация зависимостей слоя Application.
+/// Регистрация зависимостей слоя Application
 /// </summary>
 public static class DependencyInjection
 {

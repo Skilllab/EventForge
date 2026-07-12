@@ -44,18 +44,9 @@ public interface IEventService
     Task ChangeEventAsync(Guid eventId, UpdateEventDto currentEvent, CancellationToken ct);
 
     /// <summary>
-    /// Зарезервировать одно место на событии.
-    /// </summary>
-    /// <param name="eventId">ID события</param>
-    /// <param name="ct">Токен отмены</param>
-    Task<bool> TryReserveSeatAsync(Guid eventId, CancellationToken ct);
-
-    /// <summary>
     /// Освободить одно место на событии.
     /// </summary>
     /// <param name="eventId">ID события</param>
     /// <param name="ct">Токен отмены</param>
     Task ReleaseSeatAsync(Guid eventId, CancellationToken ct);
-
-
 }

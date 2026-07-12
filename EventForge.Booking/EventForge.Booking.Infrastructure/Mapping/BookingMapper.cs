@@ -11,6 +11,7 @@ public static class BookingMapper
     /// <summary>
     /// Из сущности БД в доменную модель
     /// </summary>
+    /// <param name="entity">Сущность базы данных</param>
     public static BookingModel ToDomain(this BookingEntity entity)
     {
         var domain = BookingModel.Create(entity.EventId, entity.UserId, entity.CreatedAt);
@@ -28,6 +29,7 @@ public static class BookingMapper
     /// <summary>
     /// Из домена в сущность БД
     /// </summary>
+    /// <param name="domain">Доменная модель</param>
     public static BookingEntity ToEntity(this BookingModel domain) =>
         new()
         {
@@ -39,6 +41,11 @@ public static class BookingMapper
             UserId = domain.UserId
         };
 
+    /// <summary>
+    /// Обновление сущности БД на основе доменной модели
+    /// </summary>
+    /// <param name="domain">Доменная модель</param>
+    /// <param name="entity">Сущность базы данных</param>
     public static void UpdateEntity(this BookingModel domain, BookingEntity entity)
     {
         entity.Status = domain.Status.ToString();

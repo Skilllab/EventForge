@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 namespace EventForge.Booking.Infrastructure.Services;
 
 /// <summary>
-/// Kafka publisher события BookingConfirmed
+/// Kafka publisher
 /// </summary>
 public sealed class KafkaBookingPublisher : IBookingPublisher, IDisposable
 {
@@ -39,7 +39,6 @@ public sealed class KafkaBookingPublisher : IBookingPublisher, IDisposable
         _logger = logger;
     }
 
-    //<inheritdoc />
     public async Task PublishRawAsync(string topic, string key, string payload, CancellationToken ct)
     {
         await _producer.ProduceAsync(

@@ -50,7 +50,6 @@ public class UpdateEventDto
             }
         }
 
-        // Если проверка прошла успешно, создаем и возвращаем объект
         return new UpdateEventDto(title, description, startAt, endAt);
     }
 }

@@ -11,15 +11,14 @@ using Microsoft.IdentityModel.Tokens;
 namespace EventForge.Users.Infrastructure.Services;
 
 /// <summary>
-/// Компонент генерации JWT-токенов.
+/// Компонент генерации JWT-токенов
 /// </summary>
-/// <param name="options">Параметры JWT.</param>
-/// <param name="timeProvider">Провайдер времени.</param>
+/// <param name="options">Параметры JWT</param>
+/// <param name="timeProvider">Провайдер времени</param>
 public class JwtTokenGenerator(IOptions<JwtSettings> options, TimeProvider timeProvider) : IJwtTokenGenerator
 {
     private readonly JwtSettings _settings = options.Value;
 
-    /// <inheritdoc />
     public string GenerateToken(Guid id, string role)
     {
         var now = timeProvider.GetUtcNow();

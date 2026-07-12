@@ -1,7 +1,7 @@
 namespace EventForge.Booking.Domain.Entities;
 
 /// <summary>
-/// Запись outbox для гарантированной последующей публикации сообщения.
+/// Запись outbox для гарантированной последующей публикации сообщения
 /// </summary>
 public class OutboxMessage
 {
@@ -86,7 +86,7 @@ public class OutboxMessage
             error);
 
     /// <summary>
-    /// Восстанавливает объект из хранилища.
+    /// Восстанавливает объект из хранилища
     /// </summary>
     public static OutboxMessage Restore(
         Guid id,

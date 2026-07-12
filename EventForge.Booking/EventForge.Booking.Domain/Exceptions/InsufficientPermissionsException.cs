@@ -7,11 +7,9 @@ namespace EventForge.Booking.Domain.Exceptions;
 /// </summary>
 public class InsufficientPermissionsException : DomainException
 {
-    // <inheritdoc />
     public InsufficientPermissionsException(string entityName, string entityId)
         : base($"У '{entityName}' с ID: '{entityId}' недостаточно прав для выполнения операции.", entityName, entityId) { }
 
-    // <inheritdoc />
     public InsufficientPermissionsException(string entityName, string entityId, string message)
         : base(message, entityName, entityId) { }
 }

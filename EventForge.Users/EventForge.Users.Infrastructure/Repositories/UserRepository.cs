@@ -8,12 +8,11 @@ using Microsoft.EntityFrameworkCore;
 namespace EventForge.Users.Infrastructure.Repositories;
 
 /// <summary>
-/// Репозиторий пользователей.
+/// Репозиторий пользователей
 /// </summary>
-/// <param name="factory">Фабрика DbContext.</param>
+/// <param name="factory">Фабрика DbContext</param>
 public class UserRepository(IDbContextFactory<UsersDbContext> factory) : IUserRepository
 {
-    /// <inheritdoc />
     public async Task<User?> GetByLoginAsync(string login)
     {
         await using var context = await factory.CreateDbContextAsync();
@@ -22,7 +21,6 @@ public class UserRepository(IDbContextFactory<UsersDbContext> factory) : IUserRe
         return user?.ToDomain();
     }
 
-    /// <inheritdoc />
     public async Task AddAsync(User user)
     {
         await using var context = await factory.CreateDbContextAsync();
@@ -31,7 +29,6 @@ public class UserRepository(IDbContextFactory<UsersDbContext> factory) : IUserRe
         await context.SaveChangesAsync();
     }
 
-    /// <inheritdoc />
     public async Task<bool> ExistsAsync(string login)
     {
         await using var context = await factory.CreateDbContextAsync();
