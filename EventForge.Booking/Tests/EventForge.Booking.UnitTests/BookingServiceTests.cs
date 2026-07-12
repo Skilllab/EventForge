@@ -20,48 +20,236 @@ namespace EventForge.Booking.UnitTests;
 
 public class BookingServiceTests
 {
-    [Fact]
-    public async Task CreateBookingAsync_Should_Save_Booking_When_Limit_Not_Exceeded()
-    {
-        // Arrange
-        var repositoryMock = new Mock<IBookingRepository>();
-        var loggerMock = new Mock<ILogger<BookingService>>();
-        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 12, 0, 0, TimeSpan.Zero));
-        var options = Options.Create(new BookingOptions { MaxBookingCount = 3 });
-        var service = new BookingService(repositoryMock.Object, options, loggerMock.Object, fakeTimeProvider);
-        var eventId = Guid.NewGuid();
-        var userId = Guid.NewGuid();
-
-        repositoryMock
-            .Setup(x => x.GetUserActiveBookingsCountAsync(userId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(1);
-
-        BookingModel? savedBooking = null;
-        repositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<BookingModel>(), It.IsAny<CancellationToken>()))
-            .Callback<BookingModel, CancellationToken>((booking, _) => savedBooking = booking)
-            .Returns(Task.CompletedTask);
-
-        // Act
-        var result = await service.CreateBookingAsync(eventId, userId, CancellationToken.None);
-
-        // Assert
-        result.EventID.Should().Be(eventId);
-        result.Status.Should().Be(nameof(BookingStatus.Pending));
-        savedBooking.Should().NotBeNull();
-        savedBooking!.UserId.Should().Be(userId);
-    }
 
     [Fact]
-    public async Task CreateBookingAsync_Should_Throw_When_Limit_Exceeded()
+    [Trait("Category", "GetBooking")]
+    public async Task GetBookingByIdAsync_Should_Return_DTO_When_Booking_Found()
     {
         // Arrange
         var repositoryMock = new Mock<IBookingRepository>();
         var service = new BookingService(
             repositoryMock.Object,
-            Options.Create(new BookingOptions { MaxBookingCount = 2 }),
+            Options.Create(new BookingOptions { MaxBookingCount = 3 }),
             Mock.Of<ILogger<BookingService>>(),
             TimeProvider.System);
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
+        var booking = BookingModel.Create(Guid.NewGuid(), Guid.NewGuid(), fakeTimeProvider.GetUtcNow().UtcDateTime);
+
+        repositoryMock
+            .Setup(x => x.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(booking);
+
+        // Act
+        var result = await service.GetBookingByIdAsync(booking.Id, CancellationToken.None);
+
+        // Assert
+        result.ID.Should().Be(booking.Id);
+        result.EventID.Should().Be(booking.EventId);
+        result.Status.Should().Be(nameof(BookingStatus.Pending));
+    }
+
+    [Fact]
+    [Trait("Category", "CancelBooking")]
+    public async Task CancelBooking_Should_Throw_NotFound_When_Booking_Does_Not_Exist()
+    {
+        // Arrange
+        var repositoryMock = new Mock<IBookingRepository>();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
+        var service = new BookingService(
+            repositoryMock.Object,
+            Options.Create(new BookingOptions { MaxBookingCount = 3 }),
+            Mock.Of<ILogger<BookingService>>(),
+            fakeTimeProvider);
+        var bookingId = Guid.NewGuid();
+
+        repositoryMock
+            .Setup(x => x.GetByIdAsync(bookingId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((BookingModel?) null);
+
+        // Act
+        Func<Task> act = () => service.CancelBooking(bookingId, Guid.NewGuid(), RoleType.User, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<NotFoundException>();
+    }
+
+    [Fact]
+    [Trait("Category", "CancelBooking")]
+    public async Task CancelBooking_Should_Throw_When_Already_Cancelled()
+    {
+        // Arrange
+        var repositoryMock = new Mock<IBookingRepository>();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
+        var service = new BookingService(
+            repositoryMock.Object,
+            Options.Create(new BookingOptions { MaxBookingCount = 3 }),
+            Mock.Of<ILogger<BookingService>>(),
+            fakeTimeProvider);
+        var booking = BookingModel.Create(Guid.NewGuid(), Guid.NewGuid(), fakeTimeProvider.GetUtcNow().UtcDateTime);
+        booking.Cancel(fakeTimeProvider.GetUtcNow().UtcDateTime);
+
+        repositoryMock
+            .Setup(x => x.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(booking);
+
+        // Act
+        Func<Task> act = () => service.CancelBooking(booking.Id, booking.UserId, RoleType.User, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    [Trait("Category", "CancelBooking")]
+    public async Task CancelBooking_Should_Throw_When_Already_Rejected()
+    {
+        // Arrange
+        var repositoryMock = new Mock<IBookingRepository>();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
+        var service = new BookingService(
+            repositoryMock.Object,
+            Options.Create(new BookingOptions { MaxBookingCount = 3 }),
+            Mock.Of<ILogger<BookingService>>(),
+            fakeTimeProvider);
+        var booking = BookingModel.Create(Guid.NewGuid(), Guid.NewGuid(), fakeTimeProvider.GetUtcNow().UtcDateTime);
+        booking.Reject(fakeTimeProvider.GetUtcNow().UtcDateTime);
+
+        repositoryMock
+            .Setup(x => x.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(booking);
+
+        // Act
+        Func<Task> act = () => service.CancelBooking(booking.Id, booking.UserId, RoleType.User, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    [Trait("Category", "CancelBooking")]
+    public async Task CancelBooking_Should_Allow_Admin_To_Cancel_Other_Users_Booking()
+    {
+        // Arrange
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
+        var repositoryMock = new Mock<IBookingRepository>();
+        var service = new BookingService(
+            repositoryMock.Object,
+            Options.Create(new BookingOptions { MaxBookingCount = 3 }),
+            Mock.Of<ILogger<BookingService>>(),
+            fakeTimeProvider);
+        var ownerId = Guid.NewGuid();
+        var adminId = Guid.NewGuid();
+        var booking = BookingModel.Create(Guid.NewGuid(), ownerId, fakeTimeProvider.GetUtcNow().UtcDateTime);
+
+        repositoryMock
+            .Setup(x => x.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(booking);
+        repositoryMock
+            .Setup(x => x.CancelAndAddOutboxAsync(booking.Id, ownerId, It.IsAny<DateTime>(), It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        // Act
+        var result = await service.CancelBooking(booking.Id, adminId, RoleType.Admin, CancellationToken.None);
+
+        // Assert
+        result.Should().BeTrue();
+        repositoryMock.Verify(
+            x => x.CancelAndAddOutboxAsync(booking.Id, ownerId, It.IsAny<DateTime>(), It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    [Trait("Category", "CancelBooking")]
+    public async Task CancelBooking_Should_Throw_When_Repository_Returns_False()
+    {
+        // Arrange
+        var repositoryMock = new Mock<IBookingRepository>();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
+        var service = new BookingService(
+            repositoryMock.Object,
+            Options.Create(new BookingOptions { MaxBookingCount = 3 }),
+            Mock.Of<ILogger<BookingService>>(),
+            fakeTimeProvider);
+        var booking = BookingModel.Create(Guid.NewGuid(), Guid.NewGuid(), fakeTimeProvider.GetUtcNow().UtcDateTime);
+
+        repositoryMock
+            .Setup(x => x.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(booking);
+        repositoryMock
+            .Setup(x => x.CancelAndAddOutboxAsync(booking.Id, booking.UserId, It.IsAny<DateTime>(), It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        // Act
+        Func<Task> act = () => service.CancelBooking(booking.Id, booking.UserId, RoleType.User, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    [Trait("Category", "GetAllBooking")]
+    public async Task GetAllBooking_Should_Return_User_Bookings_When_Admin()
+    {
+        // Arrange
+        var repositoryMock = new Mock<IBookingRepository>();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
+        var service = new BookingService(
+            repositoryMock.Object,
+            Options.Create(new BookingOptions { MaxBookingCount = 3 }),
+            Mock.Of<ILogger<BookingService>>(),
+            fakeTimeProvider);
+        var userId = Guid.NewGuid();
+        var userBooking = BookingModel.Create(Guid.NewGuid(), userId, fakeTimeProvider.GetUtcNow().UtcDateTime);
+        var otherBooking = BookingModel.Create(Guid.NewGuid(), Guid.NewGuid(), fakeTimeProvider.GetUtcNow().UtcDateTime);
+
+        repositoryMock
+            .Setup(x => x.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync([userBooking, otherBooking]);
+
+        // Act
+        var result = await service.GetAllBooking(userId, RoleType.Admin, CancellationToken.None);
+
+        // Assert
+        result.Should().HaveCount(1);
+        result[0].ID.Should().Be(userBooking.Id);
+    }
+
+    [Fact]
+    [Trait("Category", "GetAllBooking")]
+    public async Task GetAllBooking_Should_Throw_When_Not_Admin()
+    {
+        // Arrange
+        var repositoryMock = new Mock<IBookingRepository>();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
+        var service = new BookingService(
+            repositoryMock.Object,
+            Options.Create(new BookingOptions { MaxBookingCount = 3 }),
+            Mock.Of<ILogger<BookingService>>(),
+            fakeTimeProvider);
+
+        // Act
+        Func<Task> act = () => service.GetAllBooking(Guid.NewGuid(), RoleType.User, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InsufficientPermissionsException>();
+    }
+
+
+
+   
+
+    [Fact]
+    [Trait("Category", "CreateBooking")]
+    public async Task CreateBookingAsync_Should_Throw_When_Limit_Exceeded()
+    {
+        // Arrange
+        var repositoryMock = new Mock<IBookingRepository>();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
+        var service = new BookingService(
+            repositoryMock.Object,
+            Options.Create(new BookingOptions { MaxBookingCount = 2 }),
+            Mock.Of<ILogger<BookingService>>(),
+            fakeTimeProvider);
         var userId = Guid.NewGuid();
 
         repositoryMock
@@ -76,15 +264,17 @@ public class BookingServiceTests
     }
 
     [Fact]
+    [Trait("Category", "GetBooking")]
     public async Task GetBookingByIdAsync_Should_Throw_When_Booking_Not_Found()
     {
         // Arrange
         var repositoryMock = new Mock<IBookingRepository>();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
         var service = new BookingService(
             repositoryMock.Object,
             Options.Create(new BookingOptions { MaxBookingCount = 3 }),
             Mock.Of<ILogger<BookingService>>(),
-            TimeProvider.System);
+            fakeTimeProvider);
         var bookingId = Guid.NewGuid();
 
         repositoryMock
@@ -99,16 +289,18 @@ public class BookingServiceTests
     }
 
     [Fact]
+    [Trait("Category", "CancelBooking")]
     public async Task CancelBooking_Should_Throw_When_User_Has_No_Permission()
     {
         // Arrange
         var repositoryMock = new Mock<IBookingRepository>();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
         var service = new BookingService(
             repositoryMock.Object,
             Options.Create(new BookingOptions { MaxBookingCount = 3 }),
             Mock.Of<ILogger<BookingService>>(),
-            TimeProvider.System);
-        var booking = BookingModel.Create(Guid.NewGuid(), Guid.NewGuid(), DateTime.UtcNow);
+            fakeTimeProvider);
+        var booking = BookingModel.Create(Guid.NewGuid(), Guid.NewGuid(), fakeTimeProvider.GetUtcNow().UtcDateTime);
 
         repositoryMock
             .Setup(x => x.GetByIdAsync(booking.Id, It.IsAny<CancellationToken>()))
@@ -122,6 +314,7 @@ public class BookingServiceTests
     }
 
     [Fact]
+    [Trait("Category", "CancelBooking")]
     public async Task CancelBooking_Should_Save_Cancelled_Outbox_For_Owner()
     {
         // Arrange
@@ -155,67 +348,5 @@ public class BookingServiceTests
         var payload = JsonSerializer.Deserialize<BookingCancelled>(savedOutbox.Payload);
         payload.Should().NotBeNull();
         payload!.BookingId.Should().Be(booking.Id);
-    }
-
-    [Fact]
-    public async Task UpdateBookingAsync_Should_Confirm_All_Pending_Bookings()
-    {
-        // Arrange
-        var repositoryMock = new Mock<IBookingRepository>();
-        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 16, 0, 0, TimeSpan.Zero));
-        var service = new BookingService(
-            repositoryMock.Object,
-            Options.Create(new BookingOptions { MaxBookingCount = 3 }),
-            Mock.Of<ILogger<BookingService>>(),
-            fakeTimeProvider);
-        var bookings = new List<BookingModel>
-        {
-            BookingModel.Create(Guid.NewGuid(), Guid.NewGuid(), fakeTimeProvider.GetUtcNow().UtcDateTime),
-            BookingModel.Create(Guid.NewGuid(), Guid.NewGuid(), fakeTimeProvider.GetUtcNow().UtcDateTime)
-        };
-
-        repositoryMock
-            .Setup(x => x.GetAllAsync(BookingStatus.Pending, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(bookings);
-        repositoryMock
-            .Setup(x => x.ConfirmAndAddOutboxAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        // Act
-        await service.UpdateBookingAsync(CancellationToken.None);
-
-        // Assert
-        repositoryMock.Verify(x => x.ConfirmAndAddOutboxAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
-    }
-
-    [Fact]
-    public async Task UpdateBookingAsync_Should_Reject_Booking_When_Confirm_Throws()
-    {
-        // Arrange
-        var repositoryMock = new Mock<IBookingRepository>();
-        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 17, 0, 0, TimeSpan.Zero));
-        var service = new BookingService(
-            repositoryMock.Object,
-            Options.Create(new BookingOptions { MaxBookingCount = 3 }),
-            Mock.Of<ILogger<BookingService>>(),
-            fakeTimeProvider);
-        var booking = BookingModel.Create(Guid.NewGuid(), Guid.NewGuid(), fakeTimeProvider.GetUtcNow().UtcDateTime);
-
-        repositoryMock
-            .Setup(x => x.GetAllAsync(BookingStatus.Pending, It.IsAny<CancellationToken>()))
-            .ReturnsAsync([booking]);
-        repositoryMock
-            .Setup(x => x.ConfirmAndAddOutboxAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("confirm failed"));
-        repositoryMock
-            .Setup(x => x.RejectAndAddOutboxAsync(booking.Id, It.IsAny<DateTime>(), It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(true);
-
-        // Act
-        Func<Task> act = () => service.UpdateBookingAsync(CancellationToken.None);
-
-        // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>();
-        repositoryMock.Verify(x => x.RejectAndAddOutboxAsync(booking.Id, It.IsAny<DateTime>(), It.IsAny<OutboxMessage>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

@@ -7,6 +7,7 @@
     <Project Path="EventForge.Booking/EventForge.Booking.Presentation/EventForge.Booking.Presentation.csproj" Id="1d501d97-7440-4e2c-b917-9abb8fb8e86a" />
   </Folder>
   <Folder Name="/EventForge.Booking/Tests/">
+    <Project Path="EventForge.Booking/Tests/EventForge.Booking.e2eTests/EventForge.Booking.e2eTests.csproj" Id="763c0b8e-fbed-456f-833c-43fbf52f4a73" />
     <Project Path="EventForge.Booking/Tests/EventForge.Booking.IntegrationTests/EventForge.Booking.IntegrationTests.csproj" />
     <Project Path="EventForge.Booking/Tests/EventForge.Booking.UnitTests/EventForge.Booking.UnitTests.csproj" />
   </Folder>

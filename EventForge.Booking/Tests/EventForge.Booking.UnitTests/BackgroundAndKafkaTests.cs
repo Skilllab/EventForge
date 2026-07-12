@@ -2,11 +2,14 @@ using Confluent.Kafka;
 
 using EventForge.Booking.Application.Interfaces;
 using EventForge.Booking.Domain.Entities;
+using EventForge.Booking.Infrastructure.Entities;
 using EventForge.Booking.Infrastructure.Services;
 using EventForge.Contract.Brokers;
+using EventForge.Contract.Enums;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 
 using Moq;
@@ -15,6 +18,7 @@ namespace EventForge.Booking.UnitTests;
 
 public class BackgroundAndKafkaTests
 {
+
     [Fact]
     public async Task KafkaBookingConfirmedPublisher_Should_Publish_Raw_Message_With_Expected_Topic_And_Key()
     {
@@ -44,94 +48,187 @@ public class BackgroundAndKafkaTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
+
     [Fact]
-    public async Task OutboxPublisherBackgroundService_Should_Mark_Message_Processed_When_Publish_Succeeds()
+    [Trait("Category", "BookingConfirmedConsumer")]
+    public async Task BookingConfirmedConsumer_Should_Confirm_Booking_When_Pending()
     {
-        // Arrange
         var services = new ServiceCollection();
-        var outboxRepositoryMock = new Mock<IOutboxRepository>();
-        var publisherMock = new Mock<IBookingConfirmedPublisher>();
-        var loggerMock = new Mock<ILogger<OutboxPublisherBackgroundService>>();
-        var message = OutboxMessage.Create("BookingConfirmed", TopicNames.BookingConfirmed, "event-key", "payload", DateTime.UtcNow, null);
+        var processedRepoMock = new Mock<IProcessedMessageRepository>();
+        var bookingRepoMock = new Mock<IBookingRepository>();
+        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
+        var booking = BookingModel.Create(message.EventId, message.UserId, DateTime.UtcNow);
 
-        outboxRepositoryMock
-            .Setup(x => x.GetPendingAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([message]);
-        publisherMock
-            .Setup(x => x.PublishRawAsync(message.Topic, message.MessageKey, message.Payload, It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        bookingRepoMock.Setup(x => x.GetByIdAsync(message.BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
+        bookingRepoMock.Setup(x => x.ConfirmBookingAsync(message.BookingId, message.ConfirmedAt, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-        services.AddSingleton(outboxRepositoryMock.Object);
-        services.AddSingleton(publisherMock.Object);
+        services.AddSingleton(processedRepoMock.Object);
+        services.AddSingleton(bookingRepoMock.Object);
         await using var provider = services.BuildServiceProvider();
-        using var service = new OutboxPublisherBackgroundService(
+        using var consumer = new BookingConfirmedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
-            loggerMock.Object,
-            new FakeTimeProvider());
+            Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "booking-tests" }),
+            Mock.Of<ILogger<BookingConfirmedConsumer>>());
 
-        // Act
-        await service.ProcessOnceAsync(CancellationToken.None);
+        await CallHandleMessageAsync<BookingConfirmed, BookingConfirmedConsumer>(consumer, message, CancellationToken.None);
 
-        // Assert
-        outboxRepositoryMock.Verify(x => x.MarkProcessedAsync(message.Id, It.IsAny<CancellationToken>()), Times.Once);
-        outboxRepositoryMock.Verify(x => x.MarkFailedAsync(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        bookingRepoMock.Verify(x => x.ConfirmBookingAsync(message.BookingId, message.ConfirmedAt, It.IsAny<CancellationToken>()), Times.Once);
+        processedRepoMock.Verify(x => x.AddAsync(message.MessageId, nameof(BookingConfirmed), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task OutboxPublisherBackgroundService_Should_Mark_Message_Failed_When_Publish_Throws()
+    [Trait("Category", "BookingConfirmedConsumer")]
+    public async Task BookingConfirmedConsumer_Should_Skip_When_Already_Processed()
     {
-        // Arrange
         var services = new ServiceCollection();
-        var outboxRepositoryMock = new Mock<IOutboxRepository>();
-        var publisherMock = new Mock<IBookingConfirmedPublisher>();
-        var loggerMock = new Mock<ILogger<OutboxPublisherBackgroundService>>();
-        var message = OutboxMessage.Create("BookingConfirmed", TopicNames.BookingConfirmed, "event-key", "payload", DateTime.UtcNow, null);
+        var processedRepoMock = new Mock<IProcessedMessageRepository>();
+        var bookingRepoMock = new Mock<IBookingRepository>();
+        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
 
-        outboxRepositoryMock
-            .Setup(x => x.GetPendingAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync([message]);
-        publisherMock
-            .Setup(x => x.PublishRawAsync(message.Topic, message.MessageKey, message.Payload, It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("kafka failed"));
+        processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
-        services.AddSingleton(outboxRepositoryMock.Object);
-        services.AddSingleton(publisherMock.Object);
+        services.AddSingleton(processedRepoMock.Object);
+        services.AddSingleton(bookingRepoMock.Object);
         await using var provider = services.BuildServiceProvider();
-        using var service = new OutboxPublisherBackgroundService(
+        using var consumer = new BookingConfirmedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
-            loggerMock.Object,
-            new FakeTimeProvider());
+            Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "booking-tests" }),
+            Mock.Of<ILogger<BookingConfirmedConsumer>>());
 
-        // Act
-        await service.ProcessOnceAsync(CancellationToken.None);
+        await CallHandleMessageAsync<BookingConfirmed, BookingConfirmedConsumer>(consumer, message, CancellationToken.None);
 
-        // Assert
-        outboxRepositoryMock.Verify(x => x.MarkFailedAsync(message.Id, It.Is<string>(s => s.Contains("kafka failed")), It.IsAny<CancellationToken>()), Times.Once);
+        bookingRepoMock.Verify(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
-    public async Task BookingBackgroundService_Should_Invoke_UpdateBookingAsync()
+    [Trait("Category", "BookingConfirmedConsumer")]
+    public async Task BookingConfirmedConsumer_Should_MarkProcessed_When_Booking_Not_Found()
     {
-        // Arrange
         var services = new ServiceCollection();
-        var bookingServiceMock = new Mock<IBookingService>();
-        var loggerMock = new Mock<ILogger<BookingBackgroundService>>();
+        var processedRepoMock = new Mock<IProcessedMessageRepository>();
+        var bookingRepoMock = new Mock<IBookingRepository>();
+        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
 
-        bookingServiceMock
-            .Setup(x => x.UpdateBookingAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+        processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        bookingRepoMock.Setup(x => x.GetByIdAsync(message.BookingId, It.IsAny<CancellationToken>())).ReturnsAsync((BookingModel?) null);
 
-        services.AddSingleton(bookingServiceMock.Object);
+        services.AddSingleton(processedRepoMock.Object);
+        services.AddSingleton(bookingRepoMock.Object);
         await using var provider = services.BuildServiceProvider();
-        using var service = new BookingBackgroundService(
+        using var consumer = new BookingConfirmedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
-            loggerMock.Object,
-            new FakeTimeProvider());
+            Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "booking-tests" }),
+            Mock.Of<ILogger<BookingConfirmedConsumer>>());
 
-        // Act
-        await service.ProcessOnceAsync(CancellationToken.None);
+        await CallHandleMessageAsync<BookingConfirmed, BookingConfirmedConsumer>(consumer, message, CancellationToken.None);
 
-        // Assert
-        bookingServiceMock.Verify(x => x.UpdateBookingAsync(It.IsAny<CancellationToken>()), Times.Once);
+        processedRepoMock.Verify(x => x.AddAsync(message.MessageId, nameof(BookingConfirmed), It.IsAny<CancellationToken>()), Times.Once);
+        bookingRepoMock.Verify(x => x.ConfirmBookingAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
     }
+
+    [Fact]
+    [Trait("Category", "BookingConfirmedConsumer")]
+    public async Task BookingConfirmedConsumer_Should_Skip_When_Booking_Already_Confirmed()
+    {
+        var services = new ServiceCollection();
+        var processedRepoMock = new Mock<IProcessedMessageRepository>();
+        var bookingRepoMock = new Mock<IBookingRepository>();
+        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
+        var booking = BookingModel.Create(message.EventId, message.UserId, DateTime.UtcNow);
+        booking.Confirm(DateTime.UtcNow); // уже подтверждён
+
+        processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        bookingRepoMock.Setup(x => x.GetByIdAsync(message.BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
+
+        services.AddSingleton(processedRepoMock.Object);
+        services.AddSingleton(bookingRepoMock.Object);
+        await using var provider = services.BuildServiceProvider();
+        using var consumer = new BookingConfirmedConsumer(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "booking-tests" }),
+            Mock.Of<ILogger<BookingConfirmedConsumer>>());
+
+        await CallHandleMessageAsync<BookingConfirmed, BookingConfirmedConsumer>(consumer, message, CancellationToken.None);
+
+        bookingRepoMock.Verify(x => x.ConfirmBookingAsync(It.IsAny<Guid>(), It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Never);
+        processedRepoMock.Verify(x => x.AddAsync(message.MessageId, nameof(BookingConfirmed), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+
+    [Fact]
+    [Trait("Category", "BookingRejectedConsumer")]
+    public async Task BookingRejectedConsumer_Should_Reject_Booking_When_Pending()
+    {
+        var services = new ServiceCollection();
+        var processedRepoMock = new Mock<IProcessedMessageRepository>();
+        var bookingRepoMock = new Mock<IBookingRepository>();
+        var now = DateTime.UtcNow;
+        var message = new BookingRejected(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), now, "no seats available");
+        var booking = BookingModel.Create(message.EventId, message.UserId, now.AddHours(-1));
+
+        processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        bookingRepoMock.Setup(x => x.GetByIdAsync(message.BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
+        bookingRepoMock.Setup(x => x.RejectBookingAsync(message.BookingId, It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        services.AddSingleton(processedRepoMock.Object);
+        services.AddSingleton(bookingRepoMock.Object);
+        await using var provider = services.BuildServiceProvider();
+        using var consumer = new BookingRejectedConsumer(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "booking-tests" }),
+            Mock.Of<ILogger<BookingRejectedConsumer>>());
+
+        await CallHandleMessageAsync<BookingRejected, BookingRejectedConsumer>(consumer, message, CancellationToken.None);
+
+        bookingRepoMock.Verify(x => x.RejectBookingAsync(message.BookingId, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        processedRepoMock.Verify(x => x.AddAsync(message.MessageId, nameof(BookingRejected), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+
+    [Fact]
+    [Trait("Category", "BookingNotApprovedConsumer")]
+    public async Task BookingNotApprovedConsumer_Should_Reject_Booking_When_Pending()
+    {
+        var services = new ServiceCollection();
+        var processedRepoMock = new Mock<IProcessedMessageRepository>();
+        var bookingRepoMock = new Mock<IBookingRepository>();
+        var now = DateTime.UtcNow;
+        var message = new BookingNotApproved(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), now, BookingNotApprovedReason.NoSeats);
+        var booking = BookingModel.Create(message.EventId, message.UserId, now.AddHours(-1));
+
+        processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
+        bookingRepoMock.Setup(x => x.GetByIdAsync(message.BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
+        bookingRepoMock.Setup(x => x.RejectBookingAsync(message.BookingId, It.IsAny<DateTime>(), It.IsAny<CancellationToken>())).ReturnsAsync(true);
+
+        services.AddSingleton(processedRepoMock.Object);
+        services.AddSingleton(bookingRepoMock.Object);
+        await using var provider = services.BuildServiceProvider();
+        using var consumer = new BookingNotApprovedConsumer(
+            provider.GetRequiredService<IServiceScopeFactory>(),
+            Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "booking-tests" }),
+            Mock.Of<ILogger<BookingRejectedConsumer>>());
+
+        await CallHandleMessageAsync<BookingNotApproved, BookingNotApprovedConsumer>(consumer, message, CancellationToken.None);
+
+        bookingRepoMock.Verify(x => x.RejectBookingAsync(message.BookingId, It.IsAny<DateTime>(), It.IsAny<CancellationToken>()), Times.Once);
+        processedRepoMock.Verify(x => x.AddAsync(message.MessageId, nameof(BookingNotApproved), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    // ========================================================================
+    // Вспомогательный метод для вызова private HandleMessageAsync через рефлексию
+    // ========================================================================
+    private static async Task CallHandleMessageAsync<TMessage, TConsumer>(
+        TConsumer consumer, TMessage? message, CancellationToken ct)
+    {
+        var method = typeof(TConsumer).GetMethod(
+            "HandleMessageAsync",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        await (Task) (method!.Invoke(consumer, [message, ct])!);
+    }
+
+
+
+
+
 }

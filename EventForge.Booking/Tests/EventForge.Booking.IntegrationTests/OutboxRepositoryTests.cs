@@ -5,6 +5,8 @@ using EventForge.Contract.Brokers;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Time.Testing;
+
 namespace EventForge.Booking.IntegrationTests;
 
 public class OutboxRepositoryTests : BaseRepositoryTest
@@ -19,7 +21,7 @@ public class OutboxRepositoryTests : BaseRepositoryTest
         var repository = CreateRepository();
 
         var newestPending = OutboxMessage.Create(
-            "BookingConfirmed",
+            "Бронь подтверждена",
             TopicNames.BookingConfirmed,
             "event-key-2",
             "payload-2",
@@ -27,7 +29,7 @@ public class OutboxRepositoryTests : BaseRepositoryTest
             null);
 
         var oldestPending = OutboxMessage.Create(
-            "BookingConfirmed",
+            "Бронь подтверждена",
             TopicNames.BookingConfirmed,
             "event-key-1",
             "payload-1",
@@ -36,7 +38,7 @@ public class OutboxRepositoryTests : BaseRepositoryTest
 
         var processed = OutboxMessage.Restore(
             Guid.NewGuid(),
-            "BookingConfirmed",
+            "Бронь подтверждена",
             TopicNames.BookingConfirmed,
             "event-key-3",
             "payload-3",
@@ -65,10 +67,11 @@ public class OutboxRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repository = CreateRepository();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
 
-        var first = OutboxMessage.Create("BookingConfirmed", TopicNames.BookingConfirmed, "key-1", "payload-1", DateTime.UtcNow.AddMinutes(-3), null);
-        var second = OutboxMessage.Create("BookingConfirmed", TopicNames.BookingConfirmed, "key-2", "payload-2", DateTime.UtcNow.AddMinutes(-2), null);
-        var third = OutboxMessage.Create("BookingConfirmed", TopicNames.BookingConfirmed, "key-3", "payload-3", DateTime.UtcNow.AddMinutes(-1), null);
+        var first = OutboxMessage.Create("Бронь подтверждена", TopicNames.BookingConfirmed, "key-1", "payload-1", fakeTimeProvider.GetUtcNow().UtcDateTime.AddMinutes(-3), null);
+        var second = OutboxMessage.Create("Бронь подтверждена", TopicNames.BookingConfirmed, "key-2", "payload-2", fakeTimeProvider.GetUtcNow().UtcDateTime.AddMinutes(-2), null);
+        var third = OutboxMessage.Create("Бронь подтверждена", TopicNames.BookingConfirmed, "key-3", "payload-3", fakeTimeProvider.GetUtcNow().UtcDateTime.AddMinutes(-1), null);
 
         await using var context = await CreateContext();
         await context.OutboxMessages.AddRangeAsync(first.ToEntity(), second.ToEntity(), third.ToEntity());
@@ -88,15 +91,16 @@ public class OutboxRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repository = CreateRepository();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
         var message = OutboxMessage.Restore(
             Guid.NewGuid(),
-            "BookingConfirmed",
+            "Бронь подтверждена",
             TopicNames.BookingConfirmed,
             "event-key",
             "payload",
-            DateTime.UtcNow,
+            fakeTimeProvider.GetUtcNow().UtcDateTime,
             null,
-            "old error");
+            "старая ошибка");
 
         await using var arrangeContext = await CreateContext();
         await arrangeContext.OutboxMessages.AddAsync(message.ToEntity());
@@ -120,12 +124,13 @@ public class OutboxRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repository = CreateRepository();
+        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
         var message = OutboxMessage.Create(
             "BookingConfirmed",
             TopicNames.BookingConfirmed,
             "event-key",
             "payload",
-            DateTime.UtcNow,
+            fakeTimeProvider.GetUtcNow().UtcDateTime,
             null);
 
         await using var arrangeContext = await CreateContext();
@@ -133,14 +138,14 @@ public class OutboxRepositoryTests : BaseRepositoryTest
         await arrangeContext.SaveChangesAsync();
 
         // Act
-        await repository.MarkFailedAsync(message.Id, "publish failed", CancellationToken.None);
+        await repository.MarkFailedAsync(message.Id, "публикация провалена", CancellationToken.None);
 
         await using var assertContext = await CreateContext();
         var entity = await assertContext.OutboxMessages.FindAsync(message.Id);
 
         // Assert
         entity.Should().NotBeNull();
-        entity!.Error.Should().Be("publish failed");
+        entity!.Error.Should().Be("публикация провалена");
         entity.ProcessedAt.Should().BeNull();
     }
 
@@ -166,7 +171,7 @@ public class OutboxRepositoryTests : BaseRepositoryTest
         var repository = CreateRepository();
 
         // Act
-        var act = async () => await repository.MarkFailedAsync(Guid.NewGuid(), "publish failed", CancellationToken.None);
+        var act = async () => await repository.MarkFailedAsync(Guid.NewGuid(), "публикация провалена", CancellationToken.None);
 
         // Assert
         await act.Should().NotThrowAsync();
