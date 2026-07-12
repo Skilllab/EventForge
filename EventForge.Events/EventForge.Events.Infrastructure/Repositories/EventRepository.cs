@@ -112,22 +112,14 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         return affected > 0;
     }
 
-    public async Task<bool> TryReserveSeatAndAddOutboxAsync(Guid eventId, int seatsCount, OutboxMessage outboxMessage, CancellationToken ct)
+    public async Task SaveEventAndOutboxAsync(Event @event, OutboxMessage outboxMessage, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);
 
-        var entity = await context.Events.FirstOrDefaultAsync(e => e.Id == eventId, ct);
-        if (entity == null || seatsCount <= 0 || entity.AvailableSeats < seatsCount)
-            return false;
-
-        entity.AvailableSeats -= seatsCount;
-
-        // Преобразуем доменную модель outbox в entity и добавляем
-        var outboxEntity = outboxMessage.ToEntity(); // нужен маппер
-        await context.OutboxMessages.AddAsync(outboxEntity, ct);
+        context.Events.Update(@event.ToEntity());
+        await context.OutboxMessages.AddAsync(outboxMessage.ToEntity(), ct);
 
         await context.SaveChangesAsync(ct);
-        return true;
     }
 
     public async Task AddOutboxAsync(OutboxMessage outboxMessage, CancellationToken ct)

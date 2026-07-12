@@ -52,14 +52,11 @@ public interface IEventRepository
     Task<bool> DeleteAsync(Guid id, CancellationToken ct);
 
     /// <summary>
-    /// Атомарно резервирует места и добавляет outbox-сообщение
+    /// Сохраняет изменённое событие и outbox-сообщение в одной транзакции
     /// </summary>
-    /// <param name="eventId">ID события</param>
-    /// <param name="seatsCount">Количество мест</param>
+    /// <param name="event">Доменная модель события</param>
     /// <param name="outboxMessage">Сообщение для outbox</param>
-    /// <param name="ct">Токен отмены</param>
-    Task<bool> TryReserveSeatAndAddOutboxAsync(
-        Guid eventId, int seatsCount, OutboxMessage outboxMessage, CancellationToken ct);
+    Task SaveEventAndOutboxAsync(Event @event, OutboxMessage outboxMessage, CancellationToken ct);
 
 
     /// <summary>

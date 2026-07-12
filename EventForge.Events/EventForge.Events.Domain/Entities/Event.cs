@@ -2,7 +2,6 @@ using EventForge.Events.Domain.Exceptions;
 
 namespace EventForge.Events.Domain.Entities;
 
-//TODO надо использовать доменные модели для валидации
 /// <summary>
 /// Событие сервиса управления
 /// </summary>

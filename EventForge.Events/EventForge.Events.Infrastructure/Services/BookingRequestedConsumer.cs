@@ -40,74 +40,100 @@ public class BookingRequestedConsumer(
         }
 
         var now = DateTime.UtcNow;
-        OutboxMessage outbox;
-
-        var eventEntity = await eventRepository.GetByIdAsync(message.EventId, stoppingToken);
-        if (eventEntity == null)
+        var bookingEvent = await eventRepository.GetByIdAsync(message.EventId, stoppingToken);
+        if (bookingEvent == null)
         {
-            logger.LogWarning("Событие {EventId} не найдено для сообщения {MessageId}",
-                message.EventId, message.MessageId);
-            // Стало:
-            var rejectedNotFound = new BookingRejected(
-                Guid.NewGuid(), message.BookingId, message.EventId,
-                message.UserId, now, $"Событие {message.EventId} не найдено для сообщения {message.MessageId}");
+            logger.LogWarning(
+                "Событие {EventId} не найдено для сообщения {MessageId}",
+                message.EventId,
+                message.MessageId);
 
-            outbox = OutboxMessage.Create(
-                nameof(BookingRejected), TopicNames.BookingRejected,
+            var rejected = new BookingRejected(
+                Guid.NewGuid(),
+                message.BookingId,
+                message.EventId,
+                message.UserId,
+                now, "не найдено событие");
+
+            var outbox = OutboxMessage.Create(
+                nameof(BookingRejected),
+                TopicNames.BookingRejected,
                 message.EventId.ToString(),
-                JsonSerializer.Serialize(rejectedNotFound), now, null);
-
-            await eventRepository.AddOutboxAsync(outbox, stoppingToken);
-            await processedRepository.AddAsync(
-                message.MessageId, nameof(BookingRejected), stoppingToken);
-            return;
-        }
-
-        if (eventEntity.StartAt <= now)
-        {
-            var rejected = new BookingNotApproved(
-                Guid.NewGuid(), message.BookingId, message.EventId,
-                message.UserId, now, BookingNotApprovedReason.EventStarted);
-
-            outbox = OutboxMessage.Create(
-                nameof(BookingNotApproved), TopicNames.BookingNotApproved,
-                message.EventId.ToString(), JsonSerializer.Serialize(rejected), now, null);
+                JsonSerializer.Serialize(rejected),
+                now,
+                null);
 
             await eventRepository.AddOutboxAsync(outbox, stoppingToken);
             await processedRepository.AddAsync(message.MessageId, nameof(BookingRejected), stoppingToken);
             return;
         }
 
-        var confirmed = new BookingConfirmed(
-            Guid.NewGuid(), message.BookingId, message.EventId,
-            message.UserId, message.SeatsCount, now);
-
-        outbox = OutboxMessage.Create(
-            nameof(BookingConfirmed), TopicNames.BookingConfirmed,
-            message.EventId.ToString(), JsonSerializer.Serialize(confirmed), now, null);
-
-        var reserved = await eventRepository.TryReserveSeatAndAddOutboxAsync(
-            message.EventId, message.SeatsCount, outbox, stoppingToken);
-
-        if (!reserved)
+        if (bookingEvent.StartAt <= now)
         {
-            logger.LogWarning("Не удалось зарезервировать места для EventId={EventId}", message.EventId);
+            var notApproved = new BookingNotApproved(
+                Guid.NewGuid(),
+                message.BookingId,
+                message.EventId,
+                message.UserId,
+                now,
+                BookingNotApprovedReason.EventStarted);
 
-            var rejected = new BookingNotApproved(
-                Guid.NewGuid(), message.BookingId, message.EventId,
-                message.UserId, now, BookingNotApprovedReason.NoSeats);
-
-            outbox = OutboxMessage.Create(
-                nameof(BookingNotApproved), TopicNames.BookingNotApproved,
-                message.EventId.ToString(), JsonSerializer.Serialize(rejected), now, null);
+            var outbox = OutboxMessage.Create(
+                nameof(BookingNotApproved),
+                TopicNames.BookingNotApproved,
+                message.EventId.ToString(),
+                JsonSerializer.Serialize(notApproved),
+                now,
+                null);
 
             await eventRepository.AddOutboxAsync(outbox, stoppingToken);
             await processedRepository.AddAsync(message.MessageId, nameof(BookingNotApproved), stoppingToken);
             return;
         }
 
+        if (!bookingEvent.TryReserveSeats(message.SeatsCount))
+        {
+            var notApproved = new BookingNotApproved(
+                Guid.NewGuid(),
+                message.BookingId,
+                message.EventId,
+                message.UserId,
+                now,
+                BookingNotApprovedReason.NoSeats);
+
+            var outbox = OutboxMessage.Create(
+                nameof(BookingNotApproved),
+                TopicNames.BookingNotApproved,
+                message.EventId.ToString(),
+                JsonSerializer.Serialize(notApproved),
+                now,
+                null);
+
+            await eventRepository.AddOutboxAsync(outbox, stoppingToken);
+            await processedRepository.AddAsync(message.MessageId, nameof(BookingNotApproved), stoppingToken);
+            return;
+        }
+
+        var confirmed = new BookingConfirmed(
+            Guid.NewGuid(),
+            message.BookingId,
+            message.EventId,
+            message.UserId,
+            message.SeatsCount,
+            now);
+
+        var confirmedOutbox = OutboxMessage.Create(
+            nameof(BookingConfirmed),
+            TopicNames.BookingConfirmed,
+            message.EventId.ToString(),
+            JsonSerializer.Serialize(confirmed),
+            now,
+            null);
+
+        await eventRepository.SaveEventAndOutboxAsync(bookingEvent, confirmedOutbox, stoppingToken);
         await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
-        logger.LogInformation("Места зарезервированы, BookingConfirmed в outbox. EventId={EventId}", message.EventId);
+
+        logger.LogInformation("Места зарезервированы. EventId={EventId}", message.EventId);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
