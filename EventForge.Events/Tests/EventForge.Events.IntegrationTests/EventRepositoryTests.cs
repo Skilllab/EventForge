@@ -15,13 +15,13 @@ public class EventRepositoryTests : BaseRepositoryTest
         await ResetDatabaseAsync();
         var repository = CreateRepository();
         var startAt = new DateTime(2025, 8, 20, 10, 0, 0, DateTimeKind.Utc);
-        var evt = Event.Create("Events integration", startAt, startAt.AddHours(3), 40, "Integration test");
+        var evt = Event.Create("Событие интеграции", startAt, startAt.AddHours(3), 40, "Тест интеграции");
 
         await repository.AddAsync(evt, CancellationToken.None);
         var result = await repository.GetByIdAsync(evt.Id, CancellationToken.None);
 
         result.Should().NotBeNull();
-        result!.Title.Should().Be("Events integration");
+        result!.Title.Should().Be("Событие интеграции");
         result.AvailableSeats.Should().Be(40);
     }
 
@@ -45,21 +45,25 @@ public class EventRepositoryTests : BaseRepositoryTest
     }
 
     [Fact]
-    public async Task TryReserveSeatAsync_And_ReleaseSeatAsync_Should_Update_AvailableSeats()
+    public async Task SaveEventAndOutboxAsync_Should_Persist_Event_And_Outbox_In_Single_Transaction()
     {
         await ResetDatabaseAsync();
         var repository = CreateRepository();
         var startAt = new DateTime(2025, 8, 21, 10, 0, 0, DateTimeKind.Utc);
-        var evt = Event.Create("Seats event", startAt, startAt.AddHours(1), 3);
+        var evt = Event.Create("Событие с местами", startAt, startAt.AddHours(1), 5);
+
         await repository.AddAsync(evt, CancellationToken.None);
 
-        var reserved = await repository.TryReserveSeatAsync(evt.Id, 2, CancellationToken.None);
-        await repository.ReleaseSeatAsync(evt.Id, 1, CancellationToken.None);
-        var result = await repository.GetByIdAsync(evt.Id, CancellationToken.None);
+        // Резервируем через домен
+        evt.TryReserveSeats(2);
+        var outbox = OutboxMessage.Create("Тестовое сообщение", "topic", "key", "{}", DateTime.UtcNow, null);
 
-        reserved.Should().BeTrue();
+        await repository.SaveEventAndOutboxAsync(evt, outbox, CancellationToken.None);
+
+        // Проверяем, что места сохранились
+        var result = await repository.GetByIdAsync(evt.Id, CancellationToken.None);
         result.Should().NotBeNull();
-        result!.AvailableSeats.Should().Be(2);
+        result!.AvailableSeats.Should().Be(3);
     }
 
     [Fact]
@@ -68,7 +72,7 @@ public class EventRepositoryTests : BaseRepositoryTest
         await ResetDatabaseAsync();
         var repository = CreateRepository();
         var startAt = new DateTime(2025, 8, 22, 10, 0, 0, DateTimeKind.Utc);
-        var evt = Event.Create("Delete event", startAt, startAt.AddHours(1), 5);
+        var evt = Event.Create("Удаляемое событие", startAt, startAt.AddHours(1), 5);
         await repository.AddAsync(evt, CancellationToken.None);
 
         var deleted = await repository.DeleteAsync(evt.Id, CancellationToken.None);
@@ -76,5 +80,16 @@ public class EventRepositoryTests : BaseRepositoryTest
 
         deleted.Should().BeTrue();
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_Should_Return_False_When_Event_Does_Not_Exist()
+    {
+        await ResetDatabaseAsync();
+        var repository = CreateRepository();
+
+        var deleted = await repository.DeleteAsync(Guid.NewGuid(), CancellationToken.None);
+
+        deleted.Should().BeFalse();
     }
 }

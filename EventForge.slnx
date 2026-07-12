@@ -18,6 +18,7 @@
     <Project Path="EventForge.Events/EventForge.Events.Presentation/EventForge.Events.Presentation.csproj" Id="70b8c5bc-c2eb-40e5-88a2-57ab8e499b7a" />
   </Folder>
   <Folder Name="/EventForge.Events/Tests/">
+    <Project Path="EventForge.Events/Tests/EventForge.Events.e2eTests/EventForge.Events.e2eTests.csproj" Id="a9ccfca7-fc1e-4ed2-bfe6-66fcf94d9d70" />
     <Project Path="EventForge.Events/Tests/EventForge.Events.IntegrationTests/EventForge.Events.IntegrationTests.csproj" />
     <Project Path="EventForge.Events/Tests/EventForge.Events.UnitTests/EventForge.Events.UnitTests.csproj" />
   </Folder>
