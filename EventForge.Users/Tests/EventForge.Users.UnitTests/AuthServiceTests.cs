@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices.JavaScript;
-
 using EventForge.Shared.Enums;
 using EventForge.Users.Application.Interfaces;
 using EventForge.Users.Application.Services;
