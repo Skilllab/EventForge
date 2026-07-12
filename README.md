@@ -25,11 +25,15 @@
 
 ## О проекте
 
-`EventBookingService` — это solution с несколькими .NET 10 микросервисами:
+`EventBookingService` — это solution с несколькими .NET 10 микросервисами для управления пользователями, событиями и бронированиями.
+
+Система построена вокруг асинхронного обмена сообщениями через Kafka и использует паттерн Outbox для надёжной публикации интеграционных событий.
+
+### Сервисы
 
 - `EventForge.Users` — регистрация, логин и JWT-аутентификация
-- `EventForge.Events` — управление событиями и доступными местами
-- `EventForge.Booking` — создание, обработка и отмена бронирований
+- `EventForge.Events` — управление событиями, доступными местами и обработка Kafka-событий бронирования
+- `EventForge.Booking` — создание, обработка и отмена бронирований, публикация сообщений через outbox
 
 Решение использует слои `Domain`, `Application`, `Infrastructure`, `Presentation` для каждого сервиса.
 
@@ -49,48 +53,28 @@ Presentation -> Application -> Domain
 - `EventForge.Shared/EventForge.Entities` — общие перечисления и shared entities
 - `EventForge.Shared/EventForge.ExceptionMiddleware` — middleware для обработки ошибок
 - `EventForge.Shared/EventForge.LoggingDBInterceptor` — DB interceptor и инфраструктурные расширения
+- `EventForge.Shared/EventForge.Settings` — общие настройки, включая JWT
 
-## Сервисы
+### Основные компоненты сервисов
 
-### EventForge.Users
-
-Назначение:
-- регистрация пользователей
-- логин
-- генерация JWT
-
-Основные компоненты:
+#### `EventForge.Users`
 
 - `AuthService`
 - `PasswordHasher`
 - `JwtTokenGenerator`
 - `UserRepository`
 
-### EventForge.Events
-
-Назначение:
-- CRUD для событий
-- управление доступными местами
-- реакция на Kafka-события бронирования
-
-Основные компоненты:
+#### `EventForge.Events`
 
 - `EventService`
 - `EventRepository`
 - `ProcessedMessageRepository`
+- `BookingRequestedConsumer`
 - `BookingConfirmedConsumer`
 - `BookingRejectedConsumer`
 - `BookingCancelledConsumer`
 
-### EventForge.Booking
-
-Назначение:
-- создание бронирований
-- фоновая обработка pending-бронирований
-- публикация интеграционных событий в Kafka через outbox
-- отмена бронирований
-
-Основные компоненты:
+#### `EventForge.Booking`
 
 - `BookingService`
 - `BookingRepository`
@@ -127,24 +111,40 @@ JWT содержит как минимум:
 
 ## Kafka и асинхронные процессы
 
-Kafka используется для межсервисного обмена событиями. Основной сценарий:
+Kafka используется для межсервисного взаимодействия между `Booking` и `Events`.
 
-1. `Booking` создаёт бронь со статусом `Pending`
-2. `BookingBackgroundService` обрабатывает pending-брони
-3. `Booking` сохраняет событие в outbox
-4. `OutboxPublisherBackgroundService` публикует его в Kafka
-5. `Events` consumer уменьшает или освобождает места
-6. `Events` хранит обработанные сообщения в `ProcessedMessages` для идемпотентности
+### Основной поток бронирования
+
+1. Клиент создаёт бронирование через `EventForge.Booking`
+2. `Booking` сохраняет бронь в статусе `Pending`
+3. `Booking` публикует `BookingRequested` в Kafka через outbox
+4. `Events` читает `BookingRequested`
+5. `Events`:
+   - проверяет, что событие существует
+   - проверяет, что событие ещё не началось
+   - проверяет, что есть доступные места
+   - резервирует место через доменную модель `Event`
+6. Если всё успешно — публикуется `BookingConfirmed`
+7. Если событие не найдено — публикуется `BookingRejected`
+8. Если событие уже началось или мест нет — публикуется `BookingNotApproved`
+9. `Booking` читает `BookingNotApproved` и переводит бронь в `Rejected`
 
 Контракты Kafka лежат в `EventForge.Shared/EventForge.Contract/Brokers`.
 
 Используемые типы сообщений:
 
+- `BookingRequested`
 - `BookingConfirmed`
 - `BookingRejected`
+- `BookingNotApproved`
 - `BookingCancelled`
 
-Для `Booking` важно, что публикация идёт через outbox, а для `Events` — что обработка идемпотентна.
+### Идемпотентность
+
+- `Events` хранит обработанные сообщения в `ProcessedMessages`
+- `Booking` также хранит обработанные сообщения в `ProcessedMessages` для защиты от повторной доставки Kafka-сообщений
+- повторная доставка Kafka-сообщения не приводит к повторной обработке
+- публикация в Kafka выполняется через outbox
 
 ## Запуск проекта
 
@@ -325,12 +325,11 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Po
 Пример:
 
 ```json
-{ 
-    "KafkaOptions":
-    {
-        "BootstrapServers": "localhost:9092",
-        "ConsumerGroup": "eventforge-events" 
-    }
+{
+  "KafkaOptions": {
+    "BootstrapServers": "localhost:9092",
+    "ConsumerGroup": "eventforge-events"
+  }
 }
 ```
 
@@ -372,6 +371,7 @@ dotnet ef database update --project <InfrastructureProject> --startup-project <P
 ```bash
 dotnet test EventForge.Users/Tests/EventForge.Users.UnitTests/EventForge.Users.UnitTests.csproj
 dotnet test EventForge.Users/Tests/EventForge.Users.IntegrationTests/EventForge.Users.IntegrationTests.csproj
+dotnet test EventForge.Users/Tests/EventForge.Users.e2eTests/EventForge.Users.e2eTests.csproj
 ```
 
 ### Events
@@ -379,6 +379,7 @@ dotnet test EventForge.Users/Tests/EventForge.Users.IntegrationTests/EventForge.
 ```bash
 dotnet test EventForge.Events/Tests/EventForge.Events.UnitTests/EventForge.Events.UnitTests.csproj
 dotnet test EventForge.Events/Tests/EventForge.Events.IntegrationTests/EventForge.Events.IntegrationTests.csproj
+dotnet test EventForge.Events/Tests/EventForge.Events.e2eTests/EventForge.Events.e2eTests.csproj
 ```
 
 ### Booking
@@ -386,6 +387,7 @@ dotnet test EventForge.Events/Tests/EventForge.Events.IntegrationTests/EventForg
 ```bash
 dotnet test EventForge.Booking/Tests/EventForge.Booking.UnitTests/EventForge.Booking.UnitTests.csproj
 dotnet test EventForge.Booking/Tests/EventForge.Booking.IntegrationTests/EventForge.Booking.IntegrationTests.csproj
+dotnet test EventForge.Booking/Tests/EventForge.Booking.e2eTests/EventForge.Booking.e2eTests.csproj
 ```
 
 Integration-тесты используют `Testcontainers.PostgreSql`, поэтому для них нужен запущенный Docker Desktop.
