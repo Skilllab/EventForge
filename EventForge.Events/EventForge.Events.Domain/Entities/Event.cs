@@ -46,7 +46,6 @@ public class Event
     /// Метод освобождения места от резервирования
     /// </summary>
     /// <param name="count">Количество мест для освобождения</param>
-    /// <returns></returns>
     public void ReleaseSeats(int count = 1)
     {
         if (count < 0)

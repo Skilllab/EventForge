@@ -112,21 +112,6 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         return affected > 0;
     }
 
-    public async Task ReleaseSeatAsync(Guid eventId, int seatsCount, CancellationToken ct)
-    {
-        await using var context = await factory.CreateDbContextAsync(ct);
-
-        var entity = await context.Events.FirstOrDefaultAsync(e => e.Id == eventId, ct);
-        if (entity == null)
-            return;
-
-        if (seatsCount <= 0)
-            return;
-
-        entity.AvailableSeats = Math.Min(entity.TotalSeats, entity.AvailableSeats + seatsCount);
-        await context.SaveChangesAsync(ct);
-    }
-
     public async Task<bool> TryReserveSeatAndAddOutboxAsync(Guid eventId, int seatsCount, OutboxMessage outboxMessage, CancellationToken ct)
     {
         await using var context = await factory.CreateDbContextAsync(ct);

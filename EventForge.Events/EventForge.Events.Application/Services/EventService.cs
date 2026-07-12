@@ -93,7 +93,7 @@ public class EventService(IEventRepository repository, ILogger<EventService> log
         await repository.UpdateAsync(existedEvent, ct);
         logger.LogInformation("Событие успешно обновлено. ID: {Id}", eventId);
     }
-   
+
 
     public async Task ReleaseSeatAsync(Guid eventId, CancellationToken ct)
     {
@@ -101,11 +101,10 @@ public class EventService(IEventRepository repository, ILogger<EventService> log
 
         var existedEvent = await repository.GetByIdAsync(eventId, ct);
         if (existedEvent == null)
-        {
             throw new NotFoundException(nameof(Event), eventId.ToString());
-        }
 
-        await repository.ReleaseSeatAsync(eventId, 1, ct);
+        existedEvent.ReleaseSeats();
+        await repository.UpdateAsync(existedEvent, ct);
     }
 
 

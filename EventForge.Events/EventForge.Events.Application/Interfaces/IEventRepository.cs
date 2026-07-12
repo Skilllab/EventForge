@@ -52,15 +52,6 @@ public interface IEventRepository
     Task<bool> DeleteAsync(Guid id, CancellationToken ct);
 
     /// <summary>
-    /// Атомарно освобождает места на событии
-    /// </summary>
-    /// <param name="eventId">Идентификатор события</param>
-    /// <param name="seatsCount">Количество мест для освобождения</param>
-    /// <param name="ct">Токен отмены</param>
-    Task ReleaseSeatAsync(Guid eventId, int seatsCount, CancellationToken ct);
-
-
-    /// <summary>
     /// Атомарно резервирует места и добавляет outbox-сообщение
     /// </summary>
     /// <param name="eventId">ID события</param>
