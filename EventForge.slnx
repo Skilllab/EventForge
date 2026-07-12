@@ -36,6 +36,7 @@
     <Project Path="EventForge.Users/EventForge.Users.Presentation/EventForge.Users.Presentation.csproj" Id="3b53befc-b4d2-4276-8de9-b36f560666d4" />
   </Folder>
   <Folder Name="/EventForge.Users/Tests/">
+    <Project Path="EventForge.Users/Tests/EventForge.Users.e2eTests/EventForge.Users.e2eTests.csproj" Id="60de949d-f619-44e9-b4cb-95abda1ed1db" />
     <Project Path="EventForge.Users/Tests/EventForge.Users.IntegrationTests/EventForge.Users.IntegrationTests.csproj" />
     <Project Path="EventForge.Users/Tests/EventForge.Users.UnitTests/EventForge.Users.UnitTests.csproj" />
   </Folder>

@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices.JavaScript;
+
 using EventForge.Shared.Enums;
 using EventForge.Users.Application.Interfaces;
 using EventForge.Users.Application.Services;
@@ -11,6 +13,97 @@ namespace EventForge.Users.UnitTests;
 
 public class AuthServiceTests
 {
+
+    [Fact]
+    [Trait("Category", "Register")]
+    public async Task RegisterUserAsync_Should_Throw_When_Login_Is_Empty()
+    {
+        // Arrange
+        var userRepositoryMock = new Mock<IUserRepository>();
+        var passwordHasherMock = new Mock<IPasswordHasher>();
+        var tokenGeneratorMock = new Mock<IJwtTokenGenerator>();
+
+        userRepositoryMock
+            .Setup(x => x.ExistsAsync(""))
+            .ReturnsAsync(false);
+
+        passwordHasherMock
+            .Setup(x => x.HashPassword("password"))
+            .Returns("hashed-password");
+
+        var service = new AuthService(userRepositoryMock.Object, passwordHasherMock.Object, tokenGeneratorMock.Object);
+
+        // Act
+        Func<Task> act = () => service.RegisterUserAsync("", "password", null);
+
+        // Assert
+        await act.Should().ThrowAsync<Domain.Exceptions.ValidationCustomException>();
+        userRepositoryMock.Verify(x => x.AddAsync(It.IsAny<User>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("Category", "Register")]
+    public async Task RegisterUserAsync_Should_Throw_When_Password_Is_Empty()
+    {
+        // Arrange
+        var userRepositoryMock = new Mock<IUserRepository>();
+        var passwordHasherMock = new Mock<IPasswordHasher>();
+        var tokenGeneratorMock = new Mock<IJwtTokenGenerator>();
+
+        userRepositoryMock
+            .Setup(x => x.ExistsAsync("new-user"))
+            .ReturnsAsync(false);
+
+        passwordHasherMock
+            .Setup(x => x.HashPassword(""))
+            .Throws< ArgumentException>();
+
+        var service = new AuthService(userRepositoryMock.Object, passwordHasherMock.Object, tokenGeneratorMock.Object);
+
+        // Act
+        Func<Task> act = () => service.RegisterUserAsync("new-user", "", null);
+
+        // Assert
+        await act.Should().ThrowAsync<ArgumentException>();
+        userRepositoryMock.Verify(x => x.AddAsync(It.IsAny<User>()), Times.Never);
+    }
+
+    [Fact]
+    [Trait("Category", "Register")]
+    public async Task RegisterUserAsync_Should_Use_ParsedRole_CaseInsensitive()
+    {
+        // Arrange
+        var userRepositoryMock = new Mock<IUserRepository>();
+        var passwordHasherMock = new Mock<IPasswordHasher>();
+        var tokenGeneratorMock = new Mock<IJwtTokenGenerator>();
+
+        userRepositoryMock
+            .Setup(x => x.ExistsAsync("case-user"))
+            .ReturnsAsync(false);
+
+        passwordHasherMock
+            .Setup(x => x.HashPassword("password"))
+            .Returns("hashed-password");
+
+        User? savedUser = null;
+        userRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<User>()))
+            .Callback<User>(user => savedUser = user)
+            .Returns(Task.CompletedTask);
+
+        var service = new AuthService(userRepositoryMock.Object, passwordHasherMock.Object, tokenGeneratorMock.Object);
+
+        // Act
+        var result = await service.RegisterUserAsync("case-user", "password", "aDmIn");
+
+        // Assert
+        result.Should().BeTrue();
+        savedUser.Should().NotBeNull();
+        savedUser!.Role.Should().Be(RoleType.Admin);
+    }
+
+
+
     [Fact]
     [Trait("Category", "Register")]
     public async Task RegisterUserAsync_Should_ReturnFalse_When_User_Already_Exists()
@@ -164,13 +257,65 @@ public class AuthServiceTests
 
     [Fact]
     [Trait("Category", "Login")]
+    public async Task LoginUserAsync_Should_ReturnFalse_When_Password_Is_Empty()
+    {
+        // Arrange
+        var userRepositoryMock = new Mock<IUserRepository>();
+        var passwordHasherMock = new Mock<IPasswordHasher>();
+        var tokenGeneratorMock = new Mock<IJwtTokenGenerator>();
+
+        userRepositoryMock
+            .Setup(x => x.GetByLoginAsync("unknown-user"))
+            .ReturnsAsync((User?) null);
+
+        var service = new AuthService(userRepositoryMock.Object, passwordHasherMock.Object, tokenGeneratorMock.Object);
+
+        // Act
+        var result = await service.LoginUserAsync("unknown-user", "");
+
+        // Assert
+        result.Should().BeNull();
+        passwordHasherMock.Verify(x => x.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        tokenGeneratorMock.Verify(x => x.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>()), Times.Never);
+    }
+
+
+
+    [Fact]
+    [Trait("Category", "Login")]
+    public async Task LoginUserAsync_Should_ReturnFalse_When_Login_Is_Empty()
+    {
+        // Arrange
+        var userRepositoryMock = new Mock<IUserRepository>();
+        var passwordHasherMock = new Mock<IPasswordHasher>();
+        var tokenGeneratorMock = new Mock<IJwtTokenGenerator>();
+
+        userRepositoryMock
+            .Setup(x => x.GetByLoginAsync(""))
+            .ReturnsAsync((User?) null);
+
+        var service = new AuthService(userRepositoryMock.Object, passwordHasherMock.Object, tokenGeneratorMock.Object);
+
+        // Act
+        var result = await service.LoginUserAsync("", "password");
+
+        // Assert
+        result.Should().BeNull();
+        passwordHasherMock.Verify(x => x.VerifyPassword(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+        tokenGeneratorMock.Verify(x => x.GenerateToken(It.IsAny<Guid>(), It.IsAny<string>()), Times.Never);
+    }
+
+
+
+    [Fact]
+    [Trait("Category", "Login")]
     public async Task LoginUserAsync_Should_ReturnNull_When_Password_Is_Invalid()
     {
         // Arrange
         var userRepositoryMock = new Mock<IUserRepository>();
         var passwordHasherMock = new Mock<IPasswordHasher>();
         var tokenGeneratorMock = new Mock<IJwtTokenGenerator>();
-        var user = User.Restore(Guid.NewGuid(), "known-user", "stored-hash", RoleType.User);
+        var user = User.Create("known-user", "stored-hash", RoleType.User);
 
         userRepositoryMock
             .Setup(x => x.GetByLoginAsync("known-user"))
@@ -198,8 +343,7 @@ public class AuthServiceTests
         var userRepositoryMock = new Mock<IUserRepository>();
         var passwordHasherMock = new Mock<IPasswordHasher>();
         var tokenGeneratorMock = new Mock<IJwtTokenGenerator>();
-        var userId = Guid.NewGuid();
-        var user = User.Restore(userId, "known-user", "stored-hash", RoleType.Admin);
+        var user = User.Create("known-user", "stored-hash", RoleType.Admin);
 
         userRepositoryMock
             .Setup(x => x.GetByLoginAsync("known-user"))
@@ -210,7 +354,7 @@ public class AuthServiceTests
             .Returns(true);
 
         tokenGeneratorMock
-            .Setup(x => x.GenerateToken(userId, "Admin"))
+            .Setup(x => x.GenerateToken(user.Id, "Admin"))
             .Returns("jwt-token");
 
         var service = new AuthService(userRepositoryMock.Object, passwordHasherMock.Object, tokenGeneratorMock.Object);
@@ -220,6 +364,7 @@ public class AuthServiceTests
 
         // Assert
         result.Should().Be("jwt-token");
-        tokenGeneratorMock.Verify(x => x.GenerateToken(userId, "Admin"), Times.Once);
+        tokenGeneratorMock.Verify(x => x.GenerateToken(user.Id, "Admin"), Times.Once);
     }
+
 }

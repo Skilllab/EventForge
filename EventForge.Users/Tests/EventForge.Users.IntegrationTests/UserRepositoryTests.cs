@@ -22,6 +22,45 @@ public class UserRepositoryTests : BaseRepositoryTest
         };
     }
 
+
+    [Fact]
+    public async Task GetByLoginAsync_Should_Return_Null_When_User_Does_Not_Exist()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        var repository = new UserRepository(Factory);
+
+        // Act
+        var result = await repository.GetByLoginAsync("MissingUser");
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task AddAsync_Should_Preserve_All_User_Fields()
+    {
+        // Arrange
+        await ResetDatabaseAsync();
+        await using var context = await CreateContext();
+        var repository = new UserRepository(Factory);
+
+        var user = User.Create("FullUser", "hashed_password", RoleType.Admin);
+
+        // Act
+        await repository.AddAsync(user);
+        var savedUser = await context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Login == "FullUser");
+
+        // Assert
+        savedUser.Should().NotBeNull();
+        savedUser!.Id.Should().Be(user.Id);
+        savedUser.Login.Should().Be(user.Login);
+        savedUser.PasswordHash.Should().Be(user.PasswordHash);
+        savedUser.Role.Should().Be(user.Role);
+    }
+
+
+
     [Fact]
     public async Task GetByLoginAsync_Should_Return_User_When_User_Exists()
     {
