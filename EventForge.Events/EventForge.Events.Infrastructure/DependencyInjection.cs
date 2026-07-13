@@ -9,6 +9,9 @@ using EventForge.Settings.JWT;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+
+using StackExchange.Redis;
 
 namespace EventForge.Events.Infrastructure;
 
@@ -28,6 +31,8 @@ public static class DependencyInjection
 
         services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
         services.Configure<KafkaOptions>(configuration.GetSection(nameof(KafkaOptions)));
+        services.Configure<RedisOptions>(configuration.GetSection(nameof(RedisOptions)));
+
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IProcessedMessageRepository, ProcessedMessageRepository>();
@@ -39,6 +44,15 @@ public static class DependencyInjection
         services.AddHostedService<BookingCancelledConsumer>();
 
         services.AddHostedService<OutboxPublisherBackgroundService>();
+
+
+        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var redisOptions = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
+            return ConnectionMultiplexer.Connect(redisOptions.ConnectionString);
+        });
+
+        services.AddScoped<ICacheService, RedisCacheService>();
 
         return services;
     }
