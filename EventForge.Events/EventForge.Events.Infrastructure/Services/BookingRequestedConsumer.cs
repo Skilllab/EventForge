@@ -2,6 +2,7 @@ using System.Text.Json;
 
 using Confluent.Kafka;
 
+using EventForge.CacheKeys;
 using EventForge.Contract.Brokers;
 using EventForge.Contract.Enums;
 using EventForge.Events.Application.Interfaces;
@@ -18,7 +19,9 @@ namespace EventForge.Events.Infrastructure.Services;
 public class BookingRequestedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
-    ILogger<BookingRequestedConsumer> logger, TimeProvider timeProvider) : BackgroundService
+    ILogger<BookingRequestedConsumer> logger,
+    ICacheService cache,
+    TimeProvider timeProvider) : BackgroundService
 {
     public async Task HandleMessageAsync(BookingRequested? message, CancellationToken stoppingToken)
     {
@@ -133,6 +136,8 @@ public class BookingRequestedConsumer(
 
         await eventRepository.SaveEventAndOutboxAsync(bookingEvent, confirmedOutbox, stoppingToken);
         await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
+        await cache.RemoveAsync(KeysForEvents.ForEvent(message.EventId));
+        await cache.RemoveAsync(KeysForEvents.TopEvents);
 
         logger.LogInformation("Места зарезервированы. EventId={EventId}", message.EventId);
     }

@@ -50,7 +50,7 @@ public static class DependencyInjection
         {
             var redisOptions = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
 
-            var options = ConfigurationOptions.Parse(redisOptions.ConnectionString);
+            var options = ConfigurationOptions.Parse(configuration.GetConnectionString("Redis"));
             options.AbortOnConnectFail = false;
             options.ConnectRetry = 3;
             options.ConnectTimeout = 5000; // Тайм-аут подключения, мс
