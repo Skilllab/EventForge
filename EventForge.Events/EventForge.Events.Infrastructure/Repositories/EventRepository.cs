@@ -145,12 +145,10 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
     {
         await using var context = await factory.CreateDbContextAsync(ct);
 
-        var query = context.Events.AsNoTracking();
-
-        query = query.Where(e => 2 * (e.TotalSeats - e.AvailableSeats) >= e.TotalSeats);
-
-        var entities = await query
-            .OrderBy(e => e.Title)
+        var entities = await context.Events
+            .AsNoTracking()
+            .Where(e => e.AvailableSeats < e.TotalSeats)   // только с проданными местами
+            .OrderByDescending(e => (double) (e.TotalSeats - e.AvailableSeats) / e.TotalSeats)
             .Take(10)
             .ToListAsync(ct);
 
