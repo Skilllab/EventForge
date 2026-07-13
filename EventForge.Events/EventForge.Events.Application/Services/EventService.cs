@@ -8,8 +8,6 @@ using EventForge.Events.Domain.Exceptions;
 
 using Microsoft.Extensions.Logging;
 
-using static System.Net.WebRequestMethods;
-
 namespace EventForge.Events.Application.Services;
 
 /// <summary>

@@ -52,7 +52,7 @@ namespace EventForge.Events.IntegrationTests
         {
             await ResetDatabaseAsync();
             var repository = CreateRepository();
-            var message = OutboxMessage.Create("Событие один", "topic", "key", "{}", DateTime.UtcNow, null);
+            var message = OutboxMessage.Create("Событие один", "topic", "key", "{}", _timeProvider.GetUtcNow().UtcDateTime, null);
 
             var eventRepo = new EventRepository(Factory);
             await eventRepo.AddOutboxAsync(message, CancellationToken.None);

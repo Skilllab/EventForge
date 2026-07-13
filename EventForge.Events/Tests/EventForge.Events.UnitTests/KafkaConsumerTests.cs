@@ -106,8 +106,8 @@ public class KafkaConsumerTests
         var services = new ServiceCollection();
         var processedRepositoryMock = new Mock<IProcessedMessageRepository>();
         var eventRepositoryMock = new Mock<IEventRepository>();
-        var message = new BookingRequested(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
         FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
+        var message = new BookingRequested(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, _timeProvider.GetUtcNow().UtcDateTime);
         processedRepositoryMock
                 .Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>()))
                 .ReturnsAsync(true);

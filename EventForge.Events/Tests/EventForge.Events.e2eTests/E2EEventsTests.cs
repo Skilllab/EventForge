@@ -24,6 +24,7 @@ namespace EventForge.Events.e2eTests;
 
 public class E2EEventsTests : IAsyncLifetime
 {
+
     private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
         .WithDatabase("eventforge_events_e2e")

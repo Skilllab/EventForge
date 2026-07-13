@@ -56,8 +56,11 @@ public class BackgroundAndKafkaTests
         var services = new ServiceCollection();
         var processedRepoMock = new Mock<IProcessedMessageRepository>();
         var bookingRepoMock = new Mock<IBookingRepository>();
-        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
-        var booking = BookingModel.Create(message.EventId, message.UserId, DateTime.UtcNow);
+        FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
+
+
+        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, _timeProvider.GetUtcNow().UtcDateTime);
+        var booking = BookingModel.Create(message.EventId, message.UserId, _timeProvider.GetUtcNow().UtcDateTime);
 
         processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         bookingRepoMock.Setup(x => x.GetByIdAsync(message.BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
@@ -84,7 +87,10 @@ public class BackgroundAndKafkaTests
         var services = new ServiceCollection();
         var processedRepoMock = new Mock<IProcessedMessageRepository>();
         var bookingRepoMock = new Mock<IBookingRepository>();
-        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
+        FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
+
+
+        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, _timeProvider.GetUtcNow().UtcDateTime);
 
         processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
 
@@ -108,7 +114,10 @@ public class BackgroundAndKafkaTests
         var services = new ServiceCollection();
         var processedRepoMock = new Mock<IProcessedMessageRepository>();
         var bookingRepoMock = new Mock<IBookingRepository>();
-        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
+        FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
+
+
+        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, _timeProvider.GetUtcNow().UtcDateTime);
 
         processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         bookingRepoMock.Setup(x => x.GetByIdAsync(message.BookingId, It.IsAny<CancellationToken>())).ReturnsAsync((BookingModel?) null);
@@ -134,9 +143,12 @@ public class BackgroundAndKafkaTests
         var services = new ServiceCollection();
         var processedRepoMock = new Mock<IProcessedMessageRepository>();
         var bookingRepoMock = new Mock<IBookingRepository>();
-        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, DateTime.UtcNow);
-        var booking = BookingModel.Create(message.EventId, message.UserId, DateTime.UtcNow);
-        booking.Confirm(DateTime.UtcNow); // уже подтверждён
+        FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
+
+
+        var message = new BookingConfirmed(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 1, _timeProvider.GetUtcNow().UtcDateTime);
+        var booking = BookingModel.Create(message.EventId, message.UserId, _timeProvider.GetUtcNow().UtcDateTime);
+        booking.Confirm(_timeProvider.GetUtcNow().UtcDateTime); // уже подтверждён
 
         processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         bookingRepoMock.Setup(x => x.GetByIdAsync(message.BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
@@ -163,9 +175,11 @@ public class BackgroundAndKafkaTests
         var services = new ServiceCollection();
         var processedRepoMock = new Mock<IProcessedMessageRepository>();
         var bookingRepoMock = new Mock<IBookingRepository>();
-        var now = DateTime.UtcNow;
-        var message = new BookingRejected(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), now, "no seats available");
-        var booking = BookingModel.Create(message.EventId, message.UserId, now.AddHours(-1));
+        FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
+
+
+        var message = new BookingRejected(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), _timeProvider.GetUtcNow().UtcDateTime, "no seats available");
+        var booking = BookingModel.Create(message.EventId, message.UserId, _timeProvider.GetUtcNow().UtcDateTime.AddHours(-1));
 
         processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         bookingRepoMock.Setup(x => x.GetByIdAsync(message.BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);
@@ -193,9 +207,11 @@ public class BackgroundAndKafkaTests
         var services = new ServiceCollection();
         var processedRepoMock = new Mock<IProcessedMessageRepository>();
         var bookingRepoMock = new Mock<IBookingRepository>();
-        var now = DateTime.UtcNow;
-        var message = new BookingNotApproved(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), now, BookingNotApprovedReason.NoSeats);
-        var booking = BookingModel.Create(message.EventId, message.UserId, now.AddHours(-1));
+        FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
+
+
+        var message = new BookingNotApproved(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), _timeProvider.GetUtcNow().UtcDateTime, BookingNotApprovedReason.NoSeats);
+        var booking = BookingModel.Create(message.EventId, message.UserId, _timeProvider.GetUtcNow().UtcDateTime.AddHours(-1));
 
         processedRepoMock.Setup(x => x.ExistsAsync(message.MessageId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
         bookingRepoMock.Setup(x => x.GetByIdAsync(message.BookingId, It.IsAny<CancellationToken>())).ReturnsAsync(booking);

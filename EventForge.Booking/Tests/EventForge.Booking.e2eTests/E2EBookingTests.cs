@@ -84,7 +84,8 @@ public class E2EBookingTests : IAsyncLifetime
 
     private static string GenerateToken(Guid userId, RoleType role)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
+
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var claims = new[]
         {

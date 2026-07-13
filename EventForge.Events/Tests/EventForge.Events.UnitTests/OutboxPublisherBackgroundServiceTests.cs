@@ -4,6 +4,7 @@ using EventForge.Events.Infrastructure.Services;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Time.Testing;
 
 using Moq;
 
@@ -11,6 +12,7 @@ namespace EventForge.Events.UnitTests
 {
     public class OutboxPublisherBackgroundServiceTests
     {
+        private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
         [Fact]
         public async Task ProcessOnceAsync_Should_Publish_And_MarkProcessed_For_Each_Pending_Message()
         {
@@ -18,8 +20,8 @@ namespace EventForge.Events.UnitTests
             var services = new ServiceCollection();
             var outboxRepositoryMock = new Mock<IOutboxRepository>();
             var publisherMock = new Mock<IEventPublisher>();
-            var message1 = OutboxMessage.Create("Сообщение 1", "topic-1", "key1", "{}", DateTime.UtcNow, null);
-            var message2 = OutboxMessage.Create("Сообщение 2", "topic-2", "key2", "{}", DateTime.UtcNow, null);
+            var message1 = OutboxMessage.Create("Сообщение 1", "topic-1", "key1", "{}", _timeProvider.GetUtcNow().UtcDateTime, null);
+            var message2 = OutboxMessage.Create("Сообщение 2", "topic-2", "key2", "{}", _timeProvider.GetUtcNow().UtcDateTime, null);
 
             outboxRepositoryMock
                 .Setup(x => x.GetPendingAsync(50, It.IsAny<CancellationToken>()))
@@ -53,7 +55,7 @@ namespace EventForge.Events.UnitTests
             var services = new ServiceCollection();
             var outboxRepositoryMock = new Mock<IOutboxRepository>();
             var publisherMock = new Mock<IEventPublisher>();
-            var failingMessage = OutboxMessage.Create("Сбойное сообщение", "topic", "key", "{}", DateTime.UtcNow, null);
+            var failingMessage = OutboxMessage.Create("Сбойное сообщение", "topic", "key", "{}", _timeProvider.GetUtcNow().UtcDateTime, null);
 
             outboxRepositoryMock
                 .Setup(x => x.GetPendingAsync(50, It.IsAny<CancellationToken>()))
