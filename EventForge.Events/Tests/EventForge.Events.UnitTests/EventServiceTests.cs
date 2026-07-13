@@ -29,9 +29,7 @@ public class EventServiceTests
     public async Task CreateEventAsync_Should_Return_EventDto_And_Save_Event()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
-        var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), Mock.Of<ICacheService>(), RedisOptions, FakeTime);
         var startAt = FakeTime.GetUtcNow().UtcDateTime.AddDays(1);
         var dto = new CreateEventDto("Намечается баня", startAt, startAt.AddHours(2), 25, "Раз в неделю точно");
 
@@ -56,9 +54,8 @@ public class EventServiceTests
     public async Task GetEventAsync_CacheHit_Should_Return_From_Cache_And_Not_Call_Repository()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var eventId = Guid.NewGuid();
         var cachedDto = new EventDTO(eventId, "Из кэша", "Описание", FakeTime.GetUtcNow().UtcDateTime.AddDays(1), FakeTime.GetUtcNow().UtcDateTime.AddDays(1).AddHours(2), 50, 45);
         var cacheKey = KeysForEvents.ForEvent(eventId);
@@ -80,9 +77,8 @@ public class EventServiceTests
     public async Task GetEventAsync_CacheMiss_Should_Call_Repository_And_Set_Cache()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var startAt = FakeTime.GetUtcNow().UtcDateTime.AddDays(1);
         var evt = Event.Create("Конференция", startAt, startAt.AddHours(8), 100, "Описание");
         var cacheKey = KeysForEvents.ForEvent(evt.Id);
@@ -102,9 +98,8 @@ public class EventServiceTests
     public async Task GetEventAsync_Should_Throw_NotFound_When_Not_In_Repository()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var eventId = Guid.NewGuid();
 
         cacheMock.Setup(x => x.GetStringAsync(KeysForEvents.ForEvent(eventId))).ReturnsAsync((string?)null);
@@ -121,9 +116,8 @@ public class EventServiceTests
     public async Task GetTop10EventsAsync_CacheHit_Should_Return_From_Cache_And_Not_Call_Repository()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var cachedResult = new PaginatedResultTop10DTO(new List<EventDTO>());
         var cacheKey = KeysForEvents.TopEvents;
 
@@ -143,9 +137,8 @@ public class EventServiceTests
     public async Task GetTop10EventsAsync_CacheMiss_Should_Call_Repository_And_Set_Cache()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var cacheKey = KeysForEvents.TopEvents;
         var startAt = FakeTime.GetUtcNow().UtcDateTime.AddDays(1);
         var evt = Event.Create("Топ событие", startAt, startAt.AddHours(2), 100, "Описание");
@@ -167,9 +160,8 @@ public class EventServiceTests
     public async Task GetEventsAsync_Should_Return_Paginated_Result_From_Repository()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var filter = new EventsFilterDTO(title: "компьютерным", page: 2, pageSize: 1);
         var startAt = FakeTime.GetUtcNow().UtcDateTime.AddDays(1);
         var eventItem = Event.Create("Конференция по новым компьютерным технологиям", startAt, startAt.AddHours(2), 50, "Описание");
@@ -195,9 +187,8 @@ public class EventServiceTests
     public async Task ChangeEventAsync_Should_Update_Event_And_Invalidate_Cache()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var startAt = FakeTime.GetUtcNow().UtcDateTime.AddDays(1);
         var evt = Event.Create("Конференция", startAt, startAt.AddHours(2), 30, "Описание");
         var update = UpdateEventDto.Create(title: "Новая конференция", description: "Ежегодное мероприятие");
@@ -217,9 +208,8 @@ public class EventServiceTests
     public async Task ChangeEventAsync_Should_Not_Invalidate_Cache_When_NotFound()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var eventId = Guid.NewGuid();
         var update = UpdateEventDto.Create(title: "Новая конференция");
 
@@ -236,9 +226,8 @@ public class EventServiceTests
     public async Task CancelEventAsync_Should_Delete_Event_And_Invalidate_Cache()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var eventId = Guid.NewGuid();
 
         repositoryMock.Setup(x => x.DeleteAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync(true);
@@ -254,9 +243,8 @@ public class EventServiceTests
     public async Task CancelEventAsync_Should_Not_Invalidate_Cache_When_NotFound()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var eventId = Guid.NewGuid();
 
         repositoryMock.Setup(x => x.DeleteAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync(false);
@@ -273,9 +261,8 @@ public class EventServiceTests
     public async Task ReleaseSeatAsync_Should_ReleaseSeat_And_Invalidate_Cache()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var startAt = FakeTime.GetUtcNow().UtcDateTime.AddDays(1);
         var evt = Event.Create("Конференция", startAt, startAt.AddHours(2), 20, "Описание");
         evt.TryReserveSeats();
@@ -294,9 +281,8 @@ public class EventServiceTests
     public async Task ReleaseSeatAsync_Should_Not_Invalidate_Cache_When_NotFound()
     {
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var eventId = Guid.NewGuid();
 
         repositoryMock.Setup(x => x.GetByIdAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync((Event?)null);
@@ -306,32 +292,39 @@ public class EventServiceTests
         await act.Should().ThrowAsync<NotFoundException>();
         cacheMock.Verify(x => x.RemoveAsync(It.IsAny<string>()), Times.Never);
     }
-
+   
 
     [Fact]
     [Trait("Category", "Cache")]
     public async Task GetOrSetCacheAsync_Should_Only_Call_Repository_Once_During_Concurrent_Access()
     {
+        // Arrange
         var repositoryMock = new Mock<IEventRepository>();
-        var loggerMock = new Mock<ILogger<EventService>>();
         var cacheMock = new Mock<ICacheService>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, RedisOptions, FakeTime);
+        var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
+
         var eventId = Guid.NewGuid();
         var cacheKey = KeysForEvents.ForEvent(eventId);
         var startAt = FakeTime.GetUtcNow().UtcDateTime.AddDays(1);
         var evt = Event.Create("Конкурентный тест", startAt, startAt.AddHours(2), 100, "Описание");
 
-        cacheMock.Setup(x => x.GetStringAsync(cacheKey)).ReturnsAsync((string?)null);
+        string cachedValue = null;
+        cacheMock.Setup(x => x.GetStringAsync(cacheKey)).ReturnsAsync(() => cachedValue);
+        cacheMock.Setup(x => x.SetStringAsync(cacheKey, It.IsAny<string>(), It.IsAny<TimeSpan>()))
+            .Callback<string, string, TimeSpan>((_, val, _) => cachedValue = val);
+
         repositoryMock.Setup(x => x.GetByIdAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync(evt);
 
+        // Act
         var tasks = Enumerable.Range(0, 5)
-            .Select(_ => service.GetEventAsync(eventId, CancellationToken.None))
-            .ToArray();
+            .Select(_ => service.GetEventAsync(eventId, CancellationToken.None));
+        var results = await Task.WhenAll(tasks);
 
-        await Task.WhenAll(tasks);
-
+        // Assert
         repositoryMock.Verify(x => x.GetByIdAsync(eventId, It.IsAny<CancellationToken>()), Times.Once);
         cacheMock.Verify(x => x.SetStringAsync(cacheKey, It.IsAny<string>(), It.IsAny<TimeSpan>()), Times.Once);
-        tasks.Select(t => t.Result.Id).Should().AllBeEquivalentTo(evt.Id);
+        results.Should().AllSatisfy(r => r.Id.Should().Be(evt.Id));
     }
+
+
 }
