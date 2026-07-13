@@ -59,7 +59,7 @@ public static class DependencyInjection
             return ConnectionMultiplexer.Connect(options);
         });
 
-        services.AddScoped<ICacheService, RedisCacheService>();
+        services.AddSingleton<ICacheService, RedisCacheService>();
 
         return services;
     }
