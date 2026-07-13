@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 
 using EventForge.CacheKeys;
 using EventForge.Events.Application.DTO;
@@ -23,9 +23,6 @@ public class EventServiceTests
     private static readonly FakeTimeProvider FakeTime = new(new DateTimeOffset(2025, 7, 4, 10, 0, 0, TimeSpan.Zero));
     private static readonly IOptions<RedisOptions> RedisOptions = Options.Create(new RedisOptions { SingleEventExpirationMinutes = 5, TopEventsExpirationMinutes = 3 });
 
-    // ========================================================================
-    // CreateEventAsync
-    // ========================================================================
 
     [Fact]
     [Trait("Category", "CreateEvent")]
@@ -53,10 +50,6 @@ public class EventServiceTests
         savedEvent!.Title.Should().Be("Намечается баня");
         repositoryMock.Verify(x => x.AddAsync(It.IsAny<Event>(), It.IsAny<CancellationToken>()), Times.Once);
     }
-
-    // ========================================================================
-    // GetEventAsync — кэш-сценарии
-    // ========================================================================
 
     [Fact]
     [Trait("Category", "GetEvent")]
@@ -123,10 +116,6 @@ public class EventServiceTests
         cacheMock.Verify(x => x.SetStringAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>()), Times.Never);
     }
 
-    // ========================================================================
-    // GetTop10EventsAsync — кэш-сценарии
-    // ========================================================================
-
     [Fact]
     [Trait("Category", "GetTop10Events")]
     public async Task GetTop10EventsAsync_CacheHit_Should_Return_From_Cache_And_Not_Call_Repository()
@@ -173,10 +162,6 @@ public class EventServiceTests
         cacheMock.Verify(x => x.SetStringAsync(cacheKey, It.IsAny<string>(), It.IsAny<TimeSpan>()), Times.Once);
     }
 
-    // ========================================================================
-    // GetEventsAsync — без кэша
-    // ========================================================================
-
     [Fact]
     [Trait("Category", "GetEvents")]
     public async Task GetEventsAsync_Should_Return_Paginated_Result_From_Repository()
@@ -204,10 +189,6 @@ public class EventServiceTests
         cacheMock.Verify(x => x.GetStringAsync(It.IsAny<string>()), Times.Never);
         cacheMock.Verify(x => x.SetStringAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<TimeSpan>()), Times.Never);
     }
-
-    // ========================================================================
-    // ChangeEventAsync — инвалидация кэша
-    // ========================================================================
 
     [Fact]
     [Trait("Category", "ChangeEvent")]
@@ -250,10 +231,6 @@ public class EventServiceTests
         cacheMock.Verify(x => x.RemoveAsync(It.IsAny<string>()), Times.Never);
     }
 
-    // ========================================================================
-    // CancelEventAsync — инвалидация кэша
-    // ========================================================================
-
     [Fact]
     [Trait("Category", "CancelEvent")]
     public async Task CancelEventAsync_Should_Delete_Event_And_Invalidate_Cache()
@@ -290,10 +267,6 @@ public class EventServiceTests
         repositoryMock.Verify(x => x.DeleteAsync(eventId, It.IsAny<CancellationToken>()), Times.Once);
         cacheMock.Verify(x => x.RemoveAsync(It.IsAny<string>()), Times.Never);
     }
-
-    // ========================================================================
-    // ReleaseSeatAsync — инвалидация кэша
-    // ========================================================================
 
     [Fact]
     [Trait("Category", "ReleaseSeat")]
@@ -334,9 +307,6 @@ public class EventServiceTests
         cacheMock.Verify(x => x.RemoveAsync(It.IsAny<string>()), Times.Never);
     }
 
-    // ========================================================================
-    // GetOrSetCacheAsync — double-check locking через SemaphoreSlim
-    // ========================================================================
 
     [Fact]
     [Trait("Category", "Cache")]
