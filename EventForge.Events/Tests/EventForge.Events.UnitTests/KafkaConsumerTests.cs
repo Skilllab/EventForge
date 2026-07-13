@@ -91,7 +91,7 @@ public class KafkaConsumerTests
         using var consumer = new BookingRequestedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "events-tests" }),
-            Mock.Of<ILogger<BookingRequestedConsumer>>(), _timeProvider);
+            Mock.Of<ILogger<BookingRequestedConsumer>>(), Mock.Of<ICacheService>(), _timeProvider);
 
         await consumer.HandleMessageAsync(null, CancellationToken.None);
 
@@ -118,7 +118,7 @@ public class KafkaConsumerTests
         using var consumer = new BookingRequestedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "events-tests" }),
-            Mock.Of<ILogger<BookingRequestedConsumer>>(), _timeProvider);
+            Mock.Of<ILogger<BookingRequestedConsumer>>(), Mock.Of<ICacheService>(), _timeProvider);
 
         await consumer.HandleMessageAsync(message, CancellationToken.None);
 
@@ -148,7 +148,7 @@ public class KafkaConsumerTests
         using var consumer = new BookingRequestedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "events-tests" }),
-            Mock.Of<ILogger<BookingRequestedConsumer>>(), _timeProvider);
+            Mock.Of<ILogger<BookingRequestedConsumer>>(), Mock.Of<ICacheService>(), _timeProvider);
 
         await consumer.HandleMessageAsync(message, CancellationToken.None);
 
@@ -186,7 +186,7 @@ public class KafkaConsumerTests
         using var consumer = new BookingRequestedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "events-tests" }),
-            Mock.Of<ILogger<BookingRequestedConsumer>>(), _timeProvider);
+            Mock.Of<ILogger<BookingRequestedConsumer>>(), Mock.Of<ICacheService>(), _timeProvider);
 
         await consumer.HandleMessageAsync(message, CancellationToken.None);
 
@@ -225,7 +225,7 @@ public class KafkaConsumerTests
         using var consumer = new BookingRequestedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "events-tests" }),
-            Mock.Of<ILogger<BookingRequestedConsumer>>(), _timeProvider);
+            Mock.Of<ILogger<BookingRequestedConsumer>>(), Mock.Of<ICacheService>(), _timeProvider);
 
         await consumer.HandleMessageAsync(message, CancellationToken.None);
 
@@ -263,7 +263,7 @@ public class KafkaConsumerTests
         using var consumer = new BookingRequestedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "events-tests" }),
-            Mock.Of<ILogger<BookingRequestedConsumer>>(), _timeProvider);
+            Mock.Of<ILogger<BookingRequestedConsumer>>(), Mock.Of<ICacheService>(), _timeProvider);
 
         await consumer.HandleMessageAsync(message, CancellationToken.None);
 
