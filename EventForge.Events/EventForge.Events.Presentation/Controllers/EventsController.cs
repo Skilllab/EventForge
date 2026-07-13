@@ -44,7 +44,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     /// </summary>
     /// <param name="ct">Токен отмены</param>
     [AllowAnonymous]
-    [HttpGet("top10")]
+    [HttpGet("top")]
     [Tags("API для событий")]
     public async Task<IActionResult> GetTop10Events(CancellationToken ct)
     {
