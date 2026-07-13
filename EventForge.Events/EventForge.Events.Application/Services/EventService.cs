@@ -140,7 +140,7 @@ public class EventService(IEventRepository repository, ILogger<EventService> log
                 var items = result.Items.Select(r => r.ToDto()).ToList();
                 return new PaginatedResultTop10DTO(items);
             },
-            TimeSpan.FromMinutes(redisOptions.Value.SingleEventExpirationMinutes),
+            TimeSpan.FromMinutes(redisOptions.Value.TopEventsExpirationMinutes),
             ct);
 
         return eventDto;
