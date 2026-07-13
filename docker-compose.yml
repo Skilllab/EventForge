@@ -115,6 +115,33 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  
+  # ===========================================================================
+  # REDIS
+  # ===========================================================================
+  redis:
+    image: redis:7.2-alpine
+    container_name: eventapi-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      
+  # ===========================================================================
+  # REDIS-INSIGHT
+  # ===========================================================================    
+  redis-insight:
+    image: redis/redisinsight:3.6
+    container_name: redis_insight
+    restart: always
+    ports:
+      - "5540:5540"
+    volumes:
+      - redis_insight_data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
       
   # ===========================================================================
   # USERS DB
@@ -199,3 +226,4 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
+  redis_insight_data:

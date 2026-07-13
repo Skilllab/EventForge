@@ -10,7 +10,7 @@ namespace EventForge.Events.Infrastructure.Repositories;
 /// <summary>
 /// Репозиторий outbox-сообщений.
 /// </summary>
-public class OutboxRepository(IDbContextFactory<EventsDbContext> factory) : IOutboxRepository
+public class OutboxRepository(IDbContextFactory<EventsDbContext> factory, TimeProvider timeProvider) : IOutboxRepository
 {
     public async Task<List<OutboxMessage>> GetPendingAsync(int batchSize, CancellationToken ct)
     {
@@ -32,7 +32,7 @@ public class OutboxRepository(IDbContextFactory<EventsDbContext> factory) : IOut
         if (entity == null)
             return;
 
-        entity.ProcessedAt = DateTime.UtcNow;
+        entity.ProcessedAt = timeProvider.GetUtcNow().UtcDateTime;
         entity.Error = null;
 
         await context.SaveChangesAsync(ct);

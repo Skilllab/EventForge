@@ -18,7 +18,7 @@ namespace EventForge.Events.Infrastructure.Services;
 public class BookingRequestedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
-    ILogger<BookingRequestedConsumer> logger) : BackgroundService
+    ILogger<BookingRequestedConsumer> logger, TimeProvider timeProvider) : BackgroundService
 {
     public async Task HandleMessageAsync(BookingRequested? message, CancellationToken stoppingToken)
     {
@@ -39,7 +39,6 @@ public class BookingRequestedConsumer(
             return;
         }
 
-        var now = DateTime.UtcNow;
         var bookingEvent = await eventRepository.GetByIdAsync(message.EventId, stoppingToken);
         if (bookingEvent == null)
         {
@@ -53,14 +52,14 @@ public class BookingRequestedConsumer(
                 message.BookingId,
                 message.EventId,
                 message.UserId,
-                now, "не найдено событие");
+                timeProvider.GetUtcNow().UtcDateTime, "не найдено событие");
 
             var outbox = OutboxMessage.Create(
                 nameof(BookingRejected),
                 TopicNames.BookingRejected,
                 message.EventId.ToString(),
                 JsonSerializer.Serialize(rejected),
-                now,
+                timeProvider.GetUtcNow().UtcDateTime,
                 null);
 
             await eventRepository.AddOutboxAsync(outbox, stoppingToken);
@@ -68,14 +67,14 @@ public class BookingRequestedConsumer(
             return;
         }
 
-        if (bookingEvent.StartAt <= now)
+        if (bookingEvent.StartAt <= timeProvider.GetUtcNow().UtcDateTime)
         {
             var notApproved = new BookingNotApproved(
                 Guid.NewGuid(),
                 message.BookingId,
                 message.EventId,
                 message.UserId,
-                now,
+                timeProvider.GetUtcNow().UtcDateTime,
                 BookingNotApprovedReason.EventStarted);
 
             var outbox = OutboxMessage.Create(
@@ -83,7 +82,7 @@ public class BookingRequestedConsumer(
                 TopicNames.BookingNotApproved,
                 message.EventId.ToString(),
                 JsonSerializer.Serialize(notApproved),
-                now,
+                timeProvider.GetUtcNow().UtcDateTime,
                 null);
 
             await eventRepository.AddOutboxAsync(outbox, stoppingToken);
@@ -98,7 +97,7 @@ public class BookingRequestedConsumer(
                 message.BookingId,
                 message.EventId,
                 message.UserId,
-                now,
+                timeProvider.GetUtcNow().UtcDateTime,
                 BookingNotApprovedReason.NoSeats);
 
             var outbox = OutboxMessage.Create(
@@ -106,7 +105,7 @@ public class BookingRequestedConsumer(
                 TopicNames.BookingNotApproved,
                 message.EventId.ToString(),
                 JsonSerializer.Serialize(notApproved),
-                now,
+                timeProvider.GetUtcNow().UtcDateTime,
                 null);
 
             await eventRepository.AddOutboxAsync(outbox, stoppingToken);
@@ -120,14 +119,14 @@ public class BookingRequestedConsumer(
             message.EventId,
             message.UserId,
             message.SeatsCount,
-            now);
+            timeProvider.GetUtcNow().UtcDateTime);
 
         var confirmedOutbox = OutboxMessage.Create(
             nameof(BookingConfirmed),
             TopicNames.BookingConfirmed,
             message.EventId.ToString(),
             JsonSerializer.Serialize(confirmed),
-            now,
+            timeProvider.GetUtcNow().UtcDateTime,
             null);
 
         await eventRepository.SaveEventAndOutboxAsync(bookingEvent, confirmedOutbox, stoppingToken);

@@ -49,7 +49,14 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionMultiplexer>(sp =>
         {
             var redisOptions = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
-            return ConnectionMultiplexer.Connect(redisOptions.ConnectionString);
+
+            var options = ConfigurationOptions.Parse(redisOptions.ConnectionString);
+            options.AbortOnConnectFail = false;
+            options.ConnectRetry = 3;
+            options.ConnectTimeout = 5000; // Тайм-аут подключения, мс
+            options.SyncTimeout = 3000;      // Тайм-аут синхронных операций, мс
+
+            return ConnectionMultiplexer.Connect(options);
         });
 
         services.AddScoped<ICacheService, RedisCacheService>();

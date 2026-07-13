@@ -11,7 +11,8 @@ namespace EventForge.Booking.IntegrationTests;
 
 public class OutboxRepositoryTests : BaseRepositoryTest
 {
-    private OutboxRepository CreateRepository() => new(Factory);
+    private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
+    private OutboxRepository CreateRepository() => new(Factory, _timeProvider);
 
     [Fact]
     public async Task GetPendingAsync_Should_Return_Only_Unprocessed_Messages_Ordered_By_CreatedAt()
@@ -25,7 +26,7 @@ public class OutboxRepositoryTests : BaseRepositoryTest
             TopicNames.BookingConfirmed,
             "event-key-2",
             "payload-2",
-            DateTime.UtcNow.AddMinutes(-5),
+            _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(-5),
             null);
 
         var oldestPending = OutboxMessage.Create(
@@ -33,7 +34,7 @@ public class OutboxRepositoryTests : BaseRepositoryTest
             TopicNames.BookingConfirmed,
             "event-key-1",
             "payload-1",
-            DateTime.UtcNow.AddMinutes(-10),
+            _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(-10),
             null);
 
         var processed = OutboxMessage.Restore(
@@ -42,8 +43,8 @@ public class OutboxRepositoryTests : BaseRepositoryTest
             TopicNames.BookingConfirmed,
             "event-key-3",
             "payload-3",
-            DateTime.UtcNow.AddMinutes(-1),
-            DateTime.UtcNow,
+            _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(-1),
+            _timeProvider.GetUtcNow().UtcDateTime,
             null);
 
         await using var context = await CreateContext();
@@ -67,11 +68,9 @@ public class OutboxRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repository = CreateRepository();
-        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
-
-        var first = OutboxMessage.Create("Бронь подтверждена", TopicNames.BookingConfirmed, "key-1", "payload-1", fakeTimeProvider.GetUtcNow().UtcDateTime.AddMinutes(-3), null);
-        var second = OutboxMessage.Create("Бронь подтверждена", TopicNames.BookingConfirmed, "key-2", "payload-2", fakeTimeProvider.GetUtcNow().UtcDateTime.AddMinutes(-2), null);
-        var third = OutboxMessage.Create("Бронь подтверждена", TopicNames.BookingConfirmed, "key-3", "payload-3", fakeTimeProvider.GetUtcNow().UtcDateTime.AddMinutes(-1), null);
+        var first = OutboxMessage.Create("Бронь подтверждена", TopicNames.BookingConfirmed, "key-1", "payload-1", _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(-3), null);
+        var second = OutboxMessage.Create("Бронь подтверждена", TopicNames.BookingConfirmed, "key-2", "payload-2", _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(-2), null);
+        var third = OutboxMessage.Create("Бронь подтверждена", TopicNames.BookingConfirmed, "key-3", "payload-3", _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(-1), null);
 
         await using var context = await CreateContext();
         await context.OutboxMessages.AddRangeAsync(first.ToEntity(), second.ToEntity(), third.ToEntity());
@@ -91,14 +90,13 @@ public class OutboxRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repository = CreateRepository();
-        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
         var message = OutboxMessage.Restore(
             Guid.NewGuid(),
             "Бронь подтверждена",
             TopicNames.BookingConfirmed,
             "event-key",
             "payload",
-            fakeTimeProvider.GetUtcNow().UtcDateTime,
+            _timeProvider.GetUtcNow().UtcDateTime,
             null,
             "старая ошибка");
 
@@ -124,13 +122,12 @@ public class OutboxRepositoryTests : BaseRepositoryTest
         // Arrange
         await ResetDatabaseAsync();
         var repository = CreateRepository();
-        var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 15, 0, 0, TimeSpan.Zero));
         var message = OutboxMessage.Create(
             "BookingConfirmed",
             TopicNames.BookingConfirmed,
             "event-key",
             "payload",
-            fakeTimeProvider.GetUtcNow().UtcDateTime,
+            _timeProvider.GetUtcNow().UtcDateTime,
             null);
 
         await using var arrangeContext = await CreateContext();

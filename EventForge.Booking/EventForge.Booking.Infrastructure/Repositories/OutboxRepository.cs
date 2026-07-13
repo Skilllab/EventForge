@@ -10,7 +10,7 @@ namespace EventForge.Booking.Infrastructure.Repositories;
 /// <summary>
 /// Репозиторий outbox-сообщений
 /// </summary>
-public class OutboxRepository(IDbContextFactory<BookingDbContext> factory) : IOutboxRepository
+public class OutboxRepository(IDbContextFactory<BookingDbContext> factory, TimeProvider timeProvider) : IOutboxRepository
 {
     public async Task<List<OutboxMessage>> GetPendingAsync(int batchSize, CancellationToken ct)
     {
@@ -32,7 +32,7 @@ public class OutboxRepository(IDbContextFactory<BookingDbContext> factory) : IOu
         if (entity == null)
             return;
 
-        entity.ProcessedAt = DateTime.UtcNow;
+        entity.ProcessedAt = timeProvider.GetUtcNow().UtcDateTime;
         entity.Error = null;
 
         await context.SaveChangesAsync(ct);

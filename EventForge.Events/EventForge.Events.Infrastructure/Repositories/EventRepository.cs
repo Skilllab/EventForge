@@ -141,5 +141,24 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
         await context.SaveChangesAsync(ct);
     }
 
+    public async Task<Top10PagedResult<Event>> GetTop10EventsAsync(CancellationToken ct)
+    {
+        await using var context = await factory.CreateDbContextAsync(ct);
 
+        var query = context.Events.AsNoTracking();
+
+        query = query.Where(e => 2 * (e.TotalSeats - e.AvailableSeats) >= e.TotalSeats);
+
+        var entities = await query
+            .OrderBy(e => e.Title)
+            .Take(10)
+            .ToListAsync(ct);
+
+        var domainEvents = entities
+            .Select(e => e.ToDomain())
+            .ToList();
+
+        return new Top10PagedResult<Event>(domainEvents);
+
+    }
 }

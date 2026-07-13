@@ -38,6 +38,22 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
         return Ok(result.ToWebDto());
     }
 
+
+    /// <summary>
+    /// Получить список ТОП 10 событий
+    /// </summary>
+    /// <param name="ct">Токен отмены</param>
+    [AllowAnonymous]
+    [HttpGet("top10")]
+    [Tags("API для событий")]
+    public async Task<IActionResult> GetTop10Events(CancellationToken ct)
+    {
+        logger.LogDebug("Обработка запроса GET {methodName}", nameof(GetTop10Events));
+
+        var result = await eventService.GetTop10EventsAsync(ct);
+        return Ok(result.ToWebDto());
+    }
+
     /// <summary>
     /// Получить событие по id
     /// </summary>

@@ -65,4 +65,10 @@ public interface IEventRepository
     /// <param name="outboxMessage">Сообщение для outbox</param>
     /// <param name="ct">Токен отмены</param>
     Task AddOutboxAsync(OutboxMessage outboxMessage, CancellationToken ct);
+
+    /// <summary>
+    /// Получить 10 самых популярных событий
+    /// </summary>
+    /// <param name="ct">Токен отмены</param>
+    Task<Top10PagedResult<Event>> GetTop10EventsAsync(CancellationToken ct);
 }

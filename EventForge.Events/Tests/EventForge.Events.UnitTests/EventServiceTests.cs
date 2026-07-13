@@ -21,8 +21,9 @@ public class EventServiceTests
     {
         var repositoryMock = new Mock<IEventRepository>();
         var loggerMock = new Mock<ILogger<EventService>>();
+        var cacheMock = new Mock<ICacheService>();
         var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 10, 0, 0, TimeSpan.Zero));
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, fakeTimeProvider);
         var startAt = fakeTimeProvider.GetUtcNow().UtcDateTime.AddDays(1);
         var dto = new CreateEventDto("Намечается баня", startAt, startAt.AddHours(2), 25, "Раз в неделю точно");
 
@@ -50,7 +51,9 @@ public class EventServiceTests
     {
         var repositoryMock = new Mock<IEventRepository>();
         var loggerMock = new Mock<ILogger<EventService>>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, TimeProvider.System);
+        var cacheMock = new Mock<ICacheService>();
+
+        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, TimeProvider.System);
         var startAt = new DateTime(2025, 8, 1, 10, 0, 0, DateTimeKind.Utc);
         var evt = Event.Create("Конференция по новым компьютерным технологиям", startAt, startAt.AddHours(8), 100, "Раз в год");
 
@@ -72,7 +75,9 @@ public class EventServiceTests
         // Arrange
         var repositoryMock = new Mock<IEventRepository>();
         var loggerMock = new Mock<ILogger<EventService>>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, TimeProvider.System);
+        var cacheMock = new Mock<ICacheService>();
+
+        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, TimeProvider.System);
         var eventId = Guid.NewGuid();
 
         repositoryMock
@@ -93,8 +98,10 @@ public class EventServiceTests
     {
         var repositoryMock = new Mock<IEventRepository>();
         var loggerMock = new Mock<ILogger<EventService>>();
+        var cacheMock = new Mock<ICacheService>();
+
         var fakeTimeProvider = new FakeTimeProvider(new DateTimeOffset(2025, 7, 4, 10, 0, 0, TimeSpan.Zero));
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, fakeTimeProvider);
+        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, fakeTimeProvider);
         var filter = new EventsFilterDTO(title: "компьютерным", page: 2, pageSize: 1);
         var eventItem = Event.Create("Конференция по новым компьютерным технологиям", fakeTimeProvider.GetUtcNow().UtcDateTime.AddDays(1), fakeTimeProvider.GetUtcNow().UtcDateTime.AddDays(1).AddHours(2), 50);
         var paged = new PagedResult<Event>([eventItem], 3);
@@ -118,7 +125,9 @@ public class EventServiceTests
     {
         var repositoryMock = new Mock<IEventRepository>();
         var loggerMock = new Mock<ILogger<EventService>>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, TimeProvider.System);
+        var cacheMock = new Mock<ICacheService>();
+
+        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, TimeProvider.System);
         var startAt = new DateTime(2025, 8, 10, 10, 0, 0, DateTimeKind.Utc);
         var evt = Event.Create("Конференция по новым компьютерным технологиям", startAt, startAt.AddHours(2), 30, "Раз в год");
         var update = UpdateEventDto.Create(title: "Новая конференция", description: "Ежегодное мероприятие");
@@ -145,7 +154,9 @@ public class EventServiceTests
         // Arrange
         var repositoryMock = new Mock<IEventRepository>();
         var loggerMock = new Mock<ILogger<EventService>>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, TimeProvider.System);
+        var cacheMock = new Mock<ICacheService>();
+
+        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, TimeProvider.System);
         var eventId = Guid.NewGuid();
         var update = UpdateEventDto.Create(title: "Новая конференция");
 
@@ -167,7 +178,9 @@ public class EventServiceTests
     {
         var repositoryMock = new Mock<IEventRepository>();
         var loggerMock = new Mock<ILogger<EventService>>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, TimeProvider.System);
+        var cacheMock = new Mock<ICacheService>();
+
+        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, TimeProvider.System);
         var eventId = Guid.NewGuid();
 
         repositoryMock
@@ -189,7 +202,8 @@ public class EventServiceTests
         // Arrange
         var repositoryMock = new Mock<IEventRepository>();
         var loggerMock = new Mock<ILogger<EventService>>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, TimeProvider.System);
+        var cacheMock = new Mock<ICacheService>();
+        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, TimeProvider.System);
         var eventId = Guid.NewGuid();
 
         repositoryMock
@@ -211,7 +225,8 @@ public class EventServiceTests
         // Arrange
         var repositoryMock = new Mock<IEventRepository>();
         var loggerMock = new Mock<ILogger<EventService>>();
-        var service = new EventService(repositoryMock.Object, loggerMock.Object, TimeProvider.System);
+        var cacheMock = new Mock<ICacheService>();
+        var service = new EventService(repositoryMock.Object, loggerMock.Object, cacheMock.Object, TimeProvider.System);
         var startAt = new DateTime(2025, 8, 12, 10, 0, 0, DateTimeKind.Utc);
         var evt = Event.Create("Конференция по новым компьютерным технологиям", startAt, startAt.AddHours(2), 20);
         evt.TryReserveSeats();

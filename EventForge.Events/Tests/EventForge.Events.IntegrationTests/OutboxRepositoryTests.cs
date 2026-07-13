@@ -3,19 +3,22 @@ using EventForge.Events.Infrastructure.Repositories;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Time.Testing;
+
 namespace EventForge.Events.IntegrationTests
 {
     public class OutboxRepositoryTests : BaseRepositoryTest
     {
-        private OutboxRepository CreateRepository() => new(Factory);
+        private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
+        private OutboxRepository CreateRepository() => new(Factory, _timeProvider);
 
         [Fact]
         public async Task GetPendingAsync_Should_Return_Only_Unprocessed_Messages_Ordered_By_CreatedAt()
         {
             await ResetDatabaseAsync();
             var repository = CreateRepository();
-            var older = OutboxMessage.Create("Событие один", "topic-a", "key1", "{}", DateTime.UtcNow, null);
-            var newer = OutboxMessage.Create("Событие два", "topic-b", "key2", "{}", DateTime.UtcNow.AddSeconds(1), null);
+            var older = OutboxMessage.Create("Событие один", "topic-a", "key1", "{}", _timeProvider.GetUtcNow().UtcDateTime, null);
+            var newer = OutboxMessage.Create("Событие два", "topic-b", "key2", "{}", _timeProvider.GetUtcNow().UtcDateTime.AddSeconds(1), null);
 
             var eventRepo = new EventRepository(Factory);
             await eventRepo.AddOutboxAsync(older, CancellationToken.None);
@@ -33,7 +36,7 @@ namespace EventForge.Events.IntegrationTests
         {
             await ResetDatabaseAsync();
             var repository = CreateRepository();
-            var message = OutboxMessage.Create("Событие один", "topic", "key", "{}", DateTime.UtcNow, null);
+            var message = OutboxMessage.Create("Событие один", "topic", "key", "{}", _timeProvider.GetUtcNow().UtcDateTime, null);
 
             var eventRepo = new EventRepository(Factory);
             await eventRepo.AddOutboxAsync(message, CancellationToken.None);

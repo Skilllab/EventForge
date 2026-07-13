@@ -9,7 +9,7 @@ namespace EventForge.Events.Infrastructure.Repositories;
 /// <summary>
 /// Репозиторий хранения обработанных сообщений.
 /// </summary>
-public class ProcessedMessageRepository(IDbContextFactory<EventsDbContext> factory) : IProcessedMessageRepository
+public class ProcessedMessageRepository(IDbContextFactory<EventsDbContext> factory, TimeProvider timeProvider) : IProcessedMessageRepository
 {
     public async Task<bool> ExistsAsync(Guid id, CancellationToken ct)
     {
@@ -25,7 +25,7 @@ public class ProcessedMessageRepository(IDbContextFactory<EventsDbContext> facto
         {
             Id = id,
             MessageType = messageType,
-            ProcessedAt = DateTime.UtcNow
+            ProcessedAt = timeProvider.GetUtcNow().UtcDateTime
         }, ct);
 
         await context.SaveChangesAsync(ct);

@@ -38,7 +38,7 @@ public class RedisCacheService(IConnectionMultiplexer redis, ILogger<RedisCacheS
         }
     }
 
-    public async Task SetAsync(string key, string value, TimeSpan expiration)
+    public async Task SetStringAsync(string key, string value, TimeSpan expiration)
     {
         try
         {
