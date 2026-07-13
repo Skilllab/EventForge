@@ -1,4 +1,4 @@
-namespace EventForge.Events.Infrastructure.Entities;
+namespace EventForge.Events.Domain.Entities;
 
 /// <summary>
 /// Класс для хранения настроек Redis

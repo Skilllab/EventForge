@@ -7,6 +7,7 @@ using System.Text;
 
 using EventForge.Booking.Application.DTO;
 using EventForge.Booking.Infrastructure.Context;
+using EventForge.Booking.Presentation;
 using EventForge.Shared.Enums;
 
 using FluentAssertions;

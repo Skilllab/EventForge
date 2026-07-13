@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 
 using EventForge.Users.Infrastructure.Context;
+using EventForge.Users.Presentation;
 using EventForge.Users.Presentation.DTO;
 
 using FluentAssertions;

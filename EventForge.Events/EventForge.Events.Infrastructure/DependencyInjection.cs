@@ -1,4 +1,5 @@
 using EventForge.Events.Application.Interfaces;
+using EventForge.Events.Domain.Entities;
 using EventForge.Events.Infrastructure.Context;
 using EventForge.Events.Infrastructure.Entities;
 using EventForge.Events.Infrastructure.Repositories;
@@ -9,7 +10,6 @@ using EventForge.Settings.JWT;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 using StackExchange.Redis;
 
@@ -46,10 +46,8 @@ public static class DependencyInjection
         services.AddHostedService<OutboxPublisherBackgroundService>();
 
 
-        services.AddSingleton<IConnectionMultiplexer>(sp =>
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
         {
-            var redisOptions = sp.GetRequiredService<IOptions<RedisOptions>>().Value;
-
             var options = ConfigurationOptions.Parse(configuration.GetConnectionString("Redis"));
             options.AbortOnConnectFail = false;
             options.ConnectRetry = 3;

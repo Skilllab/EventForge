@@ -7,7 +7,6 @@ using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Application.Mapping;
 using EventForge.Events.Domain.Entities;
 using EventForge.Events.Domain.Exceptions;
-using EventForge.Events.Infrastructure.Entities;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 
 using EventForge.Events.Infrastructure.Context;
+using EventForge.Events.Presentation;
 using EventForge.Events.Presentation.DTO;
 using EventForge.Shared.Enums;
 
