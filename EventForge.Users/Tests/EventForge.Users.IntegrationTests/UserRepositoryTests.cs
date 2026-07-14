@@ -49,7 +49,7 @@ public class UserRepositoryTests : BaseRepositoryTest
 
         // Act
         await repository.AddAsync(user);
-        var savedUser = await context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Login == "FullUser");
+        var savedUser = await context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Login == "FullUser", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         savedUser.Should().NotBeNull();
@@ -70,7 +70,7 @@ public class UserRepositoryTests : BaseRepositoryTest
         var user = User.Create("AdminUser", "hashed_password", RoleType.Admin);
 
         context.Users.Add(CreateUserEntity(user));
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var repository = new UserRepository(Factory);
 
@@ -95,7 +95,7 @@ public class UserRepositoryTests : BaseRepositoryTest
         
         // Act
         await repository.AddAsync(user);
-        var savedUser = await context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Login == "NewUser");
+        var savedUser = await context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Login == "NewUser", cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         savedUser.Should().NotBeNull();

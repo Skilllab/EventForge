@@ -52,7 +52,7 @@ public class OutboxRepositoryTests : BaseRepositoryTest
             oldestPending.ToEntity(),
             newestPending.ToEntity(),
             processed.ToEntity());
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         var result = await repository.GetPendingAsync(10, CancellationToken.None);
@@ -74,7 +74,7 @@ public class OutboxRepositoryTests : BaseRepositoryTest
 
         await using var context = await CreateContext();
         await context.OutboxMessages.AddRangeAsync(first.ToEntity(), second.ToEntity(), third.ToEntity());
-        await context.SaveChangesAsync();
+        await context.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act  
         var result = await repository.GetPendingAsync(2, CancellationToken.None);
@@ -101,14 +101,14 @@ public class OutboxRepositoryTests : BaseRepositoryTest
             "старая ошибка");
 
         await using var arrangeContext = await CreateContext();
-        await arrangeContext.OutboxMessages.AddAsync(message.ToEntity());
-        await arrangeContext.SaveChangesAsync();
+        await arrangeContext.OutboxMessages.AddAsync(message.ToEntity(), TestContext.Current.CancellationToken);
+        await arrangeContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         await repository.MarkProcessedAsync(message.Id, CancellationToken.None);
 
         // Act
         await using var assertContext = await CreateContext();
-        var entity = await assertContext.OutboxMessages.FindAsync(message.Id);
+        var entity = await assertContext.OutboxMessages.FindAsync([message.Id], TestContext.Current.CancellationToken);
 
         // Assert
         entity.Should().NotBeNull();
@@ -131,14 +131,14 @@ public class OutboxRepositoryTests : BaseRepositoryTest
             null);
 
         await using var arrangeContext = await CreateContext();
-        await arrangeContext.OutboxMessages.AddAsync(message.ToEntity());
-        await arrangeContext.SaveChangesAsync();
+        await arrangeContext.OutboxMessages.AddAsync(message.ToEntity(), TestContext.Current.CancellationToken);
+        await arrangeContext.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         // Act
         await repository.MarkFailedAsync(message.Id, "публикация провалена", CancellationToken.None);
 
         await using var assertContext = await CreateContext();
-        var entity = await assertContext.OutboxMessages.FindAsync(message.Id);
+        var entity = await assertContext.OutboxMessages.FindAsync([message.Id], TestContext.Current.CancellationToken);
 
         // Assert
         entity.Should().NotBeNull();

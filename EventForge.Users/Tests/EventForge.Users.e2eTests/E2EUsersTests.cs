@@ -29,7 +29,7 @@ public class E2EUsersTests : IAsyncLifetime
     private WebApplicationFactory<Program> _factory = null!;
     private HttpClient _client = null!;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _dbContainer.StartAsync();
 
@@ -58,10 +58,14 @@ public class E2EUsersTests : IAsyncLifetime
             AllowAutoRedirect = false
         });
 
-        await ResetDatabaseAsync();
+        // Миграция/создание — один раз при старте класса
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<IDbContextFactory<UsersDbContext>>();
+        await using var ctx = await db.CreateDbContextAsync();
+        await ctx.Database.EnsureCreatedAsync();  // один раз
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
         await _factory.DisposeAsync();
@@ -82,17 +86,17 @@ public class E2EUsersTests : IAsyncLifetime
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/auth/register", request);
+        var response = await _client.PostAsJsonAsync("/auth/register", request, TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         await using var scope = _factory.Services.CreateAsyncScope();
         var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<UsersDbContext>>();
-        await using var context = await dbFactory.CreateDbContextAsync();
+        await using var context = await dbFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
 
         var user = await context.Users.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Login == "new-user");
+            .FirstOrDefaultAsync(x => x.Login == "new-user", cancellationToken: TestContext.Current.CancellationToken);
 
         user.Should().NotBeNull();
         user!.Login.Should().Be("new-user");
@@ -113,11 +117,11 @@ public class E2EUsersTests : IAsyncLifetime
             Role = "User"
         };
 
-        var first = await _client.PostAsJsonAsync("/auth/register", request);
+        var first = await _client.PostAsJsonAsync("/auth/register", request, TestContext.Current.CancellationToken);
         first.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         // Act
-        var second = await _client.PostAsJsonAsync("/auth/register", request);
+        var second = await _client.PostAsJsonAsync("/auth/register", request, TestContext.Current.CancellationToken);
 
         // Assert
         second.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -134,7 +138,7 @@ public class E2EUsersTests : IAsyncLifetime
             Login = "known-user",
             Password = "password123",
             Role = "Admin"
-        });
+        }, TestContext.Current.CancellationToken);
 
         registerResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
@@ -143,12 +147,12 @@ public class E2EUsersTests : IAsyncLifetime
         {
             Login = "known-user",
             Password = "password123"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var payload = await response.Content.ReadFromJsonAsync<LoginResponse>();
+        var payload = await response.Content.ReadFromJsonAsync<LoginResponse>(cancellationToken: TestContext.Current.CancellationToken);
         payload.Should().NotBeNull();
         payload!.Token.Should().NotBeNullOrWhiteSpace();
     }
@@ -164,7 +168,7 @@ public class E2EUsersTests : IAsyncLifetime
         {
             Login = "missing-user",
             Password = "password123"
-        });
+        }, TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -184,7 +188,7 @@ public class E2EUsersTests : IAsyncLifetime
         };
 
         // Act
-        var response = await _client.PostAsJsonAsync("/auth/register", request);
+        var response = await _client.PostAsJsonAsync("/auth/register", request, TestContext.Current.CancellationToken);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -192,12 +196,12 @@ public class E2EUsersTests : IAsyncLifetime
 
     private async Task ResetDatabaseAsync()
     {
+        // Только чистим данные
         await using var scope = _factory.Services.CreateAsyncScope();
-        var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<UsersDbContext>>();
-        await using var context = await dbFactory.CreateDbContextAsync();
-
-        await context.Database.EnsureDeletedAsync();
-        await context.Database.MigrateAsync();
+        var db = scope.ServiceProvider.GetRequiredService<IDbContextFactory<UsersDbContext>>();
+        await using var ctx = await db.CreateDbContextAsync();
+        ctx.Users.RemoveRange(ctx.Users);
+        await ctx.SaveChangesAsync();
     }
 
     private sealed record LoginResponse(string Token);
