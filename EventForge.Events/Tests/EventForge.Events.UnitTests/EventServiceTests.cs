@@ -2,6 +2,7 @@ using System.Text.Json;
 
 using EventForge.CacheKeys;
 using EventForge.Events.Application.DTO;
+using EventForge.Events.Application.Entities;
 using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Application.Services;
 using EventForge.Events.Domain.Entities;

@@ -1,5 +1,4 @@
 using EventForge.Events.Application.Interfaces;
-using EventForge.Events.Domain.Entities;
 using EventForge.Events.Infrastructure.Context;
 using EventForge.Events.Infrastructure.Entities;
 using EventForge.Events.Infrastructure.Repositories;
@@ -31,8 +30,6 @@ public static class DependencyInjection
 
         services.Configure<JwtSettings>(configuration.GetSection(nameof(JwtSettings)));
         services.Configure<KafkaOptions>(configuration.GetSection(nameof(KafkaOptions)));
-        services.Configure<RedisOptions>(configuration.GetSection(nameof(RedisOptions)));
-
 
         services.AddScoped<IEventRepository, EventRepository>();
         services.AddScoped<IProcessedMessageRepository, ProcessedMessageRepository>();

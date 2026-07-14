@@ -1,3 +1,4 @@
+using EventForge.Events.Application.Entities;
 using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Application.Services;
 
@@ -19,6 +20,9 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
 
         services.AddScoped<IEventService, EventService>();
+
+        services.Configure<RedisOptions>(configuration.GetSection(nameof(RedisOptions)));
+
 
         return services;
     }
