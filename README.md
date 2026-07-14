@@ -270,7 +270,7 @@ docker-compose up -d users_api
 Запуск только окружения для последующего запуска сервисов в debug режиме
 
 ```bash
-docker-compose up -d zookeeper kafka akhq postgres pgadmin kafka-init-topics redis redis-insight
+docker-compose up -d zookeeper kafka akhq postgres pgadmin kafka-init-topics redis
 ```
 
 Сборка образов без запуска:
