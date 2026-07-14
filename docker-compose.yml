@@ -133,21 +133,6 @@ services:
       retries: 10
       
   # ===========================================================================
-  # REDIS-INSIGHT
-  # ===========================================================================    
-  redis-insight:
-    image: redis/redisinsight:3.6
-    container_name: redis_insight
-    restart: always
-    ports:
-      - "5540:5540"
-    volumes:
-      - redis_insight_data:/data
-    depends_on:
-      redis:
-        condition: service_healthy
-      
-  # ===========================================================================
   # USERS DB
   # ===========================================================================
   users_api:
