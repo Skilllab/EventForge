@@ -77,5 +77,10 @@ public static class EventPresentationMapper
             EventsCountOnCurrentPage: dto.EventsCountOnCurrentPage);
 
 
-     
+    public static PaginatedResultTop10Response ToWebDto(this PaginatedResultTop10DTO dto) =>
+        new(
+            Events: dto.Events.Select(e => e.ToWebDto()).ToList());
+
+
+
 }

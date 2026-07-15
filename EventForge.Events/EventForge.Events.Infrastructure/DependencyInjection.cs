@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+using StackExchange.Redis;
+
 namespace EventForge.Events.Infrastructure;
 
 /// <summary>
@@ -39,6 +41,20 @@ public static class DependencyInjection
         services.AddHostedService<BookingCancelledConsumer>();
 
         services.AddHostedService<OutboxPublisherBackgroundService>();
+
+
+        services.AddSingleton<IConnectionMultiplexer>(_ =>
+        {
+            var options = ConfigurationOptions.Parse(configuration.GetConnectionString("Redis"));
+            options.AbortOnConnectFail = false;
+            options.ConnectRetry = 3;
+            options.ConnectTimeout = 5000; // Тайм-аут подключения, мс
+            options.SyncTimeout = 3000;      // Тайм-аут синхронных операций, мс
+
+            return ConnectionMultiplexer.Connect(options);
+        });
+
+        services.AddSingleton<ICacheService, RedisCacheService>();
 
         return services;
     }

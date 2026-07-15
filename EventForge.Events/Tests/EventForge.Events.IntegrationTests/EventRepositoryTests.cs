@@ -3,10 +3,13 @@ using EventForge.Events.Infrastructure.Repositories;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Time.Testing;
+
 namespace EventForge.Events.IntegrationTests;
 
 public class EventRepositoryTests : BaseRepositoryTest
 {
+    private static readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
     private EventRepository CreateRepository() => new(Factory);
 
     [Fact]
@@ -14,7 +17,7 @@ public class EventRepositoryTests : BaseRepositoryTest
     {
         await ResetDatabaseAsync();
         var repository = CreateRepository();
-        var startAt = new DateTime(2025, 8, 20, 10, 0, 0, DateTimeKind.Utc);
+        var startAt = _timeProvider.GetUtcNow().UtcDateTime;
         var evt = Event.Create("Событие интеграции", startAt, startAt.AddHours(3), 40, "Тест интеграции");
 
         await repository.AddAsync(evt, CancellationToken.None);
@@ -30,7 +33,7 @@ public class EventRepositoryTests : BaseRepositoryTest
     {
         await ResetDatabaseAsync();
         var repository = CreateRepository();
-        var baseDate = new DateTime(2025, 9, 1, 9, 0, 0, DateTimeKind.Utc);
+        var baseDate = _timeProvider.GetUtcNow().UtcDateTime;
         var target = Event.Create("Dotnet Meetup", baseDate, baseDate.AddHours(2), 20);
         var other = Event.Create("Frontend Meetup", baseDate.AddDays(5), baseDate.AddDays(5).AddHours(2), 20);
 
@@ -49,14 +52,14 @@ public class EventRepositoryTests : BaseRepositoryTest
     {
         await ResetDatabaseAsync();
         var repository = CreateRepository();
-        var startAt = new DateTime(2025, 8, 21, 10, 0, 0, DateTimeKind.Utc);
+        var startAt = _timeProvider.GetUtcNow().UtcDateTime;
         var evt = Event.Create("Событие с местами", startAt, startAt.AddHours(1), 5);
 
         await repository.AddAsync(evt, CancellationToken.None);
 
         // Резервируем через домен
         evt.TryReserveSeats(2);
-        var outbox = OutboxMessage.Create("Тестовое сообщение", "topic", "key", "{}", DateTime.UtcNow, null);
+        var outbox = OutboxMessage.Create("Тестовое сообщение", "topic", "key", "{}", _timeProvider.GetUtcNow().UtcDateTime, null);
 
         await repository.SaveEventAndOutboxAsync(evt, outbox, CancellationToken.None);
 
@@ -71,7 +74,7 @@ public class EventRepositoryTests : BaseRepositoryTest
     {
         await ResetDatabaseAsync();
         var repository = CreateRepository();
-        var startAt = new DateTime(2025, 8, 22, 10, 0, 0, DateTimeKind.Utc);
+        var startAt = _timeProvider.GetUtcNow().UtcDateTime;
         var evt = Event.Create("Удаляемое событие", startAt, startAt.AddHours(1), 5);
         await repository.AddAsync(evt, CancellationToken.None);
 

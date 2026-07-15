@@ -169,7 +169,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
         result.ProcessedAt.Should().Be(processedAt);
 
         await using var context = await CreateContext();
-        var outboxCount = await context.OutboxMessages.CountAsync();
+        var outboxCount = await context.OutboxMessages.CountAsync(cancellationToken: TestContext.Current.CancellationToken);
         outboxCount.Should().Be(1);
     }
 

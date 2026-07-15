@@ -2,11 +2,14 @@ using EventForge.Events.Infrastructure.Repositories;
 
 using FluentAssertions;
 
+using Microsoft.Extensions.Time.Testing;
+
 namespace EventForge.Events.IntegrationTests;
 
 public class ProcessedMessageRepositoryTests : BaseRepositoryTest
 {
-    private ProcessedMessageRepository CreateRepository() => new(Factory);
+    private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 7, 13, 12, 0, 0, TimeSpan.Zero));
+    private ProcessedMessageRepository CreateRepository() => new(Factory, _timeProvider);
 
     [Fact]
     public async Task AddAsync_Should_Save_Message_And_ExistsAsync_Should_Return_True()

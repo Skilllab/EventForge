@@ -11,12 +11,12 @@ public class DatabaseTests : BaseRepositoryTest
     {
         // Arrange
         await using var context = await CreateContext();
-        await context.Database.EnsureDeletedAsync();
+        await context.Database.EnsureDeletedAsync(TestContext.Current.CancellationToken);
         
         // Act
-        await context.Database.MigrateAsync();
-        var bookingsCount = await context.Bookings.CountAsync();
-        var outboxCount = await context.OutboxMessages.CountAsync();
+        await context.Database.MigrateAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var bookingsCount = await context.Bookings.CountAsync(cancellationToken: TestContext.Current.CancellationToken);
+        var outboxCount = await context.OutboxMessages.CountAsync(cancellationToken: TestContext.Current.CancellationToken);
 
         // Assert
         bookingsCount.Should().Be(0);

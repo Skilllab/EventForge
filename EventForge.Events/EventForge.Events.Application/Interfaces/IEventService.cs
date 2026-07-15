@@ -49,4 +49,10 @@ public interface IEventService
     /// <param name="eventId">ID события</param>
     /// <param name="ct">Токен отмены</param>
     Task ReleaseSeatAsync(Guid eventId, CancellationToken ct);
+
+    /// <summary>
+    /// Получить ТОП 10 событий
+    /// </summary>
+    /// <param name="ct"></param>
+    Task<PaginatedResultTop10DTO> GetTop10EventsAsync(CancellationToken ct);
 }

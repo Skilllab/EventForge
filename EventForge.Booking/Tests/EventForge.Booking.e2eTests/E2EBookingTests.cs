@@ -7,6 +7,7 @@ using System.Text;
 
 using EventForge.Booking.Application.DTO;
 using EventForge.Booking.Infrastructure.Context;
+using EventForge.Booking.Presentation;
 using EventForge.Shared.Enums;
 
 using FluentAssertions;
@@ -35,10 +36,10 @@ public class E2EBookingTests : IAsyncLifetime
     private HttpClient _client = null!;
 
     private const string JwtSecret = "SuperSecretKeyWithMoreThan32CharactersLength!!";
-    private const string JwtIssuer = "EventBookingService";
-    private const string JwtAudience = "EventBookingAPI";
+    private const string JwtIssuer = "EventForge";
+    private const string JwtAudience = "EventForgeAPI";
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _dbContainer.StartAsync();
 
@@ -68,10 +69,14 @@ public class E2EBookingTests : IAsyncLifetime
             AllowAutoRedirect = false
         });
 
-        await ResetDatabaseAsync();
+        // Миграция/создание — один раз при старте класса
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<IDbContextFactory<BookingDbContext>>();
+        await using var ctx = await db.CreateDbContextAsync();
+        await ctx.Database.EnsureCreatedAsync();  // один раз
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         _client.Dispose();
         await _factory.DisposeAsync();
@@ -84,7 +89,8 @@ public class E2EBookingTests : IAsyncLifetime
 
     private static string GenerateToken(Guid userId, RoleType role)
     {
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
+
+    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var claims = new[]
         {
@@ -117,11 +123,12 @@ public class E2EBookingTests : IAsyncLifetime
 
     private async Task ResetDatabaseAsync()
     {
+        // Только чистим данные
         await using var scope = _factory.Services.CreateAsyncScope();
-        var dbFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<BookingDbContext>>();
-        await using var context = await dbFactory.CreateDbContextAsync();
-        await context.Database.EnsureDeletedAsync();
-        await context.Database.MigrateAsync();
+        var db = scope.ServiceProvider.GetRequiredService<IDbContextFactory<BookingDbContext>>();
+        await using var ctx = await db.CreateDbContextAsync();
+        ctx.Bookings.RemoveRange(ctx.Bookings);
+        await ctx.SaveChangesAsync();
     }
 
     // ========================================================================
@@ -136,10 +143,10 @@ public class E2EBookingTests : IAsyncLifetime
         var userId = NewUserId();
         SetUserAuth(userId);
 
-        var response = await _client.PostAsync($"/bookings/{Guid.NewGuid()}", null);
+        var response = await _client.PostAsync($"/bookings/{Guid.NewGuid()}", null, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
-        var body = await response.Content.ReadFromJsonAsync<BookingInfoDTO>();
+        var body = await response.Content.ReadFromJsonAsync<BookingInfoDTO>(cancellationToken: TestContext.Current.CancellationToken);
         body.Should().NotBeNull();
         body!.ID.Should().NotBeEmpty();
         body.Status.Should().Be("Pending");
@@ -152,7 +159,7 @@ public class E2EBookingTests : IAsyncLifetime
         await ResetDatabaseAsync();
         ClearAuth();
 
-        var response = await _client.PostAsync($"/bookings/{Guid.NewGuid()}", null);
+        var response = await _client.PostAsync($"/bookings/{Guid.NewGuid()}", null, TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -168,11 +175,11 @@ public class E2EBookingTests : IAsyncLifetime
 
         for (var i = 0; i < 3; i++)
         {
-            var ok = await _client.PostAsync($"/bookings/{eventId}", null);
+            var ok = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
             ok.StatusCode.Should().Be(HttpStatusCode.Accepted);
         }
 
-        var response = await _client.PostAsync($"/bookings/{eventId}", null);
+        var response = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
         response.StatusCode.Should().NotBe(HttpStatusCode.Accepted);
     }
 
@@ -186,13 +193,13 @@ public class E2EBookingTests : IAsyncLifetime
         SetUserAuth(userId);
         var eventId = Guid.NewGuid();
 
-        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null);
-        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>();
+        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
+        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>(cancellationToken: TestContext.Current.CancellationToken);
 
-        var response = await _client.GetAsync($"/bookings/{created!.ID}");
+        var response = await _client.GetAsync($"/bookings/{created!.ID}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<BookingInfoDTO>();
+        var body = await response.Content.ReadFromJsonAsync<BookingInfoDTO>(cancellationToken: TestContext.Current.CancellationToken);
         body.Should().NotBeNull();
         body!.ID.Should().Be(created.ID);
         body.EventID.Should().Be(eventId);
@@ -206,7 +213,7 @@ public class E2EBookingTests : IAsyncLifetime
         await ResetDatabaseAsync();
         SetUserAuth(NewUserId());
 
-        var response = await _client.GetAsync($"/bookings/{Guid.NewGuid()}");
+        var response = await _client.GetAsync($"/bookings/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -218,7 +225,7 @@ public class E2EBookingTests : IAsyncLifetime
         await ResetDatabaseAsync();
         ClearAuth();
 
-        var response = await _client.GetAsync($"/bookings/{Guid.NewGuid()}");
+        var response = await _client.GetAsync($"/bookings/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -233,13 +240,13 @@ public class E2EBookingTests : IAsyncLifetime
         SetUserAuth(userId);
         var eventId = Guid.NewGuid();
 
-        await _client.PostAsync($"/bookings/{eventId}", null);
+        await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
 
         SetAdminAuth(userId);
         var response = await _client.GetAsync("/bookings");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<List<BookingInfoDTO>>();
+        var body = await response.Content.ReadFromJsonAsync<List<BookingInfoDTO>>(cancellationToken: TestContext.Current.CancellationToken);
         body.Should().NotBeNull();
         body.Should().HaveCount(1);
         body![0].EventID.Should().Be(eventId);
@@ -255,7 +262,7 @@ public class E2EBookingTests : IAsyncLifetime
         var response = await _client.GetAsync("/bookings");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<List<BookingInfoDTO>>();
+        var body = await response.Content.ReadFromJsonAsync<List<BookingInfoDTO>>(cancellationToken: TestContext.Current.CancellationToken);
         body.Should().NotBeNull();
         body.Should().BeEmpty();
     }
@@ -267,7 +274,7 @@ public class E2EBookingTests : IAsyncLifetime
         await ResetDatabaseAsync();
         SetUserAuth(NewUserId());
 
-        var response = await _client.GetAsync("/bookings");
+        var response = await _client.GetAsync("/bookings", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -279,7 +286,7 @@ public class E2EBookingTests : IAsyncLifetime
         await ResetDatabaseAsync();
         ClearAuth();
 
-        var response = await _client.GetAsync("/bookings");
+        var response = await _client.GetAsync("/bookings", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
@@ -297,10 +304,10 @@ public class E2EBookingTests : IAsyncLifetime
         SetUserAuth(userId);
         var eventId = Guid.NewGuid();
 
-        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null);
-        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>();
+        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
+        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>(cancellationToken: TestContext.Current.CancellationToken);
 
-        var response = await _client.DeleteAsync($"/bookings/{created!.ID}");
+        var response = await _client.DeleteAsync($"/bookings/{created!.ID}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -314,12 +321,12 @@ public class E2EBookingTests : IAsyncLifetime
         SetUserAuth(ownerId);
         var eventId = Guid.NewGuid();
 
-        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null);
-        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>();
+        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
+        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>(cancellationToken: TestContext.Current.CancellationToken);
 
         var adminId = NewUserId();
         SetAdminAuth(adminId);
-        var response = await _client.DeleteAsync($"/bookings/{created!.ID}");
+        var response = await _client.DeleteAsync($"/bookings/{created!.ID}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
@@ -333,12 +340,12 @@ public class E2EBookingTests : IAsyncLifetime
         SetUserAuth(ownerId);
         var eventId = Guid.NewGuid();
 
-        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null);
-        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>();
+        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
+        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>(cancellationToken: TestContext.Current.CancellationToken);
 
         var otherUserId = NewUserId();
         SetUserAuth(otherUserId);
-        var response = await _client.DeleteAsync($"/bookings/{created!.ID}");
+        var response = await _client.DeleteAsync($"/bookings/{created!.ID}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
@@ -350,7 +357,7 @@ public class E2EBookingTests : IAsyncLifetime
         await ResetDatabaseAsync();
         SetUserAuth(NewUserId());
 
-        var response = await _client.DeleteAsync($"/bookings/{Guid.NewGuid()}");
+        var response = await _client.DeleteAsync($"/bookings/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -362,7 +369,7 @@ public class E2EBookingTests : IAsyncLifetime
         await ResetDatabaseAsync();
         ClearAuth();
 
-        var response = await _client.DeleteAsync($"/bookings/{Guid.NewGuid()}");
+        var response = await _client.DeleteAsync($"/bookings/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

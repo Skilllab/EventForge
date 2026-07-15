@@ -2,6 +2,7 @@ using System.Text.Json;
 
 using Confluent.Kafka;
 
+using EventForge.CacheKeys;
 using EventForge.Contract.Brokers;
 using EventForge.Contract.Enums;
 using EventForge.Events.Application.Interfaces;
@@ -18,10 +19,14 @@ namespace EventForge.Events.Infrastructure.Services;
 public class BookingRequestedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
-    ILogger<BookingRequestedConsumer> logger) : BackgroundService
+    ILogger<BookingRequestedConsumer> logger,
+    ICacheService cache,
+    TimeProvider timeProvider) : BackgroundService
 {
     public async Task HandleMessageAsync(BookingRequested? message, CancellationToken stoppingToken)
     {
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+
         if (message == null)
         {
             logger.LogWarning("Получено пустое или невалидное сообщение BookingRequested");
@@ -39,7 +44,6 @@ public class BookingRequestedConsumer(
             return;
         }
 
-        var now = DateTime.UtcNow;
         var bookingEvent = await eventRepository.GetByIdAsync(message.EventId, stoppingToken);
         if (bookingEvent == null)
         {
@@ -132,6 +136,8 @@ public class BookingRequestedConsumer(
 
         await eventRepository.SaveEventAndOutboxAsync(bookingEvent, confirmedOutbox, stoppingToken);
         await processedRepository.AddAsync(message.MessageId, nameof(BookingConfirmed), stoppingToken);
+        await cache.RemoveAsync(KeysForEvents.ForEvent(message.EventId));
+        await cache.RemoveAsync(KeysForEvents.TopEvents);
 
         logger.LogInformation("Места зарезервированы. EventId={EventId}", message.EventId);
     }
