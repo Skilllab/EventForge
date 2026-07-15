@@ -37,8 +37,8 @@ public class E2EChangeEventTests : IAsyncLifetime
 
     // Константы для JWT (должны совпадать с appsettings)
     private const string JwtSecret = "SuperSecretKeyWithMoreThan32CharactersLength!!";
-    private const string JwtIssuer = "EventBookingService";
-    private const string JwtAudience = "EventBookingAPI";
+    private const string JwtIssuer = "EventForge";
+    private const string JwtAudience = "EventForgeAPI";
 
     public async ValueTask InitializeAsync()
     {

@@ -36,8 +36,8 @@ public class E2EBookingTests : IAsyncLifetime
     private HttpClient _client = null!;
 
     private const string JwtSecret = "SuperSecretKeyWithMoreThan32CharactersLength!!";
-    private const string JwtIssuer = "EventBookingService";
-    private const string JwtAudience = "EventBookingAPI";
+    private const string JwtIssuer = "EventForge";
+    private const string JwtAudience = "EventForgeAPI";
 
     public async ValueTask InitializeAsync()
     {
