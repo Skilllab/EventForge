@@ -79,34 +79,4 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
 
         return Ok(new { Token = token });
     }
-
-    /// <summary>
-    /// Аутентифицирует пользователя по логину и паролю и возвращает JWT-токен. Login
-    /// </summary>
-    /// <param name="request">Данные для входа: логин и пароль.</param>
-    /// <returns>
-    /// <para><b>200 OK</b> — объект <c>{ "token": "..." }</c> с JWT-токеном.</para>
-    /// <para><b>404 Not Found</b> — <c>{ "message": "Неверный логин или пароль." }</c>, если
-    /// пользователь не существует или пароль не совпадает.</para>
-    /// </returns>
-    /// <remarks>
-    /// Токен содержит claims: <c>sub</c> (ID пользователя), <c>role</c> (роль), Login
-    /// а также стандартные <c>iat</c>, <c>exp</c>, <c>iss</c>, <c>aud</c>.
-    /// Срок жизни токена задаётся в <c>JwtSettings:Lifetime</c> (в часах).
-    /// </remarks>
-    [HttpPost("login")]
-    [ApiVersion("2.0")]
-    [SwaggerOperation(Summary = "Аутентификация пользователя (Login)", Tags = new[] { "Auth" })]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Login2([FromBody] LoginDataRequest request)
-    {
-        logger.LogDebug("Обработка запроса POST {methodName}. Аутентификация пользователя: {login}", nameof(Login), request.Login);
-
-        var token = await authService.LoginUserAsync(request.Login, request.Password);
-        if (token is null)
-            return NotFound(new { message = "Неверный логин или пароль." });
-
-        return Ok(new { Token = token });
-    }
 }
