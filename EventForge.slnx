@@ -30,6 +30,7 @@
     <Project Path="EventForge.Shared/EventForge.ExceptionMiddleware/EventForge.ExceptionMiddleware.csproj" Id="99f14210-c2a1-4fbf-9e8a-77e22b342e43" />
     <Project Path="EventForge.Shared/EventForge.LoggingDBInterceptor/EventForge.LoggingDBInterceptor.csproj" Id="633c4d51-9249-474f-b5e0-8f6b20bd6a14" />
     <Project Path="EventForge.Shared/EventForge.Settings/EventForge.Settings.csproj" Id="29e9ef9c-bf61-40da-952b-93e1f6d7960c" />
+    <Project Path="EventForge.Shared/EventForge.Swagger/EventForge.Swagger.csproj" Id="ede4a50e-bb29-4e75-b737-e2e82ac538af" />
   </Folder>
   <Folder Name="/EventForge.Users/">
     <File Path="EventForge.Users/dockerfile" />
