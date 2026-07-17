@@ -7,7 +7,6 @@ using System.Text;
 
 using EventForge.Booking.Application.DTO;
 using EventForge.Booking.Infrastructure.Context;
-using EventForge.Booking.Presentation;
 using EventForge.Shared.Enums;
 
 using FluentAssertions;
@@ -23,7 +22,7 @@ using Testcontainers.PostgreSql;
 
 namespace EventForge.Booking.e2eTests;
 
-public class E2EBookingTests : IAsyncLifetime
+public class E2EGetBookingTests : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
         .WithImage("postgres:16-alpine")
@@ -127,65 +126,15 @@ public class E2EBookingTests : IAsyncLifetime
         await using var scope = _factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<IDbContextFactory<BookingDbContext>>();
         await using var ctx = await db.CreateDbContextAsync();
-        ctx.Bookings.RemoveRange(ctx.Bookings);
-        await ctx.SaveChangesAsync();
-    }
+        //await ctx.Bookings.ExecuteDeleteAsync();
+        //await ctx.SaveChangesAsync();
 
-    // ========================================================================
-    // POST /bookings/{eventId} — CreateBooking
-    // ========================================================================
-
-    [Fact]
-    [Trait("Category", "CreateBooking")]
-    public async Task CreateBooking_Should_Return_Accepted_When_Valid_Token()
-    {
-        await ResetDatabaseAsync();
-        var userId = NewUserId();
-        SetUserAuth(userId);
-
-        var response = await _client.PostAsync($"/bookings/{Guid.NewGuid()}", null, TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
-        var body = await response.Content.ReadFromJsonAsync<BookingInfoDTO>(cancellationToken: TestContext.Current.CancellationToken);
-        body.Should().NotBeNull();
-        body!.ID.Should().NotBeEmpty();
-        body.Status.Should().Be("Pending");
-    }
-
-    [Fact]
-    [Trait("Category", "CreateBooking")]
-    public async Task CreateBooking_Should_Return_Unauthorized_When_No_Token()
-    {
-        await ResetDatabaseAsync();
-        ClearAuth();
-
-        var response = await _client.PostAsync($"/bookings/{Guid.NewGuid()}", null, TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    [Fact]
-    [Trait("Category", "CreateBooking")]
-    public async Task CreateBooking_Should_Fail_When_MaxBookingCount_Exceeded()
-    {
-        await ResetDatabaseAsync();
-        var userId = NewUserId();
-        SetUserAuth(userId);
-        var eventId = Guid.NewGuid();
-
-        for (var i = 0; i < 3; i++)
-        {
-            var ok = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
-            ok.StatusCode.Should().Be(HttpStatusCode.Accepted);
-        }
-
-        var response = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
-        response.StatusCode.Should().NotBe(HttpStatusCode.Accepted);
+        await ctx.Database.ExecuteSqlRawAsync(
+            "TRUNCATE TABLE \"Booking\".\"Bookings\" RESTART IDENTITY CASCADE");
     }
 
 
     [Fact]
-    [Trait("Category", "GetBooking")]
     public async Task GetBooking_Should_Return_Ok_When_Booking_Exists()
     {
         await ResetDatabaseAsync();
@@ -207,7 +156,6 @@ public class E2EBookingTests : IAsyncLifetime
     }
 
     [Fact]
-    [Trait("Category", "GetBooking")]
     public async Task GetBooking_Should_Return_NotFound_When_Booking_Does_Not_Exist()
     {
         await ResetDatabaseAsync();
@@ -219,7 +167,6 @@ public class E2EBookingTests : IAsyncLifetime
     }
 
     [Fact]
-    [Trait("Category", "GetBooking")]
     public async Task GetBooking_Should_Return_Unauthorized_When_No_Token()
     {
         await ResetDatabaseAsync();
@@ -232,7 +179,6 @@ public class E2EBookingTests : IAsyncLifetime
 
 
     [Fact]
-    [Trait("Category", "GetAllBooking")]
     public async Task GetAllBooking_Should_Return_Ok_With_User_Bookings_When_Admin()
     {
         await ResetDatabaseAsync();
@@ -253,7 +199,6 @@ public class E2EBookingTests : IAsyncLifetime
     }
 
     [Fact]
-    [Trait("Category", "GetAllBooking")]
     public async Task GetAllBooking_Should_Return_Empty_List_When_Admin_Has_No_Bookings()
     {
         await ResetDatabaseAsync();
@@ -268,7 +213,6 @@ public class E2EBookingTests : IAsyncLifetime
     }
 
     [Fact]
-    [Trait("Category", "GetAllBooking")]
     public async Task GetAllBooking_Should_Return_Forbidden_When_Not_Admin()
     {
         await ResetDatabaseAsync();
@@ -280,96 +224,12 @@ public class E2EBookingTests : IAsyncLifetime
     }
 
     [Fact]
-    [Trait("Category", "GetAllBooking")]
     public async Task GetAllBooking_Should_Return_Unauthorized_When_No_Token()
     {
         await ResetDatabaseAsync();
         ClearAuth();
 
         var response = await _client.GetAsync("/bookings", TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-    }
-
-    // ========================================================================
-    // DELETE /bookings/{bookingId} — CancelBooking
-    // ========================================================================
-
-    [Fact]
-    [Trait("Category", "CancelBooking")]
-    public async Task CancelBooking_Should_Return_NoContent_When_Owner_Cancels_Own_Booking()
-    {
-        await ResetDatabaseAsync();
-        var userId = NewUserId();
-        SetUserAuth(userId);
-        var eventId = Guid.NewGuid();
-
-        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
-        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>(cancellationToken: TestContext.Current.CancellationToken);
-
-        var response = await _client.DeleteAsync($"/bookings/{created!.ID}", TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-    }
-
-    [Fact]
-    [Trait("Category", "CancelBooking")]
-    public async Task CancelBooking_Should_Return_NoContent_When_Admin_Cancels_Other_Users_Booking()
-    {
-        await ResetDatabaseAsync();
-        var ownerId = NewUserId();
-        SetUserAuth(ownerId);
-        var eventId = Guid.NewGuid();
-
-        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
-        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>(cancellationToken: TestContext.Current.CancellationToken);
-
-        var adminId = NewUserId();
-        SetAdminAuth(adminId);
-        var response = await _client.DeleteAsync($"/bookings/{created!.ID}", TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
-    }
-
-    [Fact]
-    [Trait("Category", "CancelBooking")]
-    public async Task CancelBooking_Should_Return_Forbidden_When_Other_User_Tries_To_Cancel()
-    {
-        await ResetDatabaseAsync();
-        var ownerId = NewUserId();
-        SetUserAuth(ownerId);
-        var eventId = Guid.NewGuid();
-
-        var createResponse = await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
-        var created = await createResponse.Content.ReadFromJsonAsync<BookingInfoDTO>(cancellationToken: TestContext.Current.CancellationToken);
-
-        var otherUserId = NewUserId();
-        SetUserAuth(otherUserId);
-        var response = await _client.DeleteAsync($"/bookings/{created!.ID}", TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-    }
-
-    [Fact]
-    [Trait("Category", "CancelBooking")]
-    public async Task CancelBooking_Should_Return_NotFound_When_Booking_Does_Not_Exist()
-    {
-        await ResetDatabaseAsync();
-        SetUserAuth(NewUserId());
-
-        var response = await _client.DeleteAsync($"/bookings/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
-
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-    }
-
-    [Fact]
-    [Trait("Category", "CancelBooking")]
-    public async Task CancelBooking_Should_Return_Unauthorized_When_No_Token()
-    {
-        await ResetDatabaseAsync();
-        ClearAuth();
-
-        var response = await _client.DeleteAsync($"/bookings/{Guid.NewGuid()}", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }

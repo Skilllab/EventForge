@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 
 using EventForge.Users.Infrastructure.Context;
-using EventForge.Users.Presentation;
 using EventForge.Users.Presentation.DTO;
 
 using FluentAssertions;
@@ -200,7 +199,7 @@ public class E2EUsersTests : IAsyncLifetime
         await using var scope = _factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<IDbContextFactory<UsersDbContext>>();
         await using var ctx = await db.CreateDbContextAsync();
-        ctx.Users.RemoveRange(ctx.Users);
+        await ctx.Users.ExecuteDeleteAsync();
         await ctx.SaveChangesAsync();
     }
 
