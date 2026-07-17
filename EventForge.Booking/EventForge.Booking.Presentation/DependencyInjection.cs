@@ -5,6 +5,7 @@ using EventForge.Booking.Domain.Exceptions;
 using EventForge.ExceptionMiddleware;
 using EventForge.Settings.JWT;
 using EventForge.Shared.Constants;
+using EventForge.Swagger;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
@@ -27,6 +28,7 @@ public static class DependencyInjection
     {
         services.AddControllers();
         services.AddEndpointsApiExplorer();
+        services.AddSharedSwagger("EventForge Booking API");
 
         var jwtOptions = configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
         var schemeName = jwtOptions?.SchemeName ?? JwtBearerDefaults.AuthenticationScheme;
@@ -61,28 +63,6 @@ public static class DependencyInjection
             options.AddPolicy(StringConstants.CustomJwtPolicy, policy =>
                 policy.AddAuthenticationSchemes(schemeName)
                     .RequireAuthenticatedUser());
-        });
-
-        services.AddSwaggerGen(options =>
-        {
-            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            options.IncludeXmlComments(xmlPath);
-
-            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
-                Description = "Введите JWT токен в формате: Bearer {ваш_токен}",
-                Name = "Authorization",
-                Scheme = "Bearer",
-                BearerFormat = "JWT",
-                Type = SecuritySchemeType.Http,
-                In = ParameterLocation.Header,
-            });
-
-            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-            {
-                [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
-            });
         });
 
 

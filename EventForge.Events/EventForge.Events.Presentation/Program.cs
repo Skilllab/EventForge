@@ -3,6 +3,7 @@ using EventForge.Events.Infrastructure;
 using EventForge.Events.Infrastructure.Context;
 using EventForge.Events.Presentation;
 using EventForge.ExceptionMiddleware;
+using EventForge.Swagger;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -35,7 +36,7 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSharedSwaggerUI("Events");
 }
 
 // Глобальный обработчик ошибок

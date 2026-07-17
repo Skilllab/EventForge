@@ -1,4 +1,7 @@
+using Asp.Versioning.ApiExplorer;
+
 using EventForge.ExceptionMiddleware;
+using EventForge.Swagger;
 using EventForge.Users.Application;
 using EventForge.Users.Infrastructure;
 using EventForge.Users.Infrastructure.Context;
@@ -35,7 +38,7 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSharedSwaggerUI("Users");
 }
 
 // Глобальный обработчик ошибок

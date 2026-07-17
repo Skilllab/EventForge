@@ -3,6 +3,7 @@ using EventForge.Booking.Infrastructure;
 using EventForge.Booking.Infrastructure.Context;
 using EventForge.Booking.Presentation;
 using EventForge.ExceptionMiddleware;
+using EventForge.Swagger;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -34,7 +35,7 @@ using (var scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Docker"))
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSharedSwaggerUI("Booking");
 }
 
 // Глобальный обработчик ошибок

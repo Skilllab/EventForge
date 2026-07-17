@@ -1,15 +1,14 @@
-using System.Reflection;
 using System.Text;
 
 using EventForge.ExceptionMiddleware;
 using EventForge.Settings.JWT;
 using EventForge.Shared.Constants;
+using EventForge.Swagger;
 using EventForge.Users.Domain.Exceptions;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 
 namespace EventForge.Users.Presentation;
 
@@ -22,6 +21,7 @@ public static class DependencyInjection
     {
         services.AddControllers();
         services.AddEndpointsApiExplorer();
+        services.AddSharedSwagger("EventForge Users API");
 
         var jwtOptions = configuration.GetSection(nameof(JwtSettings)).Get<JwtSettings>();
         var schemeName = jwtOptions?.SchemeName ?? JwtBearerDefaults.AuthenticationScheme;
@@ -57,29 +57,6 @@ public static class DependencyInjection
                     .RequireAuthenticatedUser());
         });
 
-        services.AddSwaggerGen(options =>
-        {
-            var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-            options.IncludeXmlComments(xmlPath);
-
-            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
-                Description = "Введите JWT токен в формате: Bearer {ваш_токен}",
-                Name = "Authorization",
-                Scheme = "Bearer",
-                BearerFormat = "JWT",
-                Type = SecuritySchemeType.Http,
-                In = ParameterLocation.Header,
-            });
-
-            options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-            {
-                [new OpenApiSecuritySchemeReference("Bearer", document)] = [],
-            });
-        });
-
-
         services.Configure<ExceptionHandlingOptions>(options =>
         {
             options.ExceptionHandler = exception => exception switch
@@ -99,8 +76,6 @@ public static class DependencyInjection
                 _ => (StatusCodes.Status500InternalServerError, new ProblemDetails { Detail = exception.Message })
             };
         });
-
-
 
         return services;
     }
