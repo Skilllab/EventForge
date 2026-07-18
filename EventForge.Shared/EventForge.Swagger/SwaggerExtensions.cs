@@ -4,6 +4,7 @@ using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi;
 
@@ -31,6 +32,7 @@ public static class SwaggerExtensions
         services.AddOptions<Swashbuckle.AspNetCore.SwaggerGen.SwaggerGenOptions>()
             .Configure<IServiceProvider>((options, sp) =>
             {
+
                 var provider = sp.GetService<IApiVersionDescriptionProvider>();
 
                 if (provider != null)
@@ -49,11 +51,16 @@ public static class SwaggerExtensions
                     options.SwaggerDoc("v1", new OpenApiInfo { Title = apiTitle, Version = "v1" });
                 }
 
-                var xmlFile = $"{Assembly.GetEntryAssembly()?.GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                if (File.Exists(xmlPath))
+                var baseDirectory = AppContext.BaseDirectory;
+                var xmlFiles = Directory.GetFiles(baseDirectory, "*.xml");
+
+                foreach (var xmlPath in xmlFiles)
                 {
-                    options.IncludeXmlComments(xmlPath);
+                    // Проверяем, что это XML от нашей экосистемы EventForge, чтобы не читать системные файлы
+                    if (Path.GetFileName(xmlPath).StartsWith("EventForge", StringComparison.OrdinalIgnoreCase))
+                    {
+                        options.IncludeXmlComments(xmlPath);
+                    }
                 }
 
                 options.EnableAnnotations();
@@ -70,7 +77,6 @@ public static class SwaggerExtensions
 
                 options.AddSecurityDefinition("Bearer", securityScheme);
 
-                // ИСПРАВЛЕНИЕ: Новый синтаксис с делегатом документа для .NET 10 / Swashbuckle v10
                 options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
                 {
                     [new OpenApiSecuritySchemeReference("Bearer", document)] = []
@@ -82,35 +88,39 @@ public static class SwaggerExtensions
         return services;
     }
 
-    // 2. Метод для настройки Middleware (app.UseSharedSwaggerUI)
+
+    private static readonly FileExtensionContentTypeProvider ContentTypeProvider = new();
+    private static readonly Assembly CurrentAssembly = typeof(SwaggerExtensions).Assembly;
+
+    // Выносим префикс пространства имен сборки для Embedded Resources
+    private const string ResourcePrefix = "EventForge.Swagger.wwwroot";
+
     public static IApplicationBuilder UseSharedSwaggerUI(this IApplicationBuilder app, string serviceName)
     {
-        // Раздаём embedded-ресурсы (CSS) через MapGet
+        //Упрощенное Middleware для раздачи статики из Embedded Resources
         app.Use(async (context, next) =>
         {
-            var path = context.Request.Path.Value;
-            string? resourceName = path switch
-            {
-                "/custom-swagger.css" => "EventForge.Swagger.wwwroot.custom-swagger.css",
-                "/favicon.ico" => "EventForge.Swagger.wwwroot.favicon.ico",
-                "/logo.png" => "EventForge.Swagger.wwwroot.logo.png",
-                _ => null
-            };
+            var path = context.Request.Path.Value ?? "";
 
-            if (resourceName != null)
+            // Превращаем URL-путь в формат имени Embedded Resource (заменяем '/' на '.')
+            // Пример: "/js/swagger-copy-token.js" -> "EventForge.Swagger.wwwroot.js.swagger-copy-token.js"
+            var resourceName = $"{ResourcePrefix}{path.Replace('/', '.')}";
+
+            // Проверяем, существует ли такой манифест в сборке. Ресурсы то добавили как embedded
+            if (CurrentAssembly.GetManifestResourceInfo(resourceName) != null)
             {
-                var assembly = typeof(SwaggerExtensions).Assembly;
-                await using var stream = assembly.GetManifestResourceStream(resourceName);
+                await using var stream = CurrentAssembly.GetManifestResourceStream(resourceName);
                 if (stream != null)
                 {
-                    context.Response.ContentType = path switch
+                    // Автоматически определяем Content-Type по расширению файла
+                    if (!ContentTypeProvider.TryGetContentType(path, out var contentType))
                     {
-                        "/custom-swagger.css" => "text/css",
-                        "/favicon.ico" => "image/x-icon",
-                        "/logo.png" => "image/png",
-                        _ => "application/octet-stream"
-                    };
+                        contentType = "application/octet-stream";
+                    }
+
+                    context.Response.ContentType = contentType;
                     context.Response.Headers.CacheControl = "public, max-age=3600";
+
                     await stream.CopyToAsync(context.Response.Body);
                     return;
                 }
@@ -118,10 +128,9 @@ public static class SwaggerExtensions
             await next();
         });
 
-
+        // Настройка SwaggerUI
         app.UseSwaggerUI(options =>
         {
-            // Динамически регистрируем конечные точки для всех обнаруженных версий
             var provider = app.ApplicationServices.GetRequiredService<IApiVersionDescriptionProvider>();
 
             foreach (var description in provider.ApiVersionDescriptions)
@@ -135,76 +144,20 @@ public static class SwaggerExtensions
             options.DisplayRequestDuration();
             options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.List);
             options.DocumentTitle = $"Сервис {serviceName}";
-            // Внедряем JS-скрипт, который удаляет старые иконки и принудительно ставит вашу
-            options.HeadContent = @"
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Удаляем все стандартные теги иконок Swagger
-                const existingIcons = document.querySelectorAll(""link[rel*='icon']"");
-                existingIcons.forEach(icon => icon.remove());
 
-                // Создаем и добавляем вашу новую иконку
-                const link = document.createElement('link');
-                link.type = 'image/x-icon';
-                link.rel = 'icon';
-                link.href = '/favicon.ico';
-                document.head.appendChild(link);
-            });
-        </script>";
+            // Инжекция JS
+            options.InjectJavascript("/js/swagger-change-head.js");
+            options.InjectJavascript("/js/swagger-change-select-api.js");
+            options.InjectJavascript("/js/swagger-copy-token.js");
+            options.InjectJavascript("/js/swagger-set-icons.js");
 
-            // Скрипт для динамического добавления текста в шапку
-            options.HeadContent += @"
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Ждем появления элемента ссылки в шапке
-                const checkTopbar = setInterval(() => {
-                    const topbarLink = document.querySelector('.swagger-ui .topbar .link');
-                    
-                    if (topbarLink) {
-                        clearInterval(checkTopbar); // Останавливаем проверку
-                        
-                        // Создаем контейнер для нашего текста
-                        const brandText = document.createElement('span');
-                        brandText.className = 'custom-topbar-text';
-                        brandText.innerText = 'EventForge - лучшая микросервисная платформа';
-                        
-                        // Добавляем текст внутрь ссылки в шапке
-                        topbarLink.appendChild(brandText);
-                    }
-                }, 50); // Проверяем каждые 50мс
-            });
-        </script>";
-
-            // Скрипт для изменения текста "Select a definition"
-            options.HeadContent += @"
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                // Создаем наблюдатель за изменениями на странице
-                const observer = new MutationObserver((mutations, obs) => {
-                    // Ищем лейбл выпадающего списка
-                    const label = document.querySelector('.swagger-ui .topbar .download-url-wrapper label span');
-                    
-                    if (label) {
-                        // Заменяем текст на ваш собственный
-                        label.textContent = 'Выберите версию API:'; // ВПИШИТЕ СЮДА ВАШ ТЕКСТ
-                        obs.disconnect(); // Отключаем наблюдатель, когда текст изменен
-                    }
-                });
-
-                // Начинаем следить за всем документом
-                observer.observe(document.body, {
-                    childList: true,
-                    subtree: true
-                });
-            });
-        </script>";
-
-
-
-            // Подключаем кастомные стили из папки wwwroot
-            options.InjectStylesheet("/custom-swagger.css");
+            // Инжекция CSS
+            options.InjectStylesheet("/theme-material.css");
+            options.InjectStylesheet("/swagger-customization.css");
         });
 
         return app;
     }
+
+
 }

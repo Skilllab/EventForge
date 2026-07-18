@@ -1,5 +1,3 @@
-using Asp.Versioning.ApiExplorer;
-
 using EventForge.ExceptionMiddleware;
 using EventForge.Swagger;
 using EventForge.Users.Application;

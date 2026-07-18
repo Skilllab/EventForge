@@ -22,10 +22,8 @@ namespace EventForge.Users.Presentation.Controllers;
 public class AuthController(IAuthService authService, ILogger<AuthController> logger) : ControllerBase
 {
     /// <summary>
-    /// Регистрирует нового пользователя с указанными логином, паролем и ролью.
+    /// Регистрация нового пользователя с указанными логином, паролем и ролью.
     /// </summary>
-    /// <response code="204">Пользователь успешно зарегистрирован.</response>
-    /// <response code="400">Ошибка регистрации пользователя (логин занят или модель невалидна, пустой логин, короткий пароль и т.д.).</response>
     /// <param name="userRequest">
     /// Данные пользователя:
     /// <c>Login</c> - непустая строка, минимум 3 символа
@@ -37,9 +35,10 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     /// </remarks>
     [HttpPost("register")]
     [ApiVersion("1.0")]
-    [SwaggerOperation(Summary = "Регистрация пользователя (Register)", Tags = new[] { "Auth" })]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [Tags("API для регистрации")]
+    [SwaggerOperation(Summary = "Регистрация пользователя (Register)")]
+    [SwaggerResponse(StatusCodes.Status204NoContent, "Пользователь успешно зарегистрирован.")]
+    [SwaggerResponse(StatusCodes.Status400BadRequest, "Ошибка регистрации пользователя (логин занят или модель невалидна, пустой логин, короткий пароль и т.д.)")]
     public async Task<IActionResult> Register([FromBody] CreateUserRequest userRequest)
     {
         logger.LogDebug("Обработка запроса POST {methodName}. Регистрация нового пользователя: {login}", nameof(Register), userRequest.Login);
@@ -51,14 +50,9 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     }
 
     /// <summary>
-    /// Аутентифицирует пользователя по логину и паролю и возвращает JWT-токен. Login
+    /// Аутентификация пользователя по логину и паролю
     /// </summary>
     /// <param name="request">Данные для входа: логин и пароль.</param>
-    /// <returns>
-    /// <para><b>200 OK</b> — объект <c>{ "token": "..." }</c> с JWT-токеном.</para>
-    /// <para><b>404 Not Found</b> — <c>{ "message": "Неверный логин или пароль." }</c>, если
-    /// пользователь не существует или пароль не совпадает.</para>
-    /// </returns>
     /// <remarks>
     /// Токен содержит claims: <c>sub</c> (ID пользователя), <c>role</c> (роль), Login
     /// а также стандартные <c>iat</c>, <c>exp</c>, <c>iss</c>, <c>aud</c>.
@@ -66,9 +60,10 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     /// </remarks>
     [HttpPost("login")]
     [ApiVersion("1.0")]
-    [SwaggerOperation(Summary = "Аутентификация пользователя (Login)", Tags = new[] { "Auth" })]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [Tags("API для аутентификации")]
+    [SwaggerOperation(Summary = "Аутентификация пользователя (Login)")]
+    [SwaggerResponse(StatusCodes.Status200OK, "объект с JWT-токеном")]
+    [SwaggerResponse(StatusCodes.Status404NotFound, "если пользователь не существует или пароль не совпадает")]
     public async Task<IActionResult> Login([FromBody] LoginDataRequest request)
     {
         logger.LogDebug("Обработка запроса POST {methodName}. Аутентификация пользователя: {login}", nameof(Login), request.Login);
