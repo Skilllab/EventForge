@@ -23,7 +23,7 @@ public class BookingModel
     /// <summary>
     /// Текущий статус брони
     /// </summary>
-    public BookingStatus Status { get; set; }
+    public BookingStatus Status { get; private set; }
 
     /// <summary>
     /// Дата и время создания брони

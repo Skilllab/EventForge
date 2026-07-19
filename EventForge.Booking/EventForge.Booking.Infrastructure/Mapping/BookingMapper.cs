@@ -20,7 +20,7 @@ public static class BookingMapper
         type.GetProperty(nameof(BookingModel.Id))?.SetValue(domain, entity.Id);
         type.GetProperty(nameof(BookingModel.UserId))?.SetValue(domain, entity.UserId);
 
-        domain.Status = Enum.Parse<BookingStatus>(entity.Status);
+        type.GetProperty(nameof(BookingModel.Status))?.SetValue(domain, Enum.Parse<BookingStatus>(entity.Status));
         domain.ProcessedAt = entity.ProcessedAt;
 
         return domain;
