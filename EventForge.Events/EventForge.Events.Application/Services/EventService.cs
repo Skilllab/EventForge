@@ -180,6 +180,10 @@ public class EventService(IEventRepository repository, ILogger<EventService> log
         finally
         {
             semaphore.Release();
+            if (semaphore.CurrentCount == 1)
+            {
+                _locks.TryRemove(cacheKey, out _);
+            }
         }
     }
 
