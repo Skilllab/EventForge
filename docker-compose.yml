@@ -121,7 +121,7 @@ services:
   # ===========================================================================
   redis:
     image: redis:7.2-alpine
-    container_name: eventapi-redis
+    container_name: eventapi_redis
     environment:
       ConnectionStrings__Redis: ${EVENTS_REDIS_CONNECTION_STRING}
     ports:
@@ -132,41 +132,42 @@ services:
       timeout: 5s
       retries: 10
   # ===========================================================================
-  # prometheus
+  # Prometheus
   # ===========================================================================      
   prometheus:
     image: prom/prometheus:v2.51.0
-    container_name: eventapi-prometheus
+    container_name: eventapi_prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9090:9090"
   # ===========================================================================
-  # jaeger
+  # Jaeger
   # ===========================================================================
   jaeger:
     image: jaegertracing/all-in-one:1.56
-    container_name: eventapi-jaeger
+    container_name: eventapi_jaeger
     ports:
       - "16686:16686"   # UI
       - "4317:4317"     # OTLP gRPC
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
   # ===========================================================================
-  # grafana
+  # Grafana
   # ===========================================================================
   grafana:
     image: grafana/grafana:10.4.2
-    container_name: eventapi-grafana
+    container_name: eventapi_grafana
     ports:
-      - "3000:3000"
+      - "3300:3000"
     environment:
       GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_SECURITY_ADMIN_USER: admin
     volumes:
       - grafana-data:/var/lib/grafana
 
   # ===========================================================================
-  # USERS DB
+  # USERS SERVICE
   # ===========================================================================
   users_api:
     build:
@@ -176,6 +177,7 @@ services:
     restart: unless-stopped
     environment:
       ConnectionStrings__DefaultConnection: ${USERS_CONNECTION_STRING}
+      Otlp__Endpoint: http://jaeger:4317
     ports:
       - "5008:8080"
     depends_on:
@@ -183,7 +185,7 @@ services:
         condition: service_healthy
 
   # ===========================================================================
-  # EVENTS DB
+  # EVENTS SERVICE
   # ===========================================================================
   events_api:
     build:
@@ -195,6 +197,7 @@ services:
       ConnectionStrings__DefaultConnection: ${EVENTS_CONNECTION_STRING}
       KafkaOptions__BootstrapServers: kafka:29092
       KafkaOptions__ConsumerGroup: eventforge-events
+      Otlp__Endpoint: http://jaeger:4317
     ports:
       - "5009:8080"
     depends_on:
@@ -206,7 +209,7 @@ services:
         condition: service_healthy
 
   # ===========================================================================
-  # BOOKING DB
+  # BOOKING SERVICE
   # ===========================================================================
   booking_api:
     build:
@@ -217,6 +220,7 @@ services:
     environment:
       ConnectionStrings__DefaultConnection: ${BOOKING_CONNECTION_STRING}
       KafkaOptions__BootstrapServers: kafka:29092
+      Otlp__Endpoint: http://jaeger:4317
     ports:
       - "5010:8080"
     depends_on:

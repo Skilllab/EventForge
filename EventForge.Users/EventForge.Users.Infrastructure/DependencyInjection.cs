@@ -10,6 +10,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
 namespace EventForge.Users.Infrastructure;
 
 /// <summary>
@@ -19,6 +24,40 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        const string serviceName = "EventForge.Users";
+        const string serviceVersion = "1.0.0";
+
+        services.AddOpenTelemetry()
+            .ConfigureResource(resource => resource
+                .AddService(
+                    serviceName: serviceName,
+                    serviceVersion: serviceVersion))
+            .WithTracing(tracing =>
+            {
+                tracing
+                    .AddSource(serviceName)
+                    .AddAspNetCoreInstrumentation()
+                    .AddEntityFrameworkCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddOtlpExporter(options =>
+                    {
+                        // Jaeger по умолчанию принимает OTLP/gRPC на порту 4317
+                        options.Endpoint = new Uri(configuration["Otel:OtlpEndpoint"] ?? "http://localhost:4317");
+                    });
+            })
+            .WithLogging(logging =>
+            {
+                logging.AddConsoleExporter();
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .AddAspNetCoreInstrumentation()
+                    .AddRuntimeInstrumentation()
+                    .AddPrometheusExporter();
+            });
+
+
         services.AddSingleton<LoggingInterceptor>();
 
         services.AddDbContextFactory<UsersDbContext>(options =>

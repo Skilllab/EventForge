@@ -7,9 +7,16 @@ using EventForge.Swagger;
 
 using Microsoft.EntityFrameworkCore;
 
+using Serilog;
+using Serilog.Formatting.Compact;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddConsole();
+
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+        .WriteTo.Console(new CompactJsonFormatter()));
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);

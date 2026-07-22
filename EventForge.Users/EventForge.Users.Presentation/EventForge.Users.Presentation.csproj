@@ -18,6 +18,13 @@
     
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
+
+    <PackageReference Include="Serilog.AspNetCore"  />
+    <PackageReference Include="Serilog.Formatting.Compact" />
+
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" />
+
   </ItemGroup>
 
   <ItemGroup>
