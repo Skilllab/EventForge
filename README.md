@@ -19,6 +19,7 @@
 - [Аутентификация и роли](#аутентификация-и-роли)
 - [Kafka и асинхронные процессы](#kafka-и-асинхронные-процессы)
 - [Запуск проекта](#запуск-проекта)
+- [Наблюдаемость](#наблюдаемость)
 - [Миграции](#миграции)
 - [Тестирование](#тестирование)
 - [API примеры](#api-примеры)
@@ -270,7 +271,7 @@ docker-compose up -d users_api
 Запуск только окружения для последующего запуска сервисов в debug режиме
 
 ```bash
-docker-compose up -d zookeeper kafka akhq postgres pgadmin kafka-init-topics redis
+docker-compose up -d zookeeper kafka akhq postgres pgadmin kafka-init-topics redis prometheus grafana jaeger
 ```
 
 Сборка образов без запуска:
@@ -338,6 +339,50 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Po
 }
 ```
 
+## Наблюдаемость
+
+В проект добавлен базовый observability-стек:
+
+- `Prometheus` — сбор метрик (`prometheus.yml`, `metrics_path: /metrics`)
+- `Grafana` — визуализация метрик и дашборды
+- `Jaeger` — трассировка (OpenTelemetry OTLP + UI)
+- `AKHQ` — UI для Kafka (просмотр топиков/сообщений)
+
+### UI и порты
+
+| Инструмент | URL | Порт |
+|---|---|---|
+| Grafana | http://localhost:3000 | `3000` |
+| Prometheus | http://localhost:9090 | `9090` |
+| Jaeger UI | http://localhost:16686 | `16686` |
+| AKHQ | http://localhost:8080 | `8080` |
+
+### Как запустить стек мониторинга
+
+Если сервисы уже запущены, поднимите только мониторинг:
+```bash
+docker compose up -d prometheus grafana jaeger
+```
+
+Если нужен полный локальный стенд:
+```bash
+docker compose up -d
+```
+
+### Дашборд Grafana `EventForge dashboard 1_0`
+
+Файл дашборда:  
+`grafana/provisioning/dashboards/files/EventForge dashboard 1_0.json`
+
+Панели в дашборде:
+
+- `Процент загрузки процессора (CPU)`
+- `Exceptions`
+- `Объем ОЗУ`
+- `Активные потоки`
+- `Latency (p50, p95, p99)`
+- `Текущее количество запросов в обработке`
+- `Throughput (RPS)`
 
 ## Миграции
 
