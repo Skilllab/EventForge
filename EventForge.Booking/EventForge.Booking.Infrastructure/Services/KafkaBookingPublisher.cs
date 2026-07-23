@@ -41,6 +41,9 @@ public sealed class KafkaBookingPublisher : IBookingPublisher, IDisposable
 
     public async Task PublishRawAsync(string topic, string key, string payload, CancellationToken ct)
     {
+        var headers = new Headers();
+        KafkaTraceContext.InjectCurrentContext(headers);
+
         await _producer.ProduceAsync(
             topic,
             new Message<string, string>

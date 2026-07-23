@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace EventForge.Booking.Domain.Entities;
 
 /// <summary>
@@ -45,6 +47,17 @@ public class OutboxMessage
     /// </summary>
     public string? Error { get; private set; }
 
+    /// <summary>
+    /// Traceparent для трассировки
+    /// </summary>
+    public string? TraceParent { get; private set; }
+
+    /// <summary>
+    /// Tracestate для трассировки
+    /// </summary>
+    public string? TraceState { get; private set; }
+
+
     private OutboxMessage(
         Guid id,
         string type,
@@ -53,7 +66,9 @@ public class OutboxMessage
         string payload,
         DateTime createdAt,
         DateTime? processedAt,
-        string? error)
+        string? error,
+        string? traceParent,
+        string? traceState)
     {
         Id = id;
         Type = type;
@@ -63,18 +78,23 @@ public class OutboxMessage
         CreatedAt = createdAt;
         ProcessedAt = processedAt;
         Error = error;
+        TraceParent = traceParent;
+        TraceState = traceState;
     }
 
     /// <summary>
     /// Создает новый экземпляр OutboxMessage
     /// </summary>
+
     public static OutboxMessage Create(
         string type,
         string topic,
         string messageKey,
         string payload,
         DateTime createdAt,
-        string? error) =>
+        string? error,
+        string? traceParent = null,
+        string? traceState = null) =>
         new(
             Guid.NewGuid(),
             type,
@@ -83,7 +103,9 @@ public class OutboxMessage
             payload,
             createdAt,
             null,
-            error);
+            error,
+            traceParent ?? Activity.Current?.Id,
+            traceState ?? Activity.Current?.TraceStateString);
 
     /// <summary>
     /// Восстанавливает объект из хранилища
@@ -96,7 +118,9 @@ public class OutboxMessage
         string payload,
         DateTime createdAt,
         DateTime? processedAt,
-        string? error) =>
+        string? error,
+        string? traceParent,
+        string? traceState) =>
         new(
             id,
             type,
@@ -105,5 +129,7 @@ public class OutboxMessage
             payload,
             createdAt,
             processedAt,
-            error);
+            error,
+            traceParent,
+            traceState);
 }
