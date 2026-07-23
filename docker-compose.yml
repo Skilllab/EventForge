@@ -165,6 +165,8 @@ services:
       GF_SECURITY_ADMIN_USER: admin
     volumes:
       - grafana-data:/var/lib/grafana
+      # provisioning для дашбордов и источников данных
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
 
   # ===========================================================================
   # USERS SERVICE
@@ -177,7 +179,7 @@ services:
     restart: unless-stopped
     environment:
       ConnectionStrings__DefaultConnection: ${USERS_CONNECTION_STRING}
-      Otlp__Endpoint: http://jaeger:4317
+      Otel__OtlpEndpoint: http://eventapi_jaeger:4317
     ports:
       - "5008:8080"
     depends_on:
@@ -197,7 +199,7 @@ services:
       ConnectionStrings__DefaultConnection: ${EVENTS_CONNECTION_STRING}
       KafkaOptions__BootstrapServers: kafka:29092
       KafkaOptions__ConsumerGroup: eventforge-events
-      Otlp__Endpoint: http://jaeger:4317
+      Otel__OtlpEndpoint: http://eventapi_jaeger:4317
     ports:
       - "5009:8080"
     depends_on:
@@ -220,7 +222,7 @@ services:
     environment:
       ConnectionStrings__DefaultConnection: ${BOOKING_CONNECTION_STRING}
       KafkaOptions__BootstrapServers: kafka:29092
-      Otlp__Endpoint: http://jaeger:4317
+      Otel__OtlpEndpoint: http://eventapi_jaeger:4317
     ports:
       - "5010:8080"
     depends_on:
