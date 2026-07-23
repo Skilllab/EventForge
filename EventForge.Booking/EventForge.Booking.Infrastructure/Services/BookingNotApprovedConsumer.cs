@@ -18,7 +18,7 @@ namespace EventForge.Booking.Infrastructure.Services;
 public class BookingNotApprovedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
-    ILogger<BookingRejectedConsumer> logger) : BackgroundService
+    ILogger<BookingNotApprovedConsumer> logger) : BackgroundService
 {
     
     private async Task HandleMessageAsync(

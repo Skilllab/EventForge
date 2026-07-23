@@ -1,6 +1,11 @@
 using EventForge.Booking.Application.Common;
+using EventForge.Booking.Application.CQRS.Commands;
+using EventForge.Booking.Application.CQRS.Handlers;
+using EventForge.Booking.Application.CQRS.Queries;
+using EventForge.Booking.Application.DTO;
 using EventForge.Booking.Application.Interfaces;
 using EventForge.Booking.Application.Services;
+using EventForge.CQRS;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -18,6 +23,11 @@ public static class DependencyInjection
         services.Configure<BookingOptions>(configuration.GetSection(nameof(BookingOptions)));
 
         services.AddScoped<IBookingService, BookingService>();
+        services.AddScoped<ISender, Mediator>();
+        services.AddScoped<IRequestHandler<CreateBookingCommand, BookingInfoDTO>, CreateBookingHandler>();
+        services.AddScoped<IRequestHandler<CancelBookingCommand, bool>, CancelBookingHandler>();
+        services.AddScoped<IRequestHandler<GetBookingByIdQuery, BookingInfoDTO>, GetBookingByIdHandler>();
+        services.AddScoped<IRequestHandler<GetAllBookingsQuery, List<BookingInfoDTO>>, GetAllBookingsHandler>();
 
         return services;
     }

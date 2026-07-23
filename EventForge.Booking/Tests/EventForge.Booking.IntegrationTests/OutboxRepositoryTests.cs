@@ -45,6 +45,8 @@ public class OutboxRepositoryTests : BaseRepositoryTest
             "payload-3",
             _timeProvider.GetUtcNow().UtcDateTime.AddMinutes(-1),
             _timeProvider.GetUtcNow().UtcDateTime,
+            null,
+            null,
             null);
 
         await using var context = await CreateContext();
@@ -98,7 +100,9 @@ public class OutboxRepositoryTests : BaseRepositoryTest
             "payload",
             _timeProvider.GetUtcNow().UtcDateTime,
             null,
-            "старая ошибка");
+            "старая ошибка", 
+            null,
+            null);
 
         await using var arrangeContext = await CreateContext();
         await arrangeContext.OutboxMessages.AddAsync(message.ToEntity(), TestContext.Current.CancellationToken);

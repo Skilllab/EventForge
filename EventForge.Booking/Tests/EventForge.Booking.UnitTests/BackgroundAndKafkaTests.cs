@@ -223,7 +223,7 @@ public class BackgroundAndKafkaTests
         using var consumer = new BookingNotApprovedConsumer(
             provider.GetRequiredService<IServiceScopeFactory>(),
             Options.Create(new KafkaOptions { BootstrapServers = "localhost:9092", ConsumerGroup = "booking-tests" }),
-            Mock.Of<ILogger<BookingRejectedConsumer>>());
+            Mock.Of<ILogger<BookingNotApprovedConsumer>>());
 
         await CallHandleMessageAsync<BookingNotApproved, BookingNotApprovedConsumer>(consumer, message, CancellationToken.None);
 

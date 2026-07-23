@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
-using EventForge.Booking.Application.Interfaces;
+using EventForge.Booking.Application.CQRS.Commands;
+using EventForge.Booking.Application.CQRS.Queries;
+using EventForge.CQRS;
 using EventForge.Shared.Constants;
 using EventForge.Shared.Enums;
 
@@ -15,13 +17,13 @@ namespace EventForge.Booking.Presentation.Controllers;
 /// <summary>
 /// Контроллер для управления бронированиями (создание, получение, отмена)
 /// </summary>
-/// <param name="bookingService">Сервис бронирования</param>
+/// <param name="sender">Сервис отправки команд и запросов</param>
 /// <param name="logger">Логгер</param>
 [Authorize(Policy = StringConstants.CustomJwtPolicy)]
 [ApiController]
 [Route("[controller]")]
 [Produces("application/json")]
-public class BookingsController(IBookingService bookingService, ILogger<BookingsController> logger) : ControllerBase
+public class BookingsController(ISender sender, ILogger<BookingsController> logger) : ControllerBase
 {
     /// <summary>
     /// Создать новое бронирование для указанного события
@@ -49,7 +51,7 @@ public class BookingsController(IBookingService bookingService, ILogger<Bookings
         if (string.IsNullOrEmpty(userIdClaim?.Value) || !Guid.TryParse(userIdClaim.Value, out var userId))
             return Unauthorized("Не удалось определить идентификатор пользователя.");
 
-        var bookingInfo = await bookingService.CreateBookingAsync(eventId, userId, ct);
+        var bookingInfo = await sender.Send(new CreateBookingCommand(eventId, userId), ct);
         return Accepted(bookingInfo);
     }
 
@@ -72,7 +74,7 @@ public class BookingsController(IBookingService bookingService, ILogger<Bookings
     {
         logger.LogDebug("Обработка запроса GET {methodName}. Получение информации для бронирования: {bookingId}", nameof(GetBooking), bookingId);
 
-        var bookingInfo = await bookingService.GetBookingByIdAsync(bookingId, ct);
+        var bookingInfo = await sender.Send(new GetBookingByIdQuery(bookingId), ct);
         return Ok(bookingInfo);
     }
 
@@ -102,7 +104,7 @@ public class BookingsController(IBookingService bookingService, ILogger<Bookings
         if (string.IsNullOrWhiteSpace(roleClaim?.Value) || !Enum.TryParse<RoleType>(roleClaim.Value, true, out var userRole))
             return Unauthorized("Не удалось определить роль пользователя.");
 
-        var bookingInfo = await bookingService.GetAllBooking(userId, userRole, ct);
+        var bookingInfo = await sender.Send(new GetAllBookingsQuery(userId, userRole), ct);
         return Ok(bookingInfo);
     }
 
@@ -137,7 +139,7 @@ public class BookingsController(IBookingService bookingService, ILogger<Bookings
         if (string.IsNullOrWhiteSpace(roleClaim?.Value) || !Enum.TryParse<RoleType>(roleClaim.Value, true, out var userRole))
             return Unauthorized("Не удалось определить роль пользователя.");
 
-        await bookingService.CancelBooking(bookingId, userId, userRole, ct);
+        await sender.Send(new CancelBookingCommand(bookingId, userId, userRole), ct);
         return NoContent();
     }
 }
