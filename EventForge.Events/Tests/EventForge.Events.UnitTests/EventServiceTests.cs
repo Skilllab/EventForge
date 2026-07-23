@@ -7,7 +7,6 @@ using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Application.Services;
 using EventForge.Events.Domain.Entities;
 using EventForge.Events.Domain.Exceptions;
-using EventForge.Events.Infrastructure.Entities;
 
 using FluentAssertions;
 
@@ -84,7 +83,7 @@ public class EventServiceTests
         var evt = Event.Create("Конференция", startAt, startAt.AddHours(8), 100, "Описание");
         var cacheKey = KeysForEvents.ForEvent(evt.Id);
 
-        cacheMock.Setup(x => x.GetStringAsync(cacheKey)).ReturnsAsync((string?)null);
+        cacheMock.Setup(x => x.GetStringAsync(cacheKey)).ReturnsAsync((string?) null);
         repositoryMock.Setup(x => x.GetByIdAsync(evt.Id, It.IsAny<CancellationToken>())).ReturnsAsync(evt);
 
         var result = await service.GetEventAsync(evt.Id, CancellationToken.None);
@@ -103,8 +102,8 @@ public class EventServiceTests
         var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var eventId = Guid.NewGuid();
 
-        cacheMock.Setup(x => x.GetStringAsync(KeysForEvents.ForEvent(eventId))).ReturnsAsync((string?)null);
-        repositoryMock.Setup(x => x.GetByIdAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync((Event?)null);
+        cacheMock.Setup(x => x.GetStringAsync(KeysForEvents.ForEvent(eventId))).ReturnsAsync((string?) null);
+        repositoryMock.Setup(x => x.GetByIdAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync((Event?) null);
 
         Func<Task> act = () => service.GetEventAsync(eventId, CancellationToken.None);
 
@@ -145,7 +144,7 @@ public class EventServiceTests
         var evt = Event.Create("Топ событие", startAt, startAt.AddHours(2), 100, "Описание");
         var pagedResult = new Top10PagedResult<Event>(new List<Event> { evt });
 
-        cacheMock.Setup(x => x.GetStringAsync(cacheKey)).ReturnsAsync((string?)null);
+        cacheMock.Setup(x => x.GetStringAsync(cacheKey)).ReturnsAsync((string?) null);
         repositoryMock.Setup(x => x.GetTop10EventsAsync(It.IsAny<CancellationToken>())).ReturnsAsync(pagedResult);
 
         var result = await service.GetTop10EventsAsync(CancellationToken.None);
@@ -214,7 +213,7 @@ public class EventServiceTests
         var eventId = Guid.NewGuid();
         var update = UpdateEventDto.Create(title: "Новая конференция");
 
-        repositoryMock.Setup(x => x.GetByIdAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync((Event?)null);
+        repositoryMock.Setup(x => x.GetByIdAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync((Event?) null);
 
         Func<Task> act = () => service.ChangeEventAsync(eventId, update, CancellationToken.None);
 
@@ -286,14 +285,14 @@ public class EventServiceTests
         var service = new EventService(repositoryMock.Object, Mock.Of<ILogger<EventService>>(), cacheMock.Object, RedisOptions, FakeTime);
         var eventId = Guid.NewGuid();
 
-        repositoryMock.Setup(x => x.GetByIdAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync((Event?)null);
+        repositoryMock.Setup(x => x.GetByIdAsync(eventId, It.IsAny<CancellationToken>())).ReturnsAsync((Event?) null);
 
         Func<Task> act = () => service.ReleaseSeatAsync(eventId, CancellationToken.None);
 
         await act.Should().ThrowAsync<NotFoundException>();
         cacheMock.Verify(x => x.RemoveAsync(It.IsAny<string>()), Times.Never);
     }
-   
+
 
     [Fact]
     [Trait("Category", "Cache")]
@@ -309,7 +308,7 @@ public class EventServiceTests
         var startAt = FakeTime.GetUtcNow().UtcDateTime.AddDays(1);
         var evt = Event.Create("Конкурентный тест", startAt, startAt.AddHours(2), 100, "Описание");
 
-        string cachedValue = null;
+        string? cachedValue = null;
         cacheMock.Setup(x => x.GetStringAsync(cacheKey)).ReturnsAsync(() => cachedValue);
         cacheMock.Setup(x => x.SetStringAsync(cacheKey, It.IsAny<string>(), It.IsAny<TimeSpan>()))
             .Callback<string, string, TimeSpan>((_, val, _) => cachedValue = val);

@@ -3,7 +3,6 @@ using System.ComponentModel.DataAnnotations;
 using EventForge.CQRS;
 using EventForge.Events.Application.CQRS.Commands;
 using EventForge.Events.Application.CQRS.Queries;
-using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Presentation.DTO;
 using EventForge.Events.Presentation.Mapping;
 using EventForge.Shared.Constants;

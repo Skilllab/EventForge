@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text;
 
 using EventForge.Events.Domain.Exceptions;
@@ -10,7 +9,6 @@ using EventForge.Swagger;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 
 namespace EventForge.Events.Presentation;
 
@@ -19,6 +17,12 @@ namespace EventForge.Events.Presentation;
 /// </summary>
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Добавляет зависимости слоя Presentation в контейнер зависимостей
+    /// </summary>
+    /// <param name="services">Коллекция сервисов для регистрации зависимостей</param>
+    /// <param name="configuration">Конфигурация приложения</param>
+    /// <returns>Обновленная коллекция сервисов</returns>
     public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddControllers();

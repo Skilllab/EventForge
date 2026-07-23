@@ -77,6 +77,11 @@ public static class EventPresentationMapper
             EventsCountOnCurrentPage: dto.EventsCountOnCurrentPage);
 
 
+    /// <summary>
+    /// Преобразует выходной DTO бизнес-логики (Application) в ответ клиенту (Presentation) для топ-10 событий
+    /// </summary>
+    /// <param name="dto">DTO топ-10 событий из слоя Application</param>
+    /// <returns>Ответ клиенту с топ-10 событиями</returns>
     public static PaginatedResultTop10Response ToWebDto(this PaginatedResultTop10DTO dto) =>
         new(
             Events: dto.Events.Select(e => e.ToWebDto()).ToList());

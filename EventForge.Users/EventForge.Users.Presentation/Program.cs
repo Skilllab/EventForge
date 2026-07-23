@@ -63,4 +63,7 @@ app.MapControllers();
 
 app.Run();
 
+/// <summary>
+/// Частичный класс Program, необходимый для интеграционного тестирования
+/// </summary>
 public partial class Program { }

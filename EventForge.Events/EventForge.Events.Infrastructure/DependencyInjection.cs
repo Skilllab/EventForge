@@ -84,7 +84,7 @@ public static class DependencyInjection
 
         services.AddSingleton<IConnectionMultiplexer>(_ =>
         {
-            var options = ConfigurationOptions.Parse(configuration.GetConnectionString("Redis"));
+            var options = ConfigurationOptions.Parse(configuration.GetConnectionString("Redis") ?? string.Empty);
             options.AbortOnConnectFail = false;
             options.ConnectRetry = 3;
             options.ConnectTimeout = 5000; // Тайм-аут подключения, мс

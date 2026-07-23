@@ -8,7 +8,7 @@ public class JwtSettings
     /// <summary>
     /// Имя схемы аутентификации
     /// </summary>
-    public required string SchemeName { get; set; }
+    public required string? SchemeName { get; set; }
     /// <summary>
     /// Секрет
     /// </summary>

@@ -3,7 +3,6 @@ using Asp.Versioning;
 using EventForge.CQRS;
 using EventForge.Users.Application.CQRS.Commands;
 using EventForge.Users.Application.CQRS.Queries;
-using EventForge.Users.Application.Interfaces;
 using EventForge.Users.Presentation.DTO;
 
 using Microsoft.AspNetCore.Authorization;
@@ -16,7 +15,7 @@ namespace EventForge.Users.Presentation.Controllers;
 /// <summary>
 /// Контроллер для аутентификации пользователей
 /// </summary>
-/// <param name="authService">Сервис аутентификации</param>
+/// <param name="sender">Сервис отправки команд и запросов</param>
 /// <param name="logger">Логгер</param>
 [AllowAnonymous]
 [ApiController]
