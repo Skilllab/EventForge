@@ -57,6 +57,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.MapPrometheusScrapingEndpoint(); // доступен по /metrics
+
 app.MapControllers();
 
 app.Run();
