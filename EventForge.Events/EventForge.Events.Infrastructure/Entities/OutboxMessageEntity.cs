@@ -44,4 +44,15 @@ public class OutboxMessageEntity
     /// Последняя ошибка публикации
     /// </summary>
     public string? Error { get; set; }
+
+    /// <summary>
+    /// Traceparent для трассировки
+    /// </summary>
+    public string? TraceParent { get; set; }
+
+    /// <summary>
+    /// Tracestate для трассировки
+    /// </summary>
+    public string? TraceState { get; set; }
+
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 
 using Confluent.Kafka;
@@ -162,8 +163,16 @@ public class BookingRequestedConsumer(
                 if (consumeResult?.Message?.Value == null)
                     continue;
 
+                var parent = KafkaTraceContext.ExtractFromHeaders(consumeResult.Message.Headers);
+                using var activity = KafkaTraceContext.Source.StartActivity("kafka consume booking-requested", ActivityKind.Consumer, parent);
+
+                activity?.SetTag("messaging.system", "kafka");
+                activity?.SetTag("messaging.destination.name", TopicNames.BookingRequested);
+                activity?.SetTag("messaging.kafka.message_key", consumeResult.Message.Key);
+
                 var message = JsonSerializer.Deserialize<BookingRequested>(consumeResult.Message.Value);
                 await HandleMessageAsync(message, stoppingToken);
+
                 consumer.Commit(consumeResult);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
