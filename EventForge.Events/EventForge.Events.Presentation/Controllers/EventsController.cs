@@ -1,5 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 
+using EventForge.CQRS;
+using EventForge.Events.Application.CQRS.Commands;
+using EventForge.Events.Application.CQRS.Queries;
 using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Presentation.DTO;
 using EventForge.Events.Presentation.Mapping;
@@ -16,13 +19,13 @@ namespace EventForge.Events.Presentation.Controllers;
 /// <summary>
 /// Контроллер для управления событиями (создание, получение, обновление, удаление)
 /// </summary>
-/// <param name="eventService">Сервис для обработки событий</param>
+/// <param name="sender">Сервис для отправки запросов и команд</param>
 /// <param name="logger">Логгер</param>
 [Authorize(Policy = StringConstants.CustomJwtPolicy)]
 [ApiController]
 [Route("[controller]")]
 [Produces("application/json")]
-public class EventsController(IEventService eventService, ILogger<EventsController> logger) : ControllerBase
+public class EventsController(ISender sender, ILogger<EventsController> logger) : ControllerBase
 {
     /// <summary>
     /// Получить список всех событий с возможностью фильтрации
@@ -42,7 +45,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     {
         logger.LogDebug("Обработка запроса GET {methodName}", nameof(GetAllEvents));
 
-        var result = await eventService.GetEventsAsync(filterRequest.ToAppDto(), ct);
+        var result = await sender.Send(new GetEventsQuery(filterRequest.ToAppDto()), ct);
         return Ok(result.ToWebDto());
     }
 
@@ -63,8 +66,8 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     {
         logger.LogDebug("Обработка запроса GET {methodName}", nameof(GetTop10Events));
 
-        var result = await eventService.GetTop10EventsAsync(ct);
-        return Ok(result.ToWebDto());
+        var top = await sender.Send(new GetTop10EventsQuery(), ct);
+        return Ok(top.ToWebDto());
     }
 
     /// <summary>
@@ -86,8 +89,8 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     {
         logger.LogDebug("Обработка запроса GET {methodName} по id: {id} ", nameof(GetEvent), eventId);
 
-        var responseEvent = await eventService.GetEventAsync(eventId, ct);
-        return Ok(responseEvent.ToWebDto());
+        var one = await sender.Send(new GetEventByIdQuery(eventId), ct);
+        return Ok(one.ToWebDto());
     }
 
     /// <summary>
@@ -110,8 +113,8 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     {
         logger.LogDebug("Обработка запроса POST {methodName}", nameof(CreateEvent));
 
-        var response = await eventService.CreateEventAsync(request.ToAppDto(), ct);
-        return CreatedAtAction(nameof(CreateEvent), new { id = response.Id }, response.ToWebDto());
+        var created = await sender.Send(new CreateEventCommand(request.ToAppDto()), ct);
+        return CreatedAtAction(nameof(CreateEvent), new { id = created.Id }, created.ToWebDto());
     }
 
     /// <summary>
@@ -137,7 +140,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
 
         logger.LogDebug("Обработка запроса PUT {methodName} c id: {id}", nameof(ChangeEvent), eventId);
 
-        await eventService.ChangeEventAsync(eventId, request.ToAppDto(), ct);
+        await sender.Send(new ChangeEventCommand(eventId, request.ToAppDto()), ct);
         return NoContent();
     }
 
@@ -163,7 +166,7 @@ public class EventsController(IEventService eventService, ILogger<EventsControll
     {
         logger.LogDebug("Обработка запроса DELETE {methodName} с id: {id}", nameof(CancelEvent), eventId);
 
-        await eventService.CancelEventAsync(eventId, ct);
+        await sender.Send(new CancelEventCommand(eventId), ct);
         return NoContent();
     }
 }

@@ -1,3 +1,8 @@
+using EventForge.CQRS;
+using EventForge.Events.Application.CQRS.Commands;
+using EventForge.Events.Application.CQRS.Handlers;
+using EventForge.Events.Application.CQRS.Queries;
+using EventForge.Events.Application.DTO;
 using EventForge.Events.Application.Entities;
 using EventForge.Events.Application.Interfaces;
 using EventForge.Events.Application.Services;
@@ -20,6 +25,14 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
 
         services.AddScoped<IEventService, EventService>();
+        services.AddScoped<ISender, Mediator>();
+
+        services.AddScoped<IRequestHandler<GetEventsQuery, PaginatedResultDTO>, GetEventsQueryHandler>();
+        services.AddScoped<IRequestHandler<GetTop10EventsQuery, PaginatedResultTop10DTO>, GetTop10EventsQueryHandler>();
+        services.AddScoped<IRequestHandler<GetEventByIdQuery, EventDTO>, GetEventByIdQueryHandler>();
+        services.AddScoped<IRequestHandler<CreateEventCommand, EventDTO>, CreateEventCommandHandler>();
+        services.AddScoped<IRequestHandler<ChangeEventCommand, bool>, ChangeEventCommandHandler>();
+        services.AddScoped<IRequestHandler<CancelEventCommand, bool>, CancelEventCommandHandler>();
 
         services.Configure<RedisOptions>(configuration.GetSection(nameof(RedisOptions)));
 
