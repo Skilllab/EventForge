@@ -1,5 +1,8 @@
 using Asp.Versioning;
 
+using EventForge.CQRS;
+using EventForge.Users.Application.CQRS.Commands;
+using EventForge.Users.Application.CQRS.Queries;
 using EventForge.Users.Application.Interfaces;
 using EventForge.Users.Presentation.DTO;
 
@@ -19,7 +22,7 @@ namespace EventForge.Users.Presentation.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 [Produces("application/json")]
-public class AuthController(IAuthService authService, ILogger<AuthController> logger) : ControllerBase
+public class AuthController(ISender sender, ILogger<AuthController> logger) : ControllerBase
 {
     /// <summary>
     /// Регистрация нового пользователя с указанными логином, паролем и ролью.
@@ -43,7 +46,7 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     {
         logger.LogDebug("Обработка запроса POST {methodName}. Регистрация нового пользователя: {login}", nameof(Register), userRequest.Login);
 
-        if (await authService.RegisterUserAsync(userRequest.Login, userRequest.Password, userRequest.Role))
+        if (await sender.Send(new RegisterUserCommand(userRequest.Login, userRequest.Password, userRequest.Role)))
             return NoContent();
 
         return BadRequest(new { message = "Ошибка регистрации пользователя" });
@@ -68,7 +71,7 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     {
         logger.LogDebug("Обработка запроса POST {methodName}. Аутентификация пользователя: {login}", nameof(Login), request.Login);
 
-        var token = await authService.LoginUserAsync(request.Login, request.Password);
+        var token = await sender.Send(new LoginUserQuery(request.Login, request.Password));
         if (token is null)
             return NotFound(new { message = "Неверный логин или пароль." });
 

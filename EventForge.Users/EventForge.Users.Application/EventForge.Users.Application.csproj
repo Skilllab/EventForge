@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\EventForge.Shared\EventForge.CQRS\EventForge.CQRS.csproj" />
     <ProjectReference Include="..\EventForge.Users.Domain\EventForge.Users.Domain.csproj" />
   </ItemGroup>
 
