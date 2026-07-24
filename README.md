@@ -375,7 +375,7 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Po
 
 | Инструмент | URL | Порт |
 |---|---|---|
-| Grafana | http://localhost:3000 | `3000` |
+| Grafana | http://localhost:3300 | `3300` |
 | Prometheus | http://localhost:9090 | `9090` |
 | Jaeger UI | http://localhost:16686 | `16686` |
 | AKHQ | http://localhost:8080 | `8080` |
