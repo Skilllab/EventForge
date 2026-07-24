@@ -17,6 +17,12 @@ namespace EventForge.Users.Presentation;
 /// </summary>
 public static class DependencyInjection
 {
+    /// <summary>
+    /// Добавляет зависимости слоя Presentation в контейнер зависимостей
+    /// </summary>
+    /// <param name="services">Коллекция сервисов для регистрации зависимостей</param>
+    /// <param name="configuration">Конфигурация приложения</param>
+    /// <returns>Обновленная коллекция сервисов</returns>
     public static IServiceCollection AddPresentation(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddControllers();

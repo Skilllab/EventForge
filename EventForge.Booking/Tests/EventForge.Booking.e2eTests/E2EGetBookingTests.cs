@@ -89,7 +89,7 @@ public class E2EGetBookingTests : IAsyncLifetime
     private static string GenerateToken(Guid userId, RoleType role)
     {
 
-    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var claims = new[]
         {
@@ -189,7 +189,7 @@ public class E2EGetBookingTests : IAsyncLifetime
         await _client.PostAsync($"/bookings/{eventId}", null, TestContext.Current.CancellationToken);
 
         SetAdminAuth(userId);
-        var response = await _client.GetAsync("/bookings");
+        var response = await _client.GetAsync("/bookings", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<List<BookingInfoDTO>>(cancellationToken: TestContext.Current.CancellationToken);
@@ -204,7 +204,7 @@ public class E2EGetBookingTests : IAsyncLifetime
         await ResetDatabaseAsync();
         SetAdminAuth(NewUserId());
 
-        var response = await _client.GetAsync("/bookings");
+        var response = await _client.GetAsync("/bookings", TestContext.Current.CancellationToken);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<List<BookingInfoDTO>>(cancellationToken: TestContext.Current.CancellationToken);

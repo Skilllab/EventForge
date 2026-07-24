@@ -19,7 +19,7 @@ public class JwtTokenGeneratorTests
         // Arrange
         var userId = Guid.NewGuid();
         var now = new DateTimeOffset(2025, 7, 1, 10, 30, 0, TimeSpan.Zero);
-        var fakeTimeProvider = new Microsoft.Extensions.Time.Testing.FakeTimeProvider(now);
+        var fakeTimeProvider = new FakeTimeProvider(now);
         var options = Options.Create(new JwtSettings
         {
             Secret = "super-secret-key-with-sufficient-length-12345",
@@ -45,7 +45,7 @@ public class JwtTokenGeneratorTests
     {
         // Arrange
         var now = new DateTimeOffset(2025, 7, 1, 10, 30, 0, TimeSpan.Zero);
-        var fakeTimeProvider = new Microsoft.Extensions.Time.Testing.FakeTimeProvider(now);
+        var fakeTimeProvider = new FakeTimeProvider(now);
         var options = Options.Create(new JwtSettings
         {
             Secret = "super-secret-key-with-sufficient-length-12345",
@@ -71,7 +71,7 @@ public class JwtTokenGeneratorTests
     {
         // Arrange
         var now = new DateTimeOffset(2025, 7, 1, 10, 30, 0, TimeSpan.Zero);
-        var fakeTimeProvider = new Microsoft.Extensions.Time.Testing.FakeTimeProvider(now);
+        var fakeTimeProvider = new FakeTimeProvider(now);
         var options = Options.Create(new JwtSettings
         {
             Secret = "super-secret-key-with-sufficient-length-12345",
@@ -98,7 +98,7 @@ public class JwtTokenGeneratorTests
     {
         // Arrange
         var now = new DateTimeOffset(2025, 7, 1, 10, 30, 0, TimeSpan.Zero);
-        var fakeTimeProvider = new Microsoft.Extensions.Time.Testing.FakeTimeProvider(now);
+        var fakeTimeProvider = new FakeTimeProvider(now);
         var options = Options.Create(new JwtSettings
         {
             Secret = "super-secret-key-with-sufficient-length-12345",

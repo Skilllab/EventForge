@@ -17,8 +17,10 @@
 - [Сервисы](#сервисы)
 - [Технологии](#технологии)
 - [Аутентификация и роли](#аутентификация-и-роли)
+- [CQRS и внутренний Mediator](#cqrs-и-внутренний-mediator)
 - [Kafka и асинхронные процессы](#kafka-и-асинхронные-процессы)
 - [Запуск проекта](#запуск-проекта)
+- [Наблюдаемость](#наблюдаемость)
 - [Миграции](#миграции)
 - [Тестирование](#тестирование)
 - [API примеры](#api-примеры)
@@ -108,6 +110,28 @@ JWT содержит как минимум:
 
 - `sub` — GUID пользователя
 - `role` — `User` или `Admin`
+
+## CQRS и внутренний Mediator
+
+В сервисах `Booking`, `Events`, `Users` применён CQRS-подход на уровне Application-слоя:
+
+- `Commands` — операции изменения состояния (create/update/cancel/register)
+- `Queries` — операции чтения
+- `Handlers` — отдельные обработчики для каждого сценария
+- контроллеры делегируют выполнение через `ISender`
+
+Для dispatch-запросов используется внутренний mediator без внешних зависимостей:
+
+- `IRequest<TResponse>`
+- `IRequestHandler<TRequest, TResponse>`
+- `ISender`
+- `Mediator` (резолвинг handler через DI)
+
+Это позволяет:
+- изолировать use-case’ы по файлам;
+- проще тестировать бизнес-сценарии (unit-тесты на handlers);
+- централизованно добавлять cross-cutting логику (валидация, аудит, логирование, pipeline-поведение).
+
 
 ## Kafka и асинхронные процессы
 
@@ -270,7 +294,7 @@ docker-compose up -d users_api
 Запуск только окружения для последующего запуска сервисов в debug режиме
 
 ```bash
-docker-compose up -d zookeeper kafka akhq postgres pgadmin kafka-init-topics redis
+docker-compose up -d zookeeper kafka akhq postgres pgadmin kafka-init-topics redis prometheus grafana jaeger
 ```
 
 Сборка образов без запуска:
@@ -338,6 +362,64 @@ dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Po
 }
 ```
 
+## Наблюдаемость
+
+В проект добавлен базовый observability-стек:
+
+- `Prometheus` — сбор метрик (`prometheus.yml`, `metrics_path: /metrics`)
+- `Grafana` — визуализация метрик и дашборды
+- `Jaeger` — трассировка (OpenTelemetry OTLP + UI)
+- `AKHQ` — UI для Kafka (просмотр топиков/сообщений)
+
+### UI и порты
+
+| Инструмент | URL | Порт |
+|---|---|---|
+| Grafana | http://localhost:3300 | `3300` |
+| Prometheus | http://localhost:9090 | `9090` |
+| Jaeger UI | http://localhost:16686 | `16686` |
+| AKHQ | http://localhost:8080 | `8080` |
+
+### Kafka: метрики клиента и сквозная трассировка
+
+Для Kafka добавлены:
+
+- клиентские метрики producer/consumer (publish/consume/process counters и latency histograms);
+- сквозная трассировка через Kafka headers (`traceparent`/`tracestate`);
+- перенос trace-context через Outbox (`TraceParent`, `TraceState` в `OutboxMessages`);
+- продолжение trace в consumer’ах с `ActivityKind.Consumer`.
+
+Результат:
+- в `Jaeger` видна непрерывная цепочка:
+  `HTTP -> Command/Handler -> Outbox -> Kafka Producer -> Kafka Consumer -> DB`;
+- в `Prometheus/Grafana` видны технические метрики Kafka-клиентов по сервисам.
+
+### Как запустить стек мониторинга
+
+Если сервисы уже запущены, поднимите только мониторинг:
+```bash
+docker compose up -d prometheus grafana jaeger
+```
+
+Если нужен полный локальный стенд:
+```bash
+docker compose up -d
+```
+
+### Дашборд Grafana `EventForge dashboard 1_0`
+
+Файл дашборда:  
+`grafana/provisioning/dashboards/files/EventForge dashboard 1_0.json`
+
+Панели в дашборде:
+
+- `Процент загрузки процессора (CPU)`
+- `Exceptions`
+- `Объем ОЗУ`
+- `Активные потоки`
+- `Latency (p50, p95, p99)`
+- `Текущее количество запросов в обработке`
+- `Throughput (RPS)`
 
 ## Миграции
 

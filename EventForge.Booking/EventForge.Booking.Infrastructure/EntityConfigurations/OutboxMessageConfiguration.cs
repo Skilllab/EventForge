@@ -45,5 +45,11 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
 
         builder.Property(x => x.Error)
             .HasColumnName("error");
+
+        builder.Property(x => x.TraceParent)
+            .HasColumnName("trace_parent");
+
+        builder.Property(x => x.TraceState)
+            .HasColumnName("trace_state");
     }
 }

@@ -93,6 +93,14 @@ namespace EventForge.Events.Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("topic");
 
+                    b.Property<string>("TraceParent")
+                        .HasColumnType("text")
+                        .HasColumnName("trace_parent");
+
+                    b.Property<string>("TraceState")
+                        .HasColumnType("text")
+                        .HasColumnName("trace_state");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("text")

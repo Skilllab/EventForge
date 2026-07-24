@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 using EventForge.Booking.Application.Interfaces;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -44,6 +46,13 @@ public class OutboxPublisherBackgroundService(
 
         foreach (var message in messages)
         {
+            var parent = KafkaTraceContext.ExtractFromOutbox(message.TraceParent, message.TraceState);
+            using var activity = KafkaTraceContext.Source.StartActivity("kafka outbox publish", ActivityKind.Producer, parent);
+
+            activity?.SetTag("messaging.system", "kafka");
+            activity?.SetTag("messaging.destination.name", message.Topic);
+            activity?.SetTag("messaging.message.id", message.Id.ToString());
+
             try
             {
                 await publisher.PublishRawAsync(message.Topic, message.MessageKey, message.Payload, stoppingToken);
@@ -51,6 +60,7 @@ public class OutboxPublisherBackgroundService(
             }
             catch (Exception ex)
             {
+                activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
                 await outboxRepository.MarkFailedAsync(message.Id, ex.Message, stoppingToken);
                 logger.LogError(ex, "Ошибка публикации outbox сообщения {MessageId}", message.Id);
             }

@@ -7,9 +7,16 @@ using EventForge.Users.Presentation;
 
 using Microsoft.EntityFrameworkCore;
 
+using Serilog;
+using Serilog.Formatting.Compact;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.AddConsole();
+
+builder.Host.UseSerilog((ctx, cfg) =>
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+        .WriteTo.Console(new CompactJsonFormatter()));
 
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
@@ -50,8 +57,13 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.MapPrometheusScrapingEndpoint(); // доступен по /metrics
+
 app.MapControllers();
 
 app.Run();
 
+/// <summary>
+/// Частичный класс Program, необходимый для интеграционного тестирования
+/// </summary>
 public partial class Program { }

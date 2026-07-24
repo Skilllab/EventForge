@@ -9,7 +9,7 @@ namespace EventForge.Events.Presentation.ValidationAttributes;
 public class NotMinDateTimeAttribute : ValidationAttribute
 {
     /// <inheritdoc/>
-    protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+    protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
     {
         if (value is DateTime dateTime && dateTime == DateTime.MinValue)
         {

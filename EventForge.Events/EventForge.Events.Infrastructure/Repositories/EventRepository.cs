@@ -135,7 +135,10 @@ public class EventRepository(IDbContextFactory<EventsDbContext> factory) : IEven
             Payload = outboxMessage.Payload,
             CreatedAt = outboxMessage.CreatedAt,
             ProcessedAt = null,
-            Error = null
+            Error = null,
+            // в AddOutboxAsync(...) добавить:
+            TraceParent = outboxMessage.TraceParent,
+            TraceState = outboxMessage.TraceState,
         };
         await context.OutboxMessages.AddAsync(outboxEntity, ct);
         await context.SaveChangesAsync(ct);

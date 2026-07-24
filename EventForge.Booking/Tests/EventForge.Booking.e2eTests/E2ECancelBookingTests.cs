@@ -132,7 +132,7 @@ public class E2ECancelBookingTests : IAsyncLifetime
         await ctx.Database.ExecuteSqlRawAsync(
             "TRUNCATE TABLE \"Booking\".\"Bookings\" RESTART IDENTITY CASCADE");
     }
-       
+
 
     [Fact]
     public async Task CancelBooking_Should_Return_NoContent_When_Owner_Cancels_Own_Booking()

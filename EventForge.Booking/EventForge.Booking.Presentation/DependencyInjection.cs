@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text;
 
 using EventForge.Booking.Domain.Exceptions;
@@ -10,7 +9,6 @@ using EventForge.Swagger;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 
 namespace EventForge.Booking.Presentation;
 
@@ -54,7 +52,7 @@ public static class DependencyInjection
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions?.Secret ?? string.Empty)),
                     ClockSkew = TimeSpan.Zero,
                 };
-                
+
                 options.MapInboundClaims = false;
             });
 

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 
 using Confluent.Kafka;
@@ -114,11 +115,18 @@ public class BookingRejectedConsumer(
                 if (consumeResult?.Message?.Value == null)
                     continue;
 
-                var message = JsonSerializer.Deserialize<BookingRejected>(
-                    consumeResult.Message.Value);
+                var parent = KafkaTraceContext.ExtractFromHeaders(consumeResult.Message.Headers);
+                using var activity = KafkaTraceContext.Source.StartActivity("kafka consume booking-rejected", ActivityKind.Consumer, parent);
 
+                activity?.SetTag("messaging.system", "kafka");
+                activity?.SetTag("messaging.destination.name", TopicNames.BookingRejected);
+                activity?.SetTag("messaging.kafka.message_key", consumeResult.Message.Key);
+
+                var message = JsonSerializer.Deserialize<BookingRejected>(consumeResult.Message.Value);
                 await HandleMessageAsync(message, stoppingToken);
+
                 consumer.Commit(consumeResult);
+
             }
             catch (OperationCanceledException)
                 when (stoppingToken.IsCancellationRequested)

@@ -1,0 +1,17 @@
+apiVersion: 1
+
+datasources:
+  # Подключение Prometheus
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://eventapi_prometheus:9090
+    isDefault: true
+    editable: false
+
+  # Подключение Jaeger для трассировки
+  - name: Jaeger
+    type: jaeger
+    access: proxy
+    url: http://eventapi_jaeger:16686
+    editable: false

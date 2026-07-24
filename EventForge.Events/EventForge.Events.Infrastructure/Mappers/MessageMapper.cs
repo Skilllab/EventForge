@@ -20,7 +20,9 @@ public static class MessageMapper
             entity.Payload,
             entity.CreatedAt,
             entity.ProcessedAt,
-            entity.Error);
+            entity.Error,
+            entity.TraceParent,
+            entity.TraceState);
 
     /// <summary>
     /// Из домена в сущность БД
@@ -35,6 +37,8 @@ public static class MessageMapper
             Payload = domain.Payload,
             CreatedAt = domain.CreatedAt,
             ProcessedAt = domain.ProcessedAt,
-            Error = domain.Error
+            Error = domain.Error,
+            TraceParent = domain.TraceParent,
+            TraceState = domain.TraceState
         };
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 
 using Confluent.Kafka;
@@ -17,7 +18,7 @@ namespace EventForge.Booking.Infrastructure.Services;
 public class BookingNotApprovedConsumer(
     IServiceScopeFactory scopeFactory,
     IOptions<KafkaOptions> kafkaOptions,
-    ILogger<BookingRejectedConsumer> logger) : BackgroundService
+    ILogger<BookingNotApprovedConsumer> logger) : BackgroundService
 {
     
     private async Task HandleMessageAsync(
@@ -111,11 +112,18 @@ public class BookingNotApprovedConsumer(
                 if (consumeResult?.Message?.Value == null)
                     continue;
 
-                var message = JsonSerializer.Deserialize<BookingNotApproved>(
-                    consumeResult.Message.Value);
+                var parent = KafkaTraceContext.ExtractFromHeaders(consumeResult.Message.Headers);
+                using var activity = KafkaTraceContext.Source.StartActivity("kafka consume booking-not-approved", ActivityKind.Consumer, parent);
 
+                activity?.SetTag("messaging.system", "kafka");
+                activity?.SetTag("messaging.destination.name", TopicNames.BookingNotApproved);
+                activity?.SetTag("messaging.kafka.message_key", consumeResult.Message.Key);
+
+                var message = JsonSerializer.Deserialize<BookingNotApproved>(consumeResult.Message.Value);
                 await HandleMessageAsync(message, stoppingToken);
+
                 consumer.Commit(consumeResult);
+
             }
             catch (OperationCanceledException)
                 when (stoppingToken.IsCancellationRequested)

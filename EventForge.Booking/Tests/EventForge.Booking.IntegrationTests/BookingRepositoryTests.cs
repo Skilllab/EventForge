@@ -80,7 +80,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
         result.Should().BeEmpty();
     }
 
-  
+
     [Fact]
     [Trait("Category", "GetUserActiveBookingsCount")]
     public async Task GetUserActiveBookingsCountAsync_Should_Count_Only_Pending_And_Confirmed()
@@ -140,7 +140,7 @@ public class BookingRepositoryTests : BaseRepositoryTest
         saved!.Id.Should().Be(booking.Id);
 
         await using var context = await CreateContext();
-        var outboxCount = await context.OutboxMessages.CountAsync();
+        var outboxCount = await context.OutboxMessages.CountAsync(TestContext.Current.CancellationToken);
         outboxCount.Should().Be(1);
     }
 
