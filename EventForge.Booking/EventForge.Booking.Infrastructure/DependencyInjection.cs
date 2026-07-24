@@ -45,7 +45,7 @@ public static class DependencyInjection
                     .AddOtlpExporter(options =>
                     {
                         // Jaeger по умолчанию принимает OTLP/gRPC на порту 4317
-                        options.Endpoint = new Uri(configuration["Otel:OtlpEndpoint"] ?? "http://localhost:4317");
+                        options.Endpoint = new Uri(configuration["Otlp:Endpoint"] ?? "http://localhost:4317");
                     });
             })
             .WithLogging(logging =>
